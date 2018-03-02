@@ -1,0 +1,29 @@
+{
+  "dataroot": "/home/visionlab/record/",
+//  "scene_directory": "/home/visionlab/record/clutter1/",
+  "dataset": "occlusion1",
+//  "scene_directory": "/home/visionlab/record/clutter2/",
+  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
+
+  "debug": true,
+
+  "visualization": {
+    "model_samples": 5000
+  },
+
+  "ICP": {
+    "voxel_size": 0.01,
+    "point_to_plane": false,
+    "rotation_level": 24,
+    "distance_threshold": 0.02
+  },
+
+  "evaluation": {
+    "show_annotation": false, // GREEN
+    "ICP_refinement": true,
+    "use_point_to_plane": false,
+    "voxel_size": 0.05, // voxel size for downsample
+    "max_distance": 0.075, // threshold for ICP
+    "samples_per_model": 50000  // for ICP refinement
+  }
+}

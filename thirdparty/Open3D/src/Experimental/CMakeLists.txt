@@ -1,0 +1,7 @@
+add_subdirectory(IntegrateRGBD)
+add_subdirectory(OdometryRGBD)
+add_subdirectory(ViewPCDMatch)
+add_subdirectory(EvaluateFeatureMatch)
+add_subdirectory(EvaluatePCDMatch)
+add_subdirectory(ViewDistances)
+add_subdirectory(TrimMeshBasedOnPointCloud)

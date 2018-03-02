@@ -1,0 +1,258 @@
+//
+// Created by feixh on 11/15/17.
+//
+#include "dataset_loaders.h"
+// own
+#include "io_utils.h"
+#include "tracker_utils.h"
+
+namespace feh {
+
+LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
+    dataroot_(dataroot) {
+    feh::io::LoadMeshFromPlyFile(dataroot + "/mesh.ply", vertices_, faces_);
+    feh::tracker::ScaleVertices(vertices_, 1e-3);
+
+    // transformation to register oldmesh
+    std::string transform_file = dataroot_ + "/transform.dat";
+    std::ifstream ifs(transform_file, std::ios::in);
+    CHECK(ifs.is_open()) << "failed to open transform.dat at " << transform_file;
+    float tmp;
+    ifs >> tmp;
+    feh::Mat4f transform_data;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            ifs >> tmp >> tmp;
+            transform_data(i, j) = tmp;
+        }
+    }
+    transform_data(3, 3) = 1.0;
+    ifs.close();
+    transform_ = Sophus::SE3f(transform_data);
+    std::cout << "transform=\n" << transform_.matrix() << "\n";
+
+    // read in jpg files
+    feh::Glob(dataroot_ + "/data", "jpg", "color", jpg_files_);
+    feh::Glob(dataroot_ + "/data", "tra", "tra", trans_files_);
+    feh::Glob(dataroot_ + "/data", "rot", "rot", rot_files_);
+    CHECK_EQ(jpg_files_.size(), trans_files_.size());
+    CHECK_EQ(jpg_files_.size(), rot_files_.size());
+    size_ = jpg_files_.size();
+}
+
+bool LinemodDatasetLoader::Grab(int i,
+                                cv::Mat &image,
+                                Sophus::SE3f &gm) {
+    if (i >= size_ || i < 0) return false;
+
+    image = cv::imread(jpg_files_[i]);
+
+    // read in translation
+    std::ifstream ifs(trans_files_[i], std::ios::in);
+    CHECK(ifs.is_open());
+    int tmp;
+    ifs >> tmp >> tmp;
+    feh::Vec3f T;
+    ifs >> T(0) >> T(1) >> T(2);
+    T *= 0.01;  // cm -> meter
+    ifs.close();
+
+    // read in rotation
+    ifs.open(rot_files_[i], std::ios::in);
+    CHECK(ifs.is_open());
+    ifs >> tmp >> tmp;
+    feh::Mat3f R;
+    for (int i =0 ; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            ifs >> R(i, j);
+        }
+    }
+    ifs.close();
+
+    // fill in homogeneous matrix
+    feh::Mat4f RT;
+    RT.block<3, 3>(0, 0) = R;
+    RT.block<3, 1>(0, 3) = T;
+    RT(3, 3) = 1.0;
+
+    gm = Sophus::SE3f(RT);
+
+    return true;
+}
+
+VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
+    dataroot_(dataroot){
+
+    std::ifstream in_file(dataroot_ + "/dataset");
+    CHECK(in_file.is_open()) << "failed to open dataset";
+
+    dataset_.ParseFromIstream(&in_file);
+    in_file.close();
+
+    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+        LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
+    }
+
+    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+        LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
+    }
+
+    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+        LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
+    }
+
+    CHECK_EQ(png_files_.size(), edge_files_.size());
+    CHECK_EQ(png_files_.size(), bbox_files_.size());
+    size_ = png_files_.size();
+}
+
+
+bool VlslamDatasetLoader::Grab(int i,
+                               cv::Mat &image,
+                               cv::Mat &edgemap,
+                               vlslam_pb::BoundingBoxList &bboxlist,
+                               Sophus::SE3f &gwc,
+                               Sophus::SO3f &Rg,
+                               std::string &fullpath) {
+    fullpath = png_files_[i];
+    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
+}
+
+bool VlslamDatasetLoader::Grab(int i,
+                               cv::Mat &image,
+                               cv::Mat &edgemap,
+                               vlslam_pb::BoundingBoxList &bboxlist,
+                               Sophus::SE3f &gwc,
+                               Sophus::SO3f &Rg) {
+
+    if (i >= size_ || i < 0) return false;
+    std::cout << i << "\n";
+
+    vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
+    gwc = Sophus::SE3f(feh::io::SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
+
+    // gravity alignment rotation
+    feh::Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
+    Rg = Sophus::SO3f::exp(Wg);
+
+    std::string png_file = png_files_[i];
+    std::string edge_file = edge_files_[i];
+    std::string bbox_file = bbox_files_[i];
+
+    // read image
+    image = cv::imread(png_file);
+    CHECK(!image.empty()) << "empty image";
+
+    // read edgemap
+    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+        LOG(FATAL) << "failed to load edge map @ " << edge_file;
+    }
+
+    // read bounding box
+    std::ifstream in_file(bbox_file, std::ios::in);
+    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
+    bboxlist.ParseFromIstream(&in_file);
+    in_file.close();
+    return true;
+}
+
+RigidPoseDatasetLoader::RigidPoseDatasetLoader(
+    const std::string &dataroot,
+    const std::string &dataset,
+    int tag):
+    dataroot_(dataroot),
+    dataset_(dataset),
+    index_(0){
+
+    // strip leading and tailing "/"
+    for (auto it = dataset_.begin(); it != dataset_.end(); ) {
+        if (*it == '/') {
+            it = dataset_.erase(it);
+        } else ++it;
+    }
+
+    while (dataset_.back() == '/') {
+        dataset_.pop_back();
+    }
+
+    // parse tag
+    std::string video_path(dataroot_ + "/" + dataset_ + "/");
+    if (tag & as_integer(Tag::Left)) {
+        if (tag & as_integer(Tag::NoiseFree)) {
+            video_path += dataset_ + "_noise_free_L.mp4";
+        } else if (tag & as_integer(Tag::Noisy)) {
+            video_path += dataset_ + "_noisy_L.mp4";
+        } else if (tag & as_integer(Tag::Occluded)) {
+            video_path += dataset_ + "_occluded_L.mp4";
+        } else {
+            LOG(FATAL) << "Invalid tag L";
+        }
+    } else if (tag & as_integer(Tag::Right)) {
+        if (tag & as_integer(Tag::NoiseFree)) {
+            video_path += dataset_ + "_noise_free_R.mp4";
+        } else if (tag & as_integer(Tag::Noisy)) {
+            video_path += dataset_ + "_noisy_R.mp4";
+        } else if (tag & as_integer(Tag::Occluded)) {
+            video_path += dataset_ + "_occluded_R.mp4";
+        } else {
+            LOG(FATAL) << "Invalid tag R";
+        }
+    } else {
+        LOG(FATAL) << "Invalid tag";
+    }
+    LOG(INFO) << "loading video at " << video_path;
+
+    capture_.open(video_path);
+    CHECK(capture_.isOpened()) << "failed to open video @ " << video_path;
+
+    // load model
+    std::string model_path(dataroot_ + "/models/" + dataset_ + "/" + dataset_ + ".obj");
+    io::LoadMeshFromObjFile(model_path, vertices_, faces_);
+    feh::tracker::ScaleVertices(vertices_, 1e-3);   // mm -> meters
+    // flip z
+    for (int i = 0; i < vertices_.size() / 3; ++i) {
+//        vertices_[i * 3 + 0] = -vertices_[i * 3 + 0];
+//        vertices_[i * 3 + 1] = -vertices_[i * 3 + 1];
+        vertices_[i * 3 + 2] = -vertices_[i * 3 + 2];
+    }
+    LOG(INFO) << vertices_.size() / 3 << " vertices loaded";
+    LOG(INFO) << faces_.size() / 3 << " faces loaded";
+
+    // load ground truth poses
+    std::string pose_path(dataroot_  + "/code/ground_truth.txt");
+    std::fstream ifs(pose_path, std::ios::in);
+    CHECK(ifs.is_open()) << "failed to open file @ " << pose_path;
+    // skip first two lines
+    std::string ignore;
+    std::getline(ifs, ignore);
+    std::getline(ifs, ignore);
+
+    for (Eigen::Matrix<float, 6, 1> v; ifs >> v(0) >> v(1) >> v(2) >> v(3) >> v(4) >> v(5); ) {
+        std::cout << v.transpose() << "\n";
+        v.head<3>() *= 1e-3;    // mm -> meters
+        g_.push_back(v);
+    }
+    ifs.close();
+
+}
+
+bool RigidPoseDatasetLoader::Grab(cv::Mat &image, Sophus::SE3f &pose) {
+    capture_ >> image;
+    if (image.empty()) return false;
+    if (index_ >= g_.size()) return false;
+    pose = GetPose(index_);
+    ++index_;
+    return true;
+}
+
+Sophus::SE3f RigidPoseDatasetLoader::GetPose(int i) const {
+//    auto R = Sophus::SO3f::exp(g_[i].tail<3>());
+//    R *= Sophus::SO3f((Eigen::Matrix3f ()<< -1, 0, 0,
+//                      0, -1, 0,
+//                      0, 0, 1).finished());
+    Eigen::Matrix3f R = Eigen::AngleAxisf(g_[i].tail<3>().norm(), g_[i].tail<3>()).toRotationMatrix();
+    return Sophus::SE3f(Sophus::SO3f::fitToSO3(R), g_[i].head<3>());
+}
+
+
+}   // namespace feh

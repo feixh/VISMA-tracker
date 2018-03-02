@@ -1,0 +1,31 @@
+{
+  "configure_files": {
+    "chair": "../cfg/chair_tracker.json"
+  },
+
+  "bbox_score_thresh": {
+    "chair": 0.8
+  },
+
+  "bbox_area_thresh": {
+    "chair": 0.05
+  },
+
+  "camera_config": "../cfg/camera.json",
+
+  "result_logger": {
+    "use": true,
+    "log_file": "./result.json"
+  },
+
+  "visualization": {
+    "show_projections": true,
+    "show_mean_projection": true,
+    "show_mean_boundary": true,
+    "show_visibility_box": false,
+    "show_bounding_boxes": true,
+    "show_evidence_as_thumbnail": true,
+    "show_zbuffer_as_thumbnail": true,
+    "show_segmask_as_thumbnail": true
+  }
+}

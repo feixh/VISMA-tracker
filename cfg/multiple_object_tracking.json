@@ -1,0 +1,17 @@
+{
+  "dataset_root": "/local/feixh/experiments/",
+  //  "dataset_root": "/local/feixh/tmp/",
+  "dataset": "clutter1",
+  "dataset": "clutter2",
+  "dataset": "occlusion1",
+  "dataset": "occlusion2",
+  "dataset": "chairs_around",
+  "dataset": "long_walk",
+  //  "dataset": "meeting_area1",
+  //  "dataset": "meeting_area2",
+  //  "dataset": "double_swivel_chairs_whiteboard",
+  "scene_config": "../cfg/scene.json",
+  "wait_time": 5,
+  "start_index": 0,
+  "save": true
+}

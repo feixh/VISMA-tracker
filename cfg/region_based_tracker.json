@@ -1,0 +1,62 @@
+{
+//  "dataroot": "/mnt/external/Data/LINEMOD/",
+  "dataroot": "/local/Data/LINEMOD/",
+//  "dataset": "benchviseblue",
+//    "dataset": "duck",
+//      "dataset": "lamp",
+//  "dataset": "ape",
+//    "dataset": "cat",
+      "dataset": "iron",
+
+  // for linemod dataset
+  "levels": 2,
+  "bins_per_channel": 16,
+  "inflate_size": 8,  // works well for duck, lamp, benchviseblue
+//  "inflate_size": 2,  // works well for ape
+
+  "depth_binarization_threshold": 0.99,
+  "contour_detection_threshold": 0.1,
+  "alpha_f": 0.01,
+  "alpha_b": 0.02,
+  "damping_factor": 0.0,
+  "residual_scaling": 5.0,
+  "translation_damping_factor": 0.0,
+  "rotation_damping_factor": 10.0,
+
+  // optional initial solution if not provided in the program
+  "W0": [0, 1.57, 0],
+  "T0": [0.0, 0.2, 2.2],
+
+  "camera": {
+    "fx": 0.561859,
+    "fy": 0.901540,
+    "cx": 0.491896,
+    "cy": 0.512629,
+    "s": 0.709402,
+
+    "rows": 600,
+    "cols": 960,
+
+    "z_near": 0.05,
+    "z_far": 5.0
+  },
+
+  "optimization": {
+    "num_iter": 50
+  },
+
+  "model": {
+    "path": "../resources/leather_chair_scanned.obj",
+//    "path": "../resources/swivel_chair_scanned.obj",
+    "scanned": true
+  },
+
+  "reach_of_smooth_heaviside": 2.5,
+
+  "wait_time": 5,
+  "tracker_view": true,
+  "dump_mats": false,
+  "dump_pointcloud": false,
+  "visualize": false
+
+}

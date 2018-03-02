@@ -1,0 +1,20 @@
+{
+  "dataset_root": "/local/feixh/tmp/",
+//    "dataset_root": "/local/feixh/tmp/",
+//  "dataset_root": "/mnt/external/tmp/",
+  "dataset": "swivel_chair_lateral",
+//    "dataset": "swivel_chair",
+//  "dataset": "double_swivel_chairs_whiteboard",
+//   "dataset": "multiple_swivel_chairs",
+  "tracker_config": "../cfg/chair_tracker.json",
+  "wait_time": 5,
+  "start_index": 0,
+  "method": "filtering", // "filtering" or "optimization"
+  "debug_delaunay": false,
+  "save": {
+    "images": false,
+    "particles": false,
+    "root": "../dump/",
+    "tag": "swivel_chair_online_identification"
+  }
+}

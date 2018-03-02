@@ -1,0 +1,32 @@
+{
+  //    // ROUGH pinhole approximation derived from original ATAN model
+  //    "fx": 539.38464,
+  //    "fy": 540.924,
+  //    "cx": 472.22016,
+  //    "cy": 257.5774,
+  //    "s": 0.709402,
+  //    "rows": 500,
+  //    "cols": 960,
+
+  // for undistorted model
+  "fx": 486.405,
+  "fy": 535.401,
+  "cx": 469.199,
+  "cy": 257.916,
+  "s": 0,
+  "rows": 500,
+  "cols": 960,
+
+  "z_near": 0.05,
+  "z_far": 5.0
+
+  // original ATAN model
+  //    "fx": 0.561859,
+  //    "fy": 0.901540,
+  //    "cx": 0.491896,
+  //    "cy": 0.512629,
+  //    "s": 0.709402,
+  //
+  //    "rows": 600,
+  //    "cols": 960,
+}

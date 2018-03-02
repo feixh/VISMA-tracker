@@ -1,0 +1,59 @@
+{
+//  "dataroot": "/mnt/external/Data/RigidPose",
+  "dataroot": "/local/Data/RigidPose",
+//  "dataset": "BakingSoda_800",
+  "dataset": "KoalaCandy_800",
+//  "dataset": "Clown_800",
+//  "dataset": "BroccoliSoup_800",  // not work well
+//  "dataset": "CubeEdgeTexture", // not work well
+//  "dataset": "Cube",
+  "left_right": 1, // 1 for left and 2 for right
+  "noise_level": 1, // 1: noise free; 2: noisy; 4: occluded
+
+  // for linemod dataset
+  "levels": 4,
+  "bins_per_channel": 32,
+  "inflate_size": 2,  // works well for duck, lamp, benchviseblue
+  //  "inflate_size": 2,  // works well for ape
+
+  "depth_binarization_threshold": 0.99,
+  "contour_detection_threshold": 0.1,
+  "alpha_f": 0.01,
+  "alpha_b": 0.02,
+  "translation_damping_factor": 0.0,
+  "rotation_damping_factor": 0.0,
+  "residual_scaling": 10.0,
+
+  "constrain_rotation": true,
+
+  "camera": {
+    "fx": 0.561859,
+    "fy": 0.901540,
+    "cx": 0.491896,
+    "cy": 0.512629,
+    "s": 0.709402,
+
+    "rows": 600,
+    "cols": 960,
+
+    "z_near": 0.05,
+    "z_far": 5.0
+  },
+
+  "num_iter": {
+//    "level0": 16,
+//    "level1": 16,
+//    "level2": 16,
+//    "level3": 16,
+//    "level4": 16
+  },
+
+
+  "reach_of_smooth_heaviside": 4.0,
+
+  "wait_time": 24,
+  "tracker_view": true,
+  "dump_mats": false,
+  "dump_pointcloud": false,
+  "visualize": false
+}
