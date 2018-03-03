@@ -45,6 +45,7 @@ Tracker::Tracker() :
     initialization_counter_(0),
     no_observation_counter_(0),
     convergence_counter_(0),
+    hits_(0),
     status_(TrackerStatus::INVALID),
     saved_status_(TrackerStatus::INVALID),
     ts_(0),
@@ -291,7 +292,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
             || (visible_ratio_ < 0.1 && convergence_counter_ <= 0)) ++no_observation_counter_;
         if (no_observation_counter_
             > config_.getDefault("max_num_allowed_null_observations", 10).asInt()
-                + 10 * convergence_counter_ ) {
+                + 10 * convergence_counter_ + 5 * hits_) {
             used_bbox_index = kTooManyNullObservations;
 //                used_bbox_indexurn kTooManyNullObservations;
         } else {
@@ -310,7 +311,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 && visible_ratio_ > 0.8f) {
                 ++initialization_counter_;
                 if (initialization_counter_
-                    > config_.getDefault("max_num_allowed_initialization", 10).asInt()) {
+                    > 5 * hits_ + config_.getDefault("max_num_allowed_initialization", 150).asInt()) {
                     return kTooManyInitializationTrials;
                 }
                 timer_.Tick("particle update");
@@ -319,11 +320,11 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 timer_.Tock("particle update");
 
                 // ESTABLISH CONVERGENCE CRITERION HERE
-                if (StationaryEnough() && CloseEnough(0.85, 10, 0.8)) {
+                if (StationaryEnough() && CloseEnough(0.85, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
-                    proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
+//                    proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
 //                    proposal_std_(3) *= 0.01;
-                    azi_uniform_mix_ = 0;
+                    // azi_uniform_mix_ = 0;
                     initial_std_ *= 10;
                     keep_id_prob_ = 1-1e-4;
                     init_state_ = mean_;
@@ -342,22 +343,21 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 }
 
             } else if (status_ == TrackerStatus::INITIALIZED
-                && visible_ratio_ > 0.8f
-                && used_bbox_index >= 0) {
+                && visible_ratio_ > 0.8f) {
                 ++convergence_counter_;
                 LOG(INFO) << "running in small proposal distribution mode\n";
                 // TURN OFF UPDATE STEP AFTER CONVERGENCE
-                timer_.Tick("particle update");
-                MultiScalePFUpdate();
+                // timer_.Tick("particle update");
+                // MultiScalePFUpdate();
                 ComputeQualityMeasure();
-                timer_.Tock("particle update");
+                // timer_.Tock("particle update");
 
                 if (status_ == TrackerStatus::OUT_OF_VIEW) {
                     no_observation_counter_ = 0;
                     return kObjectOutOfView;
                 } else {
                     // FIXME: need to tune parameters
-                    if (!CloseEnough(0.7, 15, 0.7)) {
+                    if (!CloseEnough(0.8, 15, 0.0)) {
                         status_ = TrackerStatus::INITIALIZING;
                         auto filter_cfg = config_["filter"];
                         keep_id_prob_ = filter_cfg["keep_shape_id_probability"].asDouble();
@@ -371,7 +371,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                                                                    return id == this->best_shape_match_;
                                                                })
                             / (label_history_.size() + eps);
-                        keep_id_prob_ = keep_prob + 0.9f * (1 - keep_prob) * chance_over_time;
+//                        keep_id_prob_ = keep_prob + 0.9f * (1 - keep_prob) * chance_over_time;
                         init_state_ = mean_;
                         azi_uniform_mix_ = filter_cfg["azimuth_uniform_mix"].asDouble();
 
@@ -483,6 +483,7 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
         rect = RectEnclosedByContour(edgelist, rows_[0], cols_[0]);
     }
 
+    timer_.Tick("compute iou");
     // FIXME: better to use IoU instead of counting in-box edge pixels
     // Find the candidate bounding box which has most overlap with the projection.
     float max_iou(0);
@@ -505,6 +506,7 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
         }
         ++counter;
     }
+    timer_.Tock("compute iou");
 
     if (best_bbox_index != kCompatibleBBoxNotFound) {
         // Not enough overlap, set not found.
@@ -521,6 +523,7 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
     }
 
 
+    timer_.Tick("prepare evidence");
     ////////////////////////////////////////
     // SETUP EVIDENCE AND EDGE NORMALS
     ////////////////////////////////////////
@@ -559,11 +562,14 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
         }
     }
     ////////////////////////////////////////
+    timer_.Tock("prepare evidence");
 
 
 
     best_bbox_index_ = best_bbox_index;
     max_iou_         = max_iou;
+
+    if (best_bbox_index >= 0) ++hits_;
 
     return best_bbox_index;
 }
@@ -619,7 +625,7 @@ bool Tracker::IsOutOfView() {
     }
 
     auto c = CentroidInCurrentView();
-    if (c(2) > 4) return true;
+    if (c(2) > 2.5) return true;
 
     return false;
 }

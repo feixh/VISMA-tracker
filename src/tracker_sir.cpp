@@ -46,28 +46,6 @@ void Tracker::PFUpdate(int level) {
     CHECK(status_ != TrackerStatus::OUT_OF_VIEW);
     if (level < 0) level = scale_level_ - 1;
 
-//    // update azimuth prior distribution
-//    if (best_bbox_.IsInitialized()
-//        && status_ == TrackerStatus::INITIALIZING) {
-//        Vec3f unit_x(1, 0, 0);  // unit x in reference frame
-//        // unit x in camera 0
-//        Vec3f unit_x0 = gwc0_.rotationMatrix().transpose() * gwc_.rotationMatrix() * unit_x;
-//        // project unit x0 on to x-z plane
-//        Vec2f x0_dir(unit_x0(0), unit_x0(2));
-//        x0_dir.normalize();
-//        // compute rotation between (1, 0) and x0_dir
-//        float current_azimuth_offset = floor(atan2(x0_dir(1), x0_dir(0)) / M_PI * 180);
-//        azimuth_prob_.setZero();
-//        for (int i = 0; i < best_bbox_.azimuth_prob_size(); ++i) {
-//            int target_index =  current_azimuth_offset + i;
-//            while (target_index >= 360) target_index -= 360;
-//            while (target_index < 0) target_index += 360;
-//            azimuth_prob_(target_index) = 0.9 * azimuth_prob_(target_index) + 0.1 * best_bbox_.azimuth_prob(i);
-//        }
-//        azimuth_prob_ /= azimuth_prob_.sum();
-//        std::cout << TermColor::bold + TermColor::red << "azimuth prior updated" << TermColor::endl;
-//    }
-
     timer_.Tick("update");
     Particles<float, 4> saved_particles(particles_);
     // reset log probability

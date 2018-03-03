@@ -226,6 +226,7 @@ private:
     int initialization_counter_;
     int no_observation_counter_;
     int convergence_counter_;
+    int hits_;
     TrackerStatus status_, saved_status_;
     float ts_;
     bool use_partial_mesh_;

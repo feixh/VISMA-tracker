@@ -12,13 +12,13 @@
 
   "filter": {
     "initial_std": [0.10, 0.2, 1.0, 0.5],
-    "proposal_std": [0.01, 0.02, 0.05, 1.5],
+    "proposal_std": [0.01, 0.02, 0.05, 0.5],
     "small_proposal_std": [0.005, 0.01, 0.025, 0.25],  // proposal distribution after convergence
-    "keep_shape_id_probability": 0.8,
+    "keep_shape_id_probability": 0.6,
     "initial_depth": 1.5,
     "initial_azimuth_interval": 15,
-    "initialization_num_particles": 300,
-    "tracking_num_particles": 100,
+    "initialization_num_particles": 100,
+    "tracking_num_particles": 300,
     "initialized_thresh": 0.8,
     "reinitialization_thresh": 0.7,
 
@@ -26,7 +26,7 @@
     "use_CNN": true,
     "CNN_probability_threshold": 1e-10, // set zero weight if confidence below this
     "CNN_log_likelihood_weight": 50, // CNN log likelihood weight
-    "log_likelihood_weight": 400.0,
+    "log_likelihood_weight": 200.0,
     "log_prior_weight": 0.0,
     "log_proposal_weight": 0.0,
     "average_distance_weight": 1.0,
@@ -38,7 +38,7 @@
     "use_MC_move": false,
     "azimuth_flip_rate": 0.45,
     "azimuth_uniform_mix": 0.2,
-    "scale_level": 2
+    "scale_level": 1
   },
 
 
@@ -61,7 +61,7 @@
     "step_length": 1,
     "search_line_length": 40,
     "intensity_thresh": 128,
-    "direction_thresh": 0.9,
+    "direction_thresh": 0.8,
     "parallel": true
   },
 

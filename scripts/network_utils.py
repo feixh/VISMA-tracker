@@ -4,7 +4,7 @@ import glog
 from pixelnet.helper import Colors
 import numpy as np
 
-model_path = '/local/feixh/workspace/simplerender/scripts/pixelnet.pytorch/segnet_epoch0009.pth'
+model_path = '/local/feixh/Dropbox/ECCV18/data/trained_models/edge/segnet_epoch0009.pth'
 
 stats = {'mean': [0.485, 0.456, 0.406],
          'std': [0.229, 0.224, 0.225]}
