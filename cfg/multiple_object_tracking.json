@@ -1,7 +1,7 @@
 {
   "dataset_root": "/local/feixh/experiments/",
-  //  "dataset_root": "/local/feixh/tmp/",
-  "dataset": "clutter1",
+//    "dataset_root": "/local/feixh/tmp/",
+ "dataset": "clutter1",
   "dataset": "clutter2",
   "dataset": "occlusion1",
   "dataset": "occlusion2",

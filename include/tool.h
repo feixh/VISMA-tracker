@@ -100,5 +100,9 @@ three::RegistrationResult ICPRefinement(std::shared_ptr<three::PointCloud> scene
                                         const Eigen::Matrix4d &T_scene_src,
                                         const folly::dynamic &options);
 
+
+void VisualizationTool(const folly::dynamic &config);
+
+
 }
 

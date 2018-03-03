@@ -292,7 +292,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
             || (visible_ratio_ < 0.1 && convergence_counter_ <= 0)) ++no_observation_counter_;
         if (no_observation_counter_
             > config_.getDefault("max_num_allowed_null_observations", 10).asInt()
-                + 10 * convergence_counter_ + 5 * hits_) {
+                + 20 * convergence_counter_ + 10 * hits_) {
             used_bbox_index = kTooManyNullObservations;
 //                used_bbox_indexurn kTooManyNullObservations;
         } else {
@@ -320,7 +320,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 timer_.Tock("particle update");
 
                 // ESTABLISH CONVERGENCE CRITERION HERE
-                if (StationaryEnough() && CloseEnough(0.85, 10, 0.0)) {
+                if (StationaryEnough() && CloseEnough(0.85, 5, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
                     proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
                      azi_uniform_mix_ = 0;
@@ -342,7 +342,8 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 }
 
             } else if (status_ == TrackerStatus::INITIALIZED
-                && visible_ratio_ > 0.8f) {
+                && visible_ratio_ > 0.8f
+                && used_bbox_index >=0) {
                 ++convergence_counter_;
                 LOG(INFO) << "running in small proposal distribution mode\n";
                 // TURN OFF UPDATE STEP AFTER CONVERGENCE
@@ -509,9 +510,9 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
 
     if (best_bbox_index != kCompatibleBBoxNotFound) {
         // Not enough overlap, set not found.
-        if (max_iou < 0.1
+        if (max_iou < 0.5
             || (status_ == TrackerStatus::INITIALIZED
-            && max_iou  < 0.5)) {
+            && max_iou  < 0.7)) {
             best_bbox_index = kCompatibleBBoxNotFound;
         } else {
             // FIXME: Restrict evidence to the most probable bounding box.
@@ -608,7 +609,8 @@ bool Tracker::IsOutOfView() {
     if (center(0) < renderer->cols() * 0.10
             || center(1) < renderer->rows() * 0.10
             || center(0) > renderer->cols() * 0.90
-            || center(1) > renderer->rows() * 0.90) {
+            || center(1) > renderer->rows() * 0.90
+        && convergence_counter_ > 0) {
         return true;
     }
 
@@ -624,7 +626,7 @@ bool Tracker::IsOutOfView() {
     }
 
     auto c = CentroidInCurrentView();
-    if (c(2) > 3.5) return true;
+    if (c(2) > 2.5 && status_ != TrackerStatus::INITIALIZING) return true;
 
     return false;
 }
@@ -953,9 +955,10 @@ void Tracker::ComputeQualityMeasure() {
 }
 
 bool Tracker::StationaryEnough() {
-    return quality_.since_last_label_change_ > 10
-        && (quality_.uncertainty_(0) < 0.02 && quality_.uncertainty_(1) < 0.02
-            && quality_.uncertainty_(2) < 0.05 && quality_.uncertainty_(3) < 0.5);
+//    return quality_.since_last_label_change_ > 10
+//        && (quality_.uncertainty_(0) < 0.02 && quality_.uncertainty_(1) < 0.02
+//            && quality_.uncertainty_(2) < 0.05 && quality_.uncertainty_(3) < 0.5);
+    return true;
 }
 
 bool Tracker::CloseEnough(float ratio_thresh, float dist_thresh, float score_thresh) {

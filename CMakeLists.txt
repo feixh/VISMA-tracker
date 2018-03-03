@@ -161,7 +161,12 @@ target_link_libraries(undistort_images feh)
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 target_link_libraries(preprocess_mesh feh)
 
-add_executable(tool app/tool.cpp src/constrained_icp.cpp src/annotation.cpp src/evaluation.cpp)
+add_executable(tool
+        app/tool.cpp
+        src/constrained_icp.cpp
+        src/annotation.cpp
+        src/evaluation.cpp
+        src/visualization.cpp)
 target_link_libraries(tool feh)
 
 add_executable(linemod app/linemod.cpp)

@@ -39,8 +39,11 @@ int main(int argc, char **argv) {
         AnnotationTool(config);
     } else if (argv[1][0] == 'e') {
         EvaluationTool(config);
-    } else {
-        std::cout << "USAGE:\n tool OPTION\n OPTION=a|e\n a for annotation\n e for evaluation\n";
+    } else if (argv[1][0] == 'v') {
+        VisualizationTool(config);
+    }
+    else {
+        std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v]\n a for annotation\n e for evaluation\n v for visualization";
         exit(-1);
     }
 

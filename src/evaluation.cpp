@@ -6,11 +6,9 @@
 // 3rd parth
 #include "IO/IO.h"
 #include "Visualization/Visualization.h"
-#include "Core/Core.h"
 #include "igl/readOBJ.h"
 #include "sophus/se3.hpp"
 #include "folly/FileUtil.h"
-#include "folly/Format.h"
 #include "folly/json.h"
 
 // feh
@@ -165,7 +163,8 @@ void EvaluationTool(const folly::dynamic &config) {
     }
 
     // LOAD RESULT FILE
-    std::string result_file = folly::sformat("{}/result.json", fragment_dir);
+    std::string result_file = folly::sformat("{}/result.json", scene_dir);
+    std::cout << "result file=" << result_file << "\n";
     folly::readFile(result_file.c_str(), contents);
     folly::dynamic result = folly::parseJson(folly::json::stripComments(contents));
     // ITERATE AND GET THE LAST ONE
