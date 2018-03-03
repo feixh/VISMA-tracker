@@ -53,7 +53,7 @@ float WarpAngle(float angle);
 float BBoxArea(const vlslam_pb::BoundingBox &bbox);
 /// \brief: Compute the smallest bounding box which covers the contour/mask.
 cv::Rect RectEnclosedByContour(const std::vector<EdgePixel> &edgelist, int rows, int cols);
-float ComputeIoU(const cv::Rect &r1, const cv::Rect &r2);
+float ComputeIoU(cv::Rect r1, cv::Rect r2);
 cv::Rect InflateRect(const cv::Rect &rect, int rows=480, int cols=640, int pad=8);
 
 const uint8_t kColorGreen[] = {0, 255, 0};

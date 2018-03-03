@@ -322,9 +322,8 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 // ESTABLISH CONVERGENCE CRITERION HERE
                 if (StationaryEnough() && CloseEnough(0.85, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
-//                    proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
-//                    proposal_std_(3) *= 0.01;
-                    // azi_uniform_mix_ = 0;
+                    proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
+                     azi_uniform_mix_ = 0;
                     initial_std_ *= 10;
                     keep_id_prob_ = 1-1e-4;
                     init_state_ = mean_;
@@ -348,7 +347,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 LOG(INFO) << "running in small proposal distribution mode\n";
                 // TURN OFF UPDATE STEP AFTER CONVERGENCE
                 // timer_.Tick("particle update");
-                // MultiScalePFUpdate();
+                 MultiScalePFUpdate();
                 ComputeQualityMeasure();
                 // timer_.Tock("particle update");
 
@@ -625,7 +624,7 @@ bool Tracker::IsOutOfView() {
     }
 
     auto c = CentroidInCurrentView();
-    if (c(2) > 2.5) return true;
+    if (c(2) > 3.5) return true;
 
     return false;
 }

@@ -214,15 +214,26 @@ cv::Rect RectEnclosedByContour(const std::vector<EdgePixel> &edgelist, int rows,
     }
 }
 
-float ComputeIoU(const cv::Rect &r1, const cv::Rect &r2) {
-    cv::Rect intersection = r1 & r2;
-    cv::Rect enclosing_rect = r1 | r2;
-    cv::Point offset = enclosing_rect.tl();
-    cv::Mat tmp(enclosing_rect.height, enclosing_rect.width, CV_8UC1);
-    tmp.setTo(0);
-    cv::rectangle(tmp, r1 - offset, 1, -1);
-    cv::rectangle(tmp, r2 - offset, 1, -1);
-    return intersection.area() / (cv::sum(tmp)[0] + eps);
+float ComputeIoU(cv::Rect r1, cv::Rect r2) {
+//    cv::Rect intersection = r1 & r2;
+//    cv::Rect enclosing_rect = r1 | r2;
+//    cv::Point offset = enclosing_rect.tl();
+//    cv::Mat tmp(enclosing_rect.height, enclosing_rect.width, CV_8UC1);
+//    tmp.setTo(0);
+//    cv::rectangle(tmp, r1 - offset, 1, -1);
+//    cv::rectangle(tmp, r2 - offset, 1, -1);
+//    return intersection.area() / (cv::sum(tmp)[0] + eps);
+    if (r1.tl().x > r2.tl().x) std::swap(r1, r2);
+    if (r1.br().x <= r2.tl().x) return 0;
+    auto tl_x = std::max(r1.tl().x, r2.tl().x);
+    auto br_x = std::min(r1.br().x, r2.br().x);
+    if (r1.tl().y > r2.tl().y) std::swap(r1, r2);
+    if (r1.br().y <= r2.tl().y) return 0;
+    auto tl_y = std::max(r1.tl().y, r2.tl().y);
+    auto br_y = std::min(r1.br().y, r2.br().y);
+    auto intersection = fabs((br_x - tl_x) * (br_y - tl_y));
+    auto total = r1.area() + r2.area() - intersection;
+    return intersection / (total + eps);
 }
 
 cv::Rect InflateRect(const cv::Rect &rect, int rows, int cols, int pad) {
