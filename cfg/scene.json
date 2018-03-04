@@ -19,8 +19,8 @@
   },
 
   "visualization": {
-    "show_projections": true,
-    "show_mean_projection": true,
+    "show_projections": false,
+    "show_mean_projection": false,
     "show_mean_boundary": true,
     "show_visibility_box": false,
     "show_bounding_boxes": true,

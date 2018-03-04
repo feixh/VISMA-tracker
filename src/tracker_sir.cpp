@@ -261,15 +261,18 @@ void Tracker::ComputeLikelihood(int level) {
 
 void Tracker::ComputePrior(int level) {
     if (level < 0) level = scale_level_ - 1;
-    if (convergence_counter_ > 0) {
+//    if (convergence_counter_ > 0)
+    {
         for (auto &particle : particles_) {
             if (particle.IsValid()) {
-                Vec3f dv(particle.v().head<3>() - init_state_.head<3>());
-                double log_prior(0);
-                for (int i = 0; i < 4; ++i) {
-                    double tmp = dv(i) / initial_std_(i);
-                    log_prior += -(tmp * tmp * 0.5);
-                }
+//                Vec3f dv(particle.v().head<3>() - init_state_.head<3>());
+//                double log_prior(0);
+//                for (int i = 0; i < 4; ++i) {
+//                    double tmp = dv(i) / initial_std_(i);
+//                    log_prior += -(tmp * tmp * 0.5);
+//                }
+                double log_prior = (M_PI/2 - particle.v(3));
+                log_prior *= log_prior;
                 log_prior *= log_prior_weight_[level];
                 particle.set_log_w(particle.log_w() + log_prior);
             }

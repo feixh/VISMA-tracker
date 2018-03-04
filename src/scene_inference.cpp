@@ -336,7 +336,7 @@ void Scene::EliminateBadObjects() {
             int size = mask.rows * mask.cols;
             auto total = std::count_if(mask.data, mask.data + size,
                                        [](uint8_t p) { return p == 0;});
-            if (total > 0.25 * size) {
+            if (total > 0.33 * size) {
                 std::cout << TermColor::bold+TermColor::red << "ELIMINATE OBJECTS COVERING MOST OF THE IMAGE: #" << (*it)->id() << TermColor::endl;
                 it = trackers_.erase(it);
             } else ++it;

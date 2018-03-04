@@ -320,7 +320,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 timer_.Tock("particle update");
 
                 // ESTABLISH CONVERGENCE CRITERION HERE
-                if (StationaryEnough() && CloseEnough(0.85, 5, 0.0)) {
+                if (StationaryEnough() && CloseEnough(0.85, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
                     proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
                      azi_uniform_mix_ = 0;
@@ -343,13 +343,15 @@ int Tracker::Update(const cv::Mat &in_evidence,
 
             } else if (status_ == TrackerStatus::INITIALIZED
                 && visible_ratio_ > 0.8f
-                && used_bbox_index >=0) {
+                && used_bbox_index >=0
+                &&  ts_ < last_update_ts_ + 50 ) {
                 ++convergence_counter_;
                 LOG(INFO) << "running in small proposal distribution mode\n";
                 // TURN OFF UPDATE STEP AFTER CONVERGENCE
                 // timer_.Tick("particle update");
                  MultiScalePFUpdate();
                 ComputeQualityMeasure();
+                last_update_ts_ = ts_;
                 // timer_.Tock("particle update");
 
                 if (status_ == TrackerStatus::OUT_OF_VIEW) {
@@ -357,7 +359,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                     return kObjectOutOfView;
                 } else {
                     // FIXME: need to tune parameters
-                    if (!CloseEnough(0.8, 15, 0.0)) {
+                    if (!CloseEnough(0.75, 15, 0.0)) {
                         status_ = TrackerStatus::INITIALIZING;
                         auto filter_cfg = config_["filter"];
                         keep_id_prob_ = filter_cfg["keep_shape_id_probability"].asDouble();
@@ -606,10 +608,10 @@ bool Tracker::IsOutOfView() {
     int level = scale_level_-1;
     auto renderer = renderers_[level];
     Vec2f center = ProjectMean(level);
-    if (center(0) < renderer->cols() * 0.10
-            || center(1) < renderer->rows() * 0.10
-            || center(0) > renderer->cols() * 0.90
-            || center(1) > renderer->rows() * 0.90
+    if (center(0) < renderer->cols() * 0.05
+            || center(1) < renderer->rows() * 0.05
+            || center(0) > renderer->cols() * 0.95
+            || center(1) > renderer->rows() * 0.95
         && convergence_counter_ > 0) {
         return true;
     }
@@ -618,10 +620,10 @@ bool Tracker::IsOutOfView() {
     renderer->ComputeEdgePixels(MatForRender(mean_), edgelist);
     cv::Rect rect = RectEnclosedByContour(edgelist, rows_[level], cols_[level]);
 
-    if (rect.tl().x > cols_[level] * 0.95f
-        || rect.tl().y > rows_[level] * 0.95
-        || rect.br().x < cols_[level] * 0.05
-        || rect.br().y < rows_[level] * 0.05) {
+    if (rect.tl().x > cols_[level] * 0.90f
+        || rect.tl().y > rows_[level] * 0.90
+        || rect.br().x < cols_[level] * 0.10
+        || rect.br().y < rows_[level] * 0.10) {
         return true;
     }
 
@@ -955,10 +957,10 @@ void Tracker::ComputeQualityMeasure() {
 }
 
 bool Tracker::StationaryEnough() {
-//    return quality_.since_last_label_change_ > 10
-//        && (quality_.uncertainty_(0) < 0.02 && quality_.uncertainty_(1) < 0.02
-//            && quality_.uncertainty_(2) < 0.05 && quality_.uncertainty_(3) < 0.5);
-    return true;
+//    return true;
+    return quality_.since_last_label_change_ > 10
+        && (quality_.uncertainty_(0) < 0.02 && quality_.uncertainty_(1) < 0.02
+            && quality_.uncertainty_(2) < 0.05 && quality_.uncertainty_(3) < 0.5);
 }
 
 bool Tracker::CloseEnough(float ratio_thresh, float dist_thresh, float score_thresh) {

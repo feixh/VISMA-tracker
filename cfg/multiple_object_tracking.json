@@ -12,6 +12,6 @@
   //  "dataset": "double_swivel_chairs_whiteboard",
   "scene_config": "../cfg/scene.json",
   "wait_time": 5,
-  "start_index": 0,
+  "start_index": 300,
   "save": true
 }

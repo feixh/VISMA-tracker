@@ -76,6 +76,7 @@ void Scene::Build2DView() {
     display_ = image_.clone();
     // list all the trackers
     for (TrackerPtr tracker : trackers_) {
+        if (tracker->status() == TrackerStatus::OUT_OF_VIEW) continue;
 //        if (config_["visualization"]["show_mean_boundary"].asBool()) {
 //            cv::Mat boundary = tracker->RenderAtCurrentEstimate(tracker->renderer0_ptr());
 //            OverlayMaskOnImage(boundary, display_, false);

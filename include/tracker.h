@@ -228,7 +228,7 @@ private:
     int convergence_counter_;
     int hits_;
     TrackerStatus status_, saved_status_;
-    float ts_;
+    float ts_, last_update_ts_;
     bool use_partial_mesh_;
 
     // camera model & render engine
