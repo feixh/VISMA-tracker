@@ -217,6 +217,12 @@ void EvaluationTool(const folly::dynamic &config) {
                                     config["evaluation"]);
         T_ef_corvis = result.transformation_;
     }
+    // save the alignment
+    folly::dynamic out = folly::dynamic::object();
+    io::WriteMatrixToDynamic(out, "T_ef_corvis", T_ef_corvis.block<3, 4>(0, 0));
+    std::string output_path = scene_dir + "/result_alignment.json";
+    folly::writeFile(folly::toPrettyJson(out), output_path.c_str());
+    std::cout << "T_ef_corvis written to " << output_path << "\n";
 
 //    three::ReadPointCloudFromPLY(config["scene_directory"].getString() + "/test.klg.ply", *scene);
     // NOW LETS LOOK AT THE ESTIMATED SCENE IN RGB-D SCENE FRAME

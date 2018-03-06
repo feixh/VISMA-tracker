@@ -22,95 +22,46 @@
 #include "io_utils.h"
 #include "geometry.h"
 
+// stl
+
 namespace feh {
-void VisualizeResult(const folly::dynamic &config) {
 
-    // EXTRACT PATHS
+static
+void VisualizeScene(const folly::dynamic &config,
+                    const std::list<std::pair<std::string, Eigen::Matrix<double, 3, 4>>> &objects,
+                    const Eigen::Matrix<double, 3, 4> &alignment,
+                    std::vector<Eigen::Matrix<double, 6, 1>> &vertices,
+                    std::vector<Eigen::Matrix<int, 3, 1>> &faces) {
     std::string database_dir = config["CAD_database_root"].getString();
-
     std::string dataroot = config["dataroot"].getString();
     std::string dataset = config["dataset"].getString();
     std::string scene_dir = dataroot + "/" + dataset + "/";
     std::string fragment_dir = scene_dir + "/fragments/";
+
+    // LOAD FLAGS
+    bool show_original = config["scene_visualization"].getDefault("show_original_scene", true).asBool();
+    bool remove_original = config["scene_visualization"].getDefault("remove_original_objects", true).asBool();
+    double padding_size = config["scene_visualization"].getDefault("padding_size", 0.0).asDouble();
+
     // LOAD SCENE POINT CLOUD
-    auto scene = std::make_shared<three::PointCloud>();
-
-    // LOAD RESULT FILE
-    std::string result_file = folly::sformat("{}/result.json", scene_dir);
-    std::string contents;
-    folly::readFile(result_file.c_str(), contents);
-    folly::dynamic result = folly::parseJson(folly::json::stripComments(contents));
-    // ITERATE AND GET THE LAST ONE
-    auto packet = result.at(result.size() - 1);
-    auto scene_est = std::make_shared<three::PointCloud>();
-    std::unordered_map<int, Model> models_est;
-    for (const auto &obj : packet) {
-        auto pose = io::GetMatrixFromDynamic<double, 3, 4>(obj, "model_pose");
-        std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
-                                   obj["id"].asInt(),
-                                   obj["status"].asInt(),
-                                   obj["model_name"].asString())
-                  << pose << "\n";
-
-        auto &this_model = models_est[obj["id"].asInt()];
-        this_model.model_name_ = obj["model_name"].asString();
-        this_model.model_to_scene_.block<3, 4>(0, 0) = pose;
-        igl::readOBJ(folly::sformat("{}/{}.obj",
-                                    database_dir,
-                                    this_model.model_name_),
-                     this_model.V_, this_model.F_);
-
-        std::shared_ptr <three::PointCloud> model_pc = std::make_shared<three::PointCloud>();
-        model_pc->points_ = SamplePointCloudFromMesh(
-            this_model.V_, this_model.F_,
-            config["visualization"]["model_samples"].asInt());
-        model_pc->colors_.resize(model_pc->points_.size(), {255, 0, 0});
-        model_pc->Transform(this_model.model_to_scene_);    // ALREADY IN CORVIS FRAME
-        this_model.pcd_ptr_ = model_pc;
-
-        *scene_est += *model_pc;
-    }
-
-    three::DrawGeometries({scene_est}, "reconstructed scene");
-}
-
-void VisualizeGroundTruth(const folly::dynamic &config) {
-    std::string database_dir = config["CAD_database_root"].getString();
-
-    std::string dataroot = config["dataroot"].getString();
-    std::string dataset = config["dataset"].getString();
-    std::string scene_dir = dataroot + "/" + dataset + "/";
-    std::string fragment_dir = scene_dir + "/fragments/";
-    // LOAD SCENE POINT CLOUD
-    auto scene = std::make_shared<three::PointCloud>();
-    three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *scene);
     std::list<Eigen::Matrix<double, 6, 1>> sceneV;
-    for (int i = 0; i < scene->points_.size(); ++i) {
-        sceneV.push_back({});
-        sceneV.back().head<3>() = scene->points_[i];
-        sceneV.back().tail<3>() = scene->colors_[i]; // / 255.0;
+    if (show_original) {
+        auto scene = std::make_shared<three::PointCloud>();
+        try {
+            three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *scene);
+            for (int i = 0; i < scene->points_.size(); ++i) {
+                sceneV.push_back({});
+                sceneV.back().head<3>() = scene->points_[i];
+                sceneV.back().tail<3>() = scene->colors_[i]; // / 255.0;
+            }
+        } catch (...) {
+            std::cout << TermColor::bold + TermColor::red << "GROUND TRUTH POINT CLOUD NOT EXIST" << TermColor::endl;
+        }
     }
 
-    // convert color from 0~255 to 0~1
-    std::vector<Eigen::Matrix<double, 6, 1>> vertices;
-    std::vector<Eigen::Matrix<int, 3, 1>> faces;
-    int vertex_counter = 0;
-
-
-    // LOAD RESULT FILE
-    std::string alignment_file = fragment_dir + "/alignment.json";
-    std::string contents;
-    folly::readFile(alignment_file.c_str(), contents);
-    folly::dynamic alignment = folly::parseJson(folly::json::stripComments(contents));
-    bool remove_original = config["ground_truth_visualization"].getDefault("remove_original_objects", true).asBool();
-    double padding_size = config["ground_truth_visualization"].getDefault("padding_size", 0.0).asDouble();
-
-
-    for (const auto &obj : alignment.keys()) {
-        std::string obj_name = obj.asString();
-        std::string model_name = obj_name.substr(0, obj_name.find_last_of('_'));
-        auto pose = io::GetMatrixFromDynamic<double, 3, 4>(alignment, obj_name);
-        std::cout << obj_name << "\n" << model_name << "\n" << pose << "\n";
+    for (const auto &obj : objects) {
+        std::string model_name = obj.first;
+        auto pose = obj.second;
         // LOAD MESH
         Eigen::Matrix<double, Eigen::Dynamic, 6> v;
         Eigen::Matrix<int, Eigen::Dynamic, 3> f;
@@ -118,10 +69,12 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
         std::cout << "v.size=" << v.rows() << "x" << v.cols() << "\n";
         // TRANSFORM TO SCENE FRAME
         v.leftCols(3) = (v.leftCols(3) * pose.block<3,3>(0,0).transpose()).rowwise() + pose.block<3, 1>(0, 3).transpose();
+        v.leftCols(3) = (v.leftCols(3) * alignment.block<3,3>(0,0).transpose()).rowwise() + alignment.block<3, 1>(0, 3).transpose();
+        int v_offset = vertices.size();
         for (int i = 0; i < v.rows(); ++i) {
             vertices.push_back(v.row(i));
         }
-        if (remove_original) {
+        if (show_original && !sceneV.empty() && remove_original) {
             std::array<Eigen::Vector3d, 2> bounds;
             bounds[0] = Eigen::Vector3d::Ones() * std::numeric_limits<double>::max();
             bounds[1] = Eigen::Vector3d::Ones() * std::numeric_limits<double>::lowest();
@@ -147,16 +100,98 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
                 } else ++it;
             }
         }
+
         for (int i = 0; i < f.rows(); ++i) {
-            faces.push_back({vertex_counter + f(i, 0), vertex_counter + f(i, 1), vertex_counter + f(i, 2)});
+            faces.push_back({v_offset + f(i, 0), v_offset + f(i, 1), v_offset + f(i, 2)});
         }
-        // UPDATE VERTEX INDEX OFFSET
-        vertex_counter += v.rows();
-        // CONSTRUCT SCENE MESH BY APPENDING OBJECT MESH TO SCENE MESH
-        // remove scene points within the bound
     }
-    vertices.insert(vertices.end(), sceneV.begin(), sceneV.end());
-    igl::writeOBJ(fragment_dir + "/ground_truth_augmented_view.obj",
+    if (!sceneV.empty()) vertices.insert(vertices.end(), sceneV.begin(), sceneV.end());
+}
+
+void VisualizeResult(const folly::dynamic &config) {
+    // EXTRACT PATHS
+    std::string database_dir = config["CAD_database_root"].getString();
+
+    std::string dataroot = config["dataroot"].getString();
+    std::string dataset = config["dataset"].getString();
+    std::string scene_dir = dataroot + "/" + dataset + "/";
+    std::string fragment_dir = scene_dir + "/fragments/";
+
+    // FILE I/O BUFFER
+    std::string contents;
+
+    // READ THE CORVIS TO ELASTICFUSION ALIGNMENT
+    std::string result_alignment_file = scene_dir + "/result_alignment.json";
+    Eigen::Matrix<double, 3, 4> T_ef_corvis;
+    try {
+        folly::readFile(result_alignment_file.c_str(), contents);
+        folly::dynamic result_alignment = folly::parseJson(folly::json::stripComments(contents));
+        T_ef_corvis = io::GetMatrixFromDynamic<double, 3, 4>(result_alignment, "T_ef_corvis").block<3, 4>(0, 0);
+    } catch (...) {
+        std::cout << TermColor::bold + TermColor::red << "failed to load result alignment; use identity transformation!!!" << TermColor::endl;
+        T_ef_corvis.block<3, 3>(0, 0).setIdentity();
+    }
+    std::cout << "result_alignment=\n" << T_ef_corvis << "\n";
+
+
+    // LOAD RESULT FILE
+    std::string result_file = folly::sformat("{}/result.json", scene_dir);
+    folly::readFile(result_file.c_str(), contents);
+    folly::dynamic result = folly::parseJson(folly::json::stripComments(contents));
+    // ITERATE AND GET THE LAST ONE
+    int result_index = config["result_visualization"].getDefault("result_index", -1).asInt();
+    if (result_index < 0) result_index = result.size()-1;
+    auto packet = result.at(result_index);
+    std::list<std::pair<std::string, Eigen::Matrix<double, 3, 4>>> objects;
+    for (const auto &obj : packet) {
+        auto pose = io::GetMatrixFromDynamic<double, 3, 4>(obj, "model_pose");
+        std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
+                                   obj["id"].asInt(),
+                                   obj["status"].asInt(),
+                                   obj["model_name"].asString())
+                  << pose << "\n";
+        std::string model_name = obj["model_name"].asString();
+        objects.push_back(std::make_pair(model_name, pose));
+    }
+
+    std::vector<Eigen::Matrix<double, 6, 1>> vertices;
+    std::vector<Eigen::Matrix<int, 3, 1>> faces;
+    VisualizeScene(config, objects, T_ef_corvis, vertices, faces);
+    igl::writeOBJ(scene_dir + "/result_augmented_view.obj",
+                  StdVectorOfEigenVectorToEigenMatrix(vertices),
+                  StdVectorOfEigenVectorToEigenMatrix(faces));
+}
+
+void VisualizeGroundTruth(const folly::dynamic &config) {
+    std::string database_dir = config["CAD_database_root"].getString();
+    std::string dataroot = config["dataroot"].getString();
+    std::string dataset = config["dataset"].getString();
+    std::string scene_dir = dataroot + "/" + dataset + "/";
+    std::string fragment_dir = scene_dir + "/fragments/";
+
+    // LOAD GROUND TRUTH ALIGNMENT
+    std::string alignment_file = fragment_dir + "/alignment.json";
+    std::string contents;
+    folly::readFile(alignment_file.c_str(), contents);
+    folly::dynamic alignment = folly::parseJson(folly::json::stripComments(contents));
+
+    std::list<std::pair<std::string, Eigen::Matrix<double, 3, 4>>> objects;
+    for (const auto &obj : alignment.keys()) {
+        std::string obj_name = obj.asString();
+        std::string model_name = obj_name.substr(0, obj_name.find_last_of('_'));
+        auto pose = io::GetMatrixFromDynamic<double, 3, 4>(alignment, obj_name);
+        std::cout << obj_name << "\n" << model_name << "\n" << pose << "\n";
+        objects.push_back(std::make_pair(model_name, pose));
+    }
+    Eigen::Matrix<double, 3, 4> identity;
+    identity.setZero();
+    identity(0, 0) = 1; identity(1, 1) = 1; identity(2, 2) = 1;
+
+    std::vector<Eigen::Matrix<double, 6, 1>> vertices;
+    std::vector<Eigen::Matrix<int, 3, 1>> faces;
+
+    VisualizeScene(config, objects, identity, vertices, faces);
+    igl::writeOBJ(scene_dir + "/ground_truth_augmented_view.obj",
                   StdVectorOfEigenVectorToEigenMatrix(vertices),
                   StdVectorOfEigenVectorToEigenMatrix(faces));
 }
