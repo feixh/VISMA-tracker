@@ -218,26 +218,87 @@ void VisualizeResult(const folly::dynamic &config) {
 
     std::string dataset_path = config["experiment_root"].getString() + "/" + config["dataset"].getString();
     std::string scene_dir = folly::sformat("{}/{}/", config["dataroot"].getString(), config["dataset"].getString());
+
+    Eigen::Matrix<double, Eigen::Dynamic, 6> traj, pts;
+
     if (config["result_visualization"]["show_trajectory"].getBool()) {
-        std::vector<Eigen::Matrix<double, 6, 1>> vtraj;
+        std::string contents;
+        std::string result_alignment_file = scene_dir + "/result_alignment.json";
+        Eigen::Matrix<double, 3, 4> T_ef_corvis;
+        try {
+            folly::readFile(result_alignment_file.c_str(), contents);
+            folly::dynamic result_alignment = folly::parseJson(folly::json::stripComments(contents));
+            T_ef_corvis = io::GetMatrixFromDynamic<double, 3, 4>(result_alignment, "T_ef_corvis").block<3, 4>(0, 0);
+        } catch (...) {
+            std::cout << TermColor::bold + TermColor::red << "failed to load result alignment; use identity transformation!!!" << TermColor::endl;
+            T_ef_corvis.block<3, 3>(0, 0).setIdentity();
+        }
+        std::cout << "result_alignment=\n" << T_ef_corvis << "\n";
+
+
         std::ifstream in_file(dataset_path + "/dataset");
         CHECK(in_file.is_open()) << "failed to open dataset @ " << dataset_path;
         vlslam_pb::Dataset dataset;
         dataset.ParseFromIstream(&in_file);
         in_file.close();
+        std::vector<Eigen::Matrix<double, 6, 1>> vtraj;
         for (int i = 0; i < dataset.packets_size(); ++i) {
             auto packet = dataset.mutable_packets(i);
             const auto gwc = Sophus::SE3f(io::SE3FromArray(packet->mutable_gwc()->mutable_data()));
-            auto Twc = gwc.translation();
+            auto Twc = T_ef_corvis.block<3, 3>(0, 0) * gwc.translation().cast<double>() + T_ef_corvis.block<3, 1>(0, 3);
             vtraj.push_back({});
-            vtraj.back() << Twc(0), Twc(1), Twc(2), 1.0, 1.0, 0.0;
+            vtraj.back() << Twc(0), Twc(1), Twc(2), 1.0, 0.5, 0.0;
         }
-        auto traj = StdVectorOfEigenVectorToEigenMatrix(vtraj);
-        Vtot.resize(V.rows() + traj.rows(), 6);
-        Vtot << V, traj;
-        igl::writeOBJ(scene_dir + "/result_with_trajectory_and_pointcloud.obj",
-                      Vtot, F);
+        traj = StdVectorOfEigenVectorToEigenMatrix(vtraj);
     }
+
+    if (config["result_visualization"]["show_pointcloud"].getBool()) {
+        std::string contents;
+        std::string result_alignment_file = scene_dir + "/result_alignment.json";
+        Eigen::Matrix<double, 3, 4> T_ef_corvis;
+        try {
+            folly::readFile(result_alignment_file.c_str(), contents);
+            folly::dynamic result_alignment = folly::parseJson(folly::json::stripComments(contents));
+            T_ef_corvis = io::GetMatrixFromDynamic<double, 3, 4>(result_alignment, "T_ef_corvis").block<3, 4>(0, 0);
+        } catch (...) {
+            std::cout << TermColor::bold + TermColor::red << "failed to load result alignment; use identity transformation!!!" << TermColor::endl;
+            T_ef_corvis.block<3, 3>(0, 0).setIdentity();
+        }
+        std::cout << "result_alignment=\n" << T_ef_corvis << "\n";
+
+
+        std::ifstream in_file(dataset_path + "/dataset");
+        CHECK(in_file.is_open()) << "failed to open dataset @ " << dataset_path;
+        vlslam_pb::Dataset dataset;
+        dataset.ParseFromIstream(&in_file);
+        in_file.close();
+        std::unordered_map<uint64_t, Eigen::Matrix<double, 6, 1>> mpts;
+        for (int i = 0; i < dataset.packets_size(); ++i) {
+            auto packet = dataset.packets(i);
+            for (int j = 0; j < packet.features_size(); ++j) {
+                auto feature = packet.features(j);
+                if (feature.status() == vlslam_pb::Feature::INSTATE) {
+                    mpts[feature.id()] << T_ef_corvis.block<3, 3>(0, 0)
+                        * Eigen::Vector3d{feature.xw(0), feature.xw(1), feature.xw(2)}
+                        + T_ef_corvis.block<3, 1>(0, 3),
+                        0, 0.5, 1.0;
+                }
+            }
+        }
+        // convert map to eigen matrix
+        pts.resize(mpts.size(), 6);
+        int counter(0);
+        for (auto it = mpts.begin(); it != mpts.end(); ++it) {
+            pts.row(counter++) = it->second;
+        }
+    }
+
+    // ASSEMBLE
+    Vtot.resize(V.rows() + traj.rows() + pts.rows(), 6);
+    Vtot << V, traj, pts;
+    igl::writeOBJ(scene_dir + "/result_with_trajectory_and_pointcloud.obj",
+                  Vtot, F);
+
 }
 
 }

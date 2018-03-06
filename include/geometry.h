@@ -37,6 +37,7 @@ StdVectorOfEigenVectorToEigenMatrix(const std::vector<Eigen::Matrix<T, DIM, 1> >
     return out;
 }
 
+
 /// \brief: Convert from an Eigen matrix type to a std vector of Eigen vectors.
 template <typename T, int DIM=3>
 std::vector<Eigen::Matrix<T, DIM, 1>>

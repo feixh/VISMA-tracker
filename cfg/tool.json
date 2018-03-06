@@ -31,12 +31,12 @@
   "result_visualization": {
     "result_index": -1,
     "show_trajectory": true,
-    "show_point_cloud": true
+    "show_pointcloud": false
   },
 
   "scene_visualization": {
     "remove_original_objects": true,
-    "padding_size": 0,
-    "show_original_scene": false
+    "padding_size": 0.0,
+    "show_original_scene": true
   }
 }
