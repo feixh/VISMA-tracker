@@ -82,9 +82,16 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
     auto scene = std::make_shared<three::PointCloud>();
     three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *scene);
 
+    // convert color from 0~255 to 0~1
     std::vector<Eigen::Matrix<double, 6, 1>> vertices;
     std::vector<Eigen::Matrix<int, 3, 1>> faces;
-
+    for (int i = 0; i < scene->points_.size(); ++i) {
+        vertices.push_back({});
+        vertices.back().head<3>() = scene->points_[i];
+        vertices.back().tail<3>() = scene->colors_[i]; // / 255.0;
+//        faces.push_back({i, i, i});
+    }
+    int vertex_counter = scene->points_.size();
 
     // LOAD RESULT FILE
     std::string alignment_file = fragment_dir + "/alignment.json";
@@ -92,7 +99,6 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
     folly::readFile(alignment_file.c_str(), contents);
     folly::dynamic alignment = folly::parseJson(folly::json::stripComments(contents));
 
-    int vertex_counter(0);
     for (const auto &obj : alignment.keys()) {
         std::string obj_name = obj.asString();
         std::string model_name = obj_name.substr(0, obj_name.find_last_of('_'));
