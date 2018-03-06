@@ -343,7 +343,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
 
             } else if (status_ == TrackerStatus::INITIALIZED
                 && visible_ratio_ > 0.8f
-                && used_bbox_index >=0
+                /*&& used_bbox_index >=0*/
                 &&  ts_ < last_update_ts_ + 50 ) {
                 ++convergence_counter_;
                 LOG(INFO) << "running in small proposal distribution mode\n";

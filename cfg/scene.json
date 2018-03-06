@@ -4,7 +4,7 @@
   },
 
   "bbox_score_thresh": {
-    "chair": 0.8
+    "chair": 0.6
   },
 
   "bbox_area_thresh": {

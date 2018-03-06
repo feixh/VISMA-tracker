@@ -172,7 +172,7 @@ void AnnotationTool(const folly::dynamic &config) {
         three::DrawGeometries({scene});
     }
     std::cout << "Writing out overlaid scene for debugging ...\n";
-    three::WritePointCloud(folly::sformat("{}/debug_scene.ply", fragment_dir), *scene);
+    three::WritePointCloud(folly::sformat("{}/debug_scene.ply", fragment_dir), *scene, true);
     // SAVE OBJECT POSE AS JSON FILE
     folly::writeFile(folly::toPrettyJson(out_json), folly::sformat("{}/alignment.json", fragment_dir).c_str());
 }
