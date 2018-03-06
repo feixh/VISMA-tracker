@@ -293,6 +293,17 @@ void QuantitativeEvaluation(folly::dynamic config) {
     std::cout << "min=" << stats.min_ << "\n";
     std::cout << "max=" << stats.max_ << "\n";
     std::cout << "median=" << stats.median_ << "\n";
+
+    // write out result
+    std::string quant_file = folly::sformat("{}/{}/surface_error.json", config["dataroot"].getString(), config["dataset"].getString());
+    folly::dynamic out_json = folly::dynamic::object
+        ("mean", stats.mean_)
+        ("std", stats.std_)
+        ("min", stats.min_)
+        ("max", stats.max_)
+        ("median", stats.median_);
+
+    folly::writeFile(folly::toPrettyJson(out_json), quant_file.c_str());
 }
 
 }
