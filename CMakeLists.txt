@@ -172,6 +172,9 @@ target_link_libraries(tool feh)
 add_executable(linemod app/linemod.cpp)
 target_link_libraries(linemod feh)
 
+add_executable(test_surface_error test/test_surface_error.cpp)
+target_link_libraries(test_surface_error feh)
+
 #add_executable(test_octree test/test_octree.cpp)
 
 #add_executable(folly_json test/test_folly_json.cpp)

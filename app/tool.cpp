@@ -42,16 +42,26 @@ int main(int argc, char **argv) {
         EvaluationTool(config);
     } else if (argv[1][0] == 'v') {
         if (argv[1][1] == 'g') {
-            VisualizeGroundTruth(config);
+            AssembleGroundTruth(config);
         } else if (argv[1][1] == 'r') {
-            VisualizeResult(config);
+            AssembleResult(config);
         } else {
             failed = true;
         }
-    } else failed = true;
+    } else if (argv[1][0] == 'q') {
+        config["scene_visualization"]["show_original_scene"] = false;
+        QuantitativeEvaluation(config);
+    } else {
+        failed = true;
+    }
 
     if (failed) {
-        std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v(g|r)]\n a for annotation\n e for evaluation\n vg for ground truth visualization\n vr for results visualization";
+        std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v(g|r)|q]\n"
+            "a for annotation\n"
+            "e for evaluation\n"
+            "vg for ground truth visualization\n"
+            "vr for results visualization\n"
+            "q for quantitative evaluation\n";
         exit(-1);
     }
 

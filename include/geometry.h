@@ -8,6 +8,10 @@
 #include <random>
 #include <chrono>
 
+// 3rd party
+#include "igl/AABB.h"
+#include "folly/dynamic.h"
+
 namespace feh {
 
 /// \brief: Find the normal vector of a (hyper)plane given as a set of points.
@@ -211,5 +215,67 @@ template<typename T, int L>
 Octree<T, L>::~Octree() {
     delete root_;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// QUANTITATIVE SURFACE ERROR METRIC
+// reference: A benchmark for RGB-D visual odometry, 3D reconstruction and SLAM
+// Input: Two meshes
+// 1) Densely sample a point cloud from the source mesh
+// 2) For each point in the source point cloud, locate the closest triangle in the target mesh and
+// 3) Compute the perpendicular distance from the point to the triangle
+// 4) Compute statistics over all distances computed above.
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+template <typename T>
+struct SurfaceErrorMetric {
+    T mean_, std_, median_, min_, max_;
+};
+/// \brief: Measure surface error.
+/// \param Vs: Source vertices.
+/// \param Fs: Source faces.
+/// \param Vt: Target vertices.
+/// \param Ft: Target faces.
+template <typename T>
+SurfaceErrorMetric<T> MeasureSurfaceError(
+    const Eigen::Matrix<T, Eigen::Dynamic, 3> &Vs,
+    const Eigen::Matrix<int, Eigen::Dynamic, 3> &Fs,
+    const Eigen::Matrix<T, Eigen::Dynamic, 3> &Vt,
+    const Eigen::Matrix<int, Eigen::Dynamic, 3> &Ft,
+    const folly::dynamic &options) {
+    // DENSELY SAMPLE FROM THE INPUT MESH
+    auto pts_s = SamplePointCloudFromMesh(Vs, Fs, options["num_samples"].getInt());
+    // CONSTRUCT AABB TREE FROM TARGET MESH
+    igl::AABB<Eigen::Matrix<T, Eigen::Dynamic, 3>, 3> tree;
+    tree.init(Vt, Ft);
+    Eigen::Matrix<T, Eigen::Dynamic, 3> P = feh::StdVectorOfEigenVectorToEigenMatrix(pts_s); // query point list
+    Eigen::VectorXd D2; // squared distance
+    Eigen::VectorXi I;  // index into face list Ft
+    Eigen::Matrix<T, Eigen::Dynamic, 3> C; // closest point in mesh, NOT necessarily a vertex
+    // Given the face index I and coordinates of the closest point C, barycentric coordinates
+    // of the closest point w.r.t the triangle can be recovered.
+    tree.squared_distance(Vt, Ft, P, D2, I, C);
+    auto D = D2.cwiseSqrt();
+
+    SurfaceErrorMetric<T> out{0, 0, 0,
+                              std::numeric_limits<T>::max(),
+                              std::numeric_limits<T>::lowest()};
+    std::vector<T> tmp(D.size());
+    for (int i = 0; i < D.size(); ++i) {
+        out.mean_ += D(i);
+        out.std_ += D(i) * D(i);
+        out.min_ = std::min(out.min_, D(i));
+        out.max_ = std::max(out.max_, D(i));
+        tmp[i] = D(i);
+    }
+    out.mean_ /= D.size();
+    out.std_ = sqrt(out.std_ / D.size() - out.mean_ * out.mean_);
+    std::sort(tmp.begin(), tmp.end());
+    out.median_ = tmp[tmp.size() >> 1];
+    return out;
+}
+
 
 }   // namespace feh

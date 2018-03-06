@@ -7,6 +7,7 @@
 // stl
 #include <unordered_map>
 #include <memory>
+#include <list>
 
 // 3rd party
 #include "folly/dynamic.h"
@@ -101,10 +102,27 @@ three::RegistrationResult ICPRefinement(std::shared_ptr<three::PointCloud> scene
                                         const folly::dynamic &options);
 
 
+/// \brief: Assemble the scene mesh by:
+/// 1) Retrieving proper meshes from CAD database;
+/// 2) Apply the pose estimate;
+/// 3) Apply the Corvis to Ground Truth (ElasticFusion) alignment.
+/// \param objects: List of shape name, pose pairs.
+/// \param alignment: Corvis to EF alignment.
+/// \param vertices, faces: Assembled mesh.
+void AssembleScene(const folly::dynamic &config,
+                   const std::list<std::pair<std::string, Eigen::Matrix<double, 3, 4> > > &objects,
+                   const Eigen::Matrix<double, 3, 4> &alignment,
+                   std::vector<Eigen::Matrix<double, 6, 1>> &vertices,
+                   std::vector<Eigen::Matrix<int, 3, 1>> &faces);
 /// \brief: Visualize semantic reconstruction with sparse point cloud from VIO.
-void VisualizeResult(const folly::dynamic &config);
+void AssembleResult(const folly::dynamic &config,
+                     Eigen::Matrix<double, Eigen::Dynamic, 3> *V=nullptr,
+                     Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
 /// \brief: Visualize ground truth with annotation.
-void VisualizeGroundTruth(const folly::dynamic &config);
+void AssembleGroundTruth(const folly::dynamic &config,
+                          Eigen::Matrix<double, Eigen::Dynamic, 3> *V=nullptr,
+                          Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
+void QuantitativeEvaluation(folly::dynamic config);
 
 
 }

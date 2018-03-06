@@ -268,5 +268,32 @@ three::RegistrationResult ICPRefinement(std::shared_ptr<three::PointCloud> scene
     return result;
 }
 
+void QuantitativeEvaluation(folly::dynamic config) {
+    // disable original mesh
+    CHECK(!config["scene_visualization"]["show_original_scene"].getBool());
+
+    // assemble result scene mesh
+    Eigen::Matrix<double, Eigen::Dynamic, 3> Vr;
+    Eigen::Matrix<int, Eigen::Dynamic, 3> Fr;
+    AssembleResult(config, &Vr, &Fr);
+    std::cout << TermColor::cyan << "Result scene mesh assembled" << TermColor::endl;
+
+    // assemble ground truth scene mesh
+    Eigen::Matrix<double, Eigen::Dynamic, 3> Vg;
+    Eigen::Matrix<int, Eigen::Dynamic, 3> Fg;
+    AssembleGroundTruth(config, &Vg, &Fg);
+    std::cout << TermColor::cyan << "Ground truth scene mesh assembled" << TermColor::endl;
+
+    // measure surface error
+    std::cout << TermColor::cyan << "Computing error measure ..." << TermColor::endl;
+    auto stats = MeasureSurfaceError(Vr, Fr, Vg, Fg,
+                                     folly::dynamic::object("num_samples", std::min<uint64_t>(500000, Fg.rows()*100)));
+    std::cout << "mean=" << stats.mean_ << "\n";
+    std::cout << "std=" << stats.std_ << "\n";
+    std::cout << "min=" << stats.min_ << "\n";
+    std::cout << "max=" << stats.max_ << "\n";
+    std::cout << "median=" << stats.median_ << "\n";
+}
+
 }
 

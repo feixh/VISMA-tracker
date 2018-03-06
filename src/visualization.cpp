@@ -9,7 +9,6 @@
 // folly
 #include "folly/FileUtil.h"
 #include "folly/json.h"
-#include "folly/Format.h"
 // libigl
 #include "igl/readOBJ.h"
 #include <igl/writeOBJ.h>
@@ -26,8 +25,7 @@
 
 namespace feh {
 
-static
-void VisualizeScene(const folly::dynamic &config,
+void AssembleScene(const folly::dynamic &config,
                     const std::list<std::pair<std::string, Eigen::Matrix<double, 3, 4>>> &objects,
                     const Eigen::Matrix<double, 3, 4> &alignment,
                     std::vector<Eigen::Matrix<double, 6, 1>> &vertices,
@@ -108,7 +106,9 @@ void VisualizeScene(const folly::dynamic &config,
     if (!sceneV.empty()) vertices.insert(vertices.end(), sceneV.begin(), sceneV.end());
 }
 
-void VisualizeResult(const folly::dynamic &config) {
+void AssembleResult(const folly::dynamic &config,
+                     Eigen::Matrix<double, Eigen::Dynamic, 3> *Vout,
+                     Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
     // EXTRACT PATHS
     std::string database_dir = config["CAD_database_root"].getString();
 
@@ -156,13 +156,20 @@ void VisualizeResult(const folly::dynamic &config) {
 
     std::vector<Eigen::Matrix<double, 6, 1>> vertices;
     std::vector<Eigen::Matrix<int, 3, 1>> faces;
-    VisualizeScene(config, objects, T_ef_corvis, vertices, faces);
+    AssembleScene(config, objects, T_ef_corvis, vertices, faces);
     igl::writeOBJ(scene_dir + "/result_augmented_view.obj",
                   StdVectorOfEigenVectorToEigenMatrix(vertices),
                   StdVectorOfEigenVectorToEigenMatrix(faces));
+
+    if (Vout && Fout) {
+        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices).leftCols(3);
+        *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
+    }
 }
 
-void VisualizeGroundTruth(const folly::dynamic &config) {
+void AssembleGroundTruth(const folly::dynamic &config,
+                          Eigen::Matrix<double, Eigen::Dynamic, 3> *Vout,
+                          Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
     std::string database_dir = config["CAD_database_root"].getString();
     std::string dataroot = config["dataroot"].getString();
     std::string dataset = config["dataset"].getString();
@@ -190,10 +197,15 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
     std::vector<Eigen::Matrix<double, 6, 1>> vertices;
     std::vector<Eigen::Matrix<int, 3, 1>> faces;
 
-    VisualizeScene(config, objects, identity, vertices, faces);
+    AssembleScene(config, objects, identity, vertices, faces);
     igl::writeOBJ(scene_dir + "/ground_truth_augmented_view.obj",
                   StdVectorOfEigenVectorToEigenMatrix(vertices),
                   StdVectorOfEigenVectorToEigenMatrix(faces));
+
+    if (Vout && Fout) {
+        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices).leftCols(3);
+        *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
+    }
 }
 
 }
