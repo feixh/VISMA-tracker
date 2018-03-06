@@ -273,15 +273,19 @@ void QuantitativeEvaluation(folly::dynamic config) {
     CHECK(!config["scene_visualization"]["show_original_scene"].getBool());
 
     // assemble result scene mesh
+    Eigen::Matrix<double, Eigen::Dynamic, 6> tmp;
+
     Eigen::Matrix<double, Eigen::Dynamic, 3> Vr;
     Eigen::Matrix<int, Eigen::Dynamic, 3> Fr;
-    AssembleResult(config, &Vr, &Fr);
+    AssembleResult(config, &tmp, &Fr);
+    Vr = tmp.leftCols(3);
     std::cout << TermColor::cyan << "Result scene mesh assembled" << TermColor::endl;
 
     // assemble ground truth scene mesh
     Eigen::Matrix<double, Eigen::Dynamic, 3> Vg;
     Eigen::Matrix<int, Eigen::Dynamic, 3> Fg;
-    AssembleGroundTruth(config, &Vg, &Fg);
+    AssembleGroundTruth(config, &tmp, &Fg);
+    Vg = tmp.leftCols(3);
     std::cout << TermColor::cyan << "Ground truth scene mesh assembled" << TermColor::endl;
 
     // measure surface error

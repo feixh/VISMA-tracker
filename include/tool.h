@@ -116,11 +116,12 @@ void AssembleScene(const folly::dynamic &config,
                    std::vector<Eigen::Matrix<int, 3, 1>> &faces);
 /// \brief: Visualize semantic reconstruction with sparse point cloud from VIO.
 void AssembleResult(const folly::dynamic &config,
-                     Eigen::Matrix<double, Eigen::Dynamic, 3> *V=nullptr,
+                     Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
                      Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
+void VisualizeResult(const folly::dynamic &config);
 /// \brief: Visualize ground truth with annotation.
 void AssembleGroundTruth(const folly::dynamic &config,
-                          Eigen::Matrix<double, Eigen::Dynamic, 3> *V=nullptr,
+                          Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
                           Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
 void QuantitativeEvaluation(folly::dynamic config);
 

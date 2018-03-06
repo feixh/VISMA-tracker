@@ -44,7 +44,8 @@ int main(int argc, char **argv) {
         if (argv[1][1] == 'g') {
             AssembleGroundTruth(config);
         } else if (argv[1][1] == 'r') {
-            AssembleResult(config);
+            VisualizeResult(config);
+//            AssembleResult(config);
         } else {
             failed = true;
         }
@@ -64,6 +65,5 @@ int main(int argc, char **argv) {
             "q for quantitative evaluation\n";
         exit(-1);
     }
-
 }
 

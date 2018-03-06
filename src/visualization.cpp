@@ -12,10 +12,13 @@
 // libigl
 #include "igl/readOBJ.h"
 #include <igl/writeOBJ.h>
+#include <vlslam.pb.h>
 #include "igl/readPLY.h"
 // Open3D
 #include "IO/IO.h"
 #include "Visualization/Visualization.h"
+// Sophus
+#include "sophus/se3.hpp"
 
 // feh
 #include "io_utils.h"
@@ -107,7 +110,7 @@ void AssembleScene(const folly::dynamic &config,
 }
 
 void AssembleResult(const folly::dynamic &config,
-                     Eigen::Matrix<double, Eigen::Dynamic, 3> *Vout,
+                     Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
                      Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
     // EXTRACT PATHS
     std::string database_dir = config["CAD_database_root"].getString();
@@ -162,13 +165,13 @@ void AssembleResult(const folly::dynamic &config,
                   StdVectorOfEigenVectorToEigenMatrix(faces));
 
     if (Vout && Fout) {
-        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices).leftCols(3);
+        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices);
         *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
     }
 }
 
 void AssembleGroundTruth(const folly::dynamic &config,
-                          Eigen::Matrix<double, Eigen::Dynamic, 3> *Vout,
+                          Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
                           Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
     std::string database_dir = config["CAD_database_root"].getString();
     std::string dataroot = config["dataroot"].getString();
@@ -203,8 +206,37 @@ void AssembleGroundTruth(const folly::dynamic &config,
                   StdVectorOfEigenVectorToEigenMatrix(faces));
 
     if (Vout && Fout) {
-        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices).leftCols(3);
+        *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices);
         *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
+    }
+}
+
+void VisualizeResult(const folly::dynamic &config) {
+    Eigen::Matrix<double, Eigen::Dynamic, 6> V, Vtot;
+    Eigen::Matrix<int, Eigen::Dynamic, 3> F;
+    AssembleResult(config, &V, &F);
+
+    std::string dataset_path = config["experiment_root"].getString() + "/" + config["dataset"].getString();
+    std::string scene_dir = folly::sformat("{}/{}/", config["dataroot"].getString(), config["dataset"].getString());
+    if (config["result_visualization"]["show_trajectory"].getBool()) {
+        std::vector<Eigen::Matrix<double, 6, 1>> vtraj;
+        std::ifstream in_file(dataset_path + "/dataset");
+        CHECK(in_file.is_open()) << "failed to open dataset @ " << dataset_path;
+        vlslam_pb::Dataset dataset;
+        dataset.ParseFromIstream(&in_file);
+        in_file.close();
+        for (int i = 0; i < dataset.packets_size(); ++i) {
+            auto packet = dataset.mutable_packets(i);
+            const auto gwc = Sophus::SE3f(io::SE3FromArray(packet->mutable_gwc()->mutable_data()));
+            auto Twc = gwc.translation();
+            vtraj.push_back({});
+            vtraj.back() << Twc(0), Twc(1), Twc(2), 1.0, 1.0, 0.0;
+        }
+        auto traj = StdVectorOfEigenVectorToEigenMatrix(vtraj);
+        Vtot.resize(V.rows() + traj.rows(), 6);
+        Vtot << V, traj;
+        igl::writeOBJ(scene_dir + "/result_with_trajectory_and_pointcloud.obj",
+                      Vtot, F);
     }
 }
 
