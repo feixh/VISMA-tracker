@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     } else failed = true;
 
     if (failed) {
-        std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v]\n a for annotation\n e for evaluation\n v for visualization";
+        std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v(g|r)]\n a for annotation\n e for evaluation\n vg for ground truth visualization\n vr for results visualization";
         exit(-1);
     }
 
