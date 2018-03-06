@@ -3,6 +3,9 @@
 //
 #include "tool.h"
 
+// stl
+#include <list>
+
 // folly
 #include "folly/FileUtil.h"
 #include "folly/json.h"
@@ -81,23 +84,27 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
     // LOAD SCENE POINT CLOUD
     auto scene = std::make_shared<three::PointCloud>();
     three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *scene);
+    std::list<Eigen::Matrix<double, 6, 1>> sceneV;
+    for (int i = 0; i < scene->points_.size(); ++i) {
+        sceneV.push_back({});
+        sceneV.back().head<3>() = scene->points_[i];
+        sceneV.back().tail<3>() = scene->colors_[i]; // / 255.0;
+    }
 
     // convert color from 0~255 to 0~1
     std::vector<Eigen::Matrix<double, 6, 1>> vertices;
     std::vector<Eigen::Matrix<int, 3, 1>> faces;
-    for (int i = 0; i < scene->points_.size(); ++i) {
-        vertices.push_back({});
-        vertices.back().head<3>() = scene->points_[i];
-        vertices.back().tail<3>() = scene->colors_[i]; // / 255.0;
-//        faces.push_back({i, i, i});
-    }
-    int vertex_counter = scene->points_.size();
+    int vertex_counter = 0;
+
 
     // LOAD RESULT FILE
     std::string alignment_file = fragment_dir + "/alignment.json";
     std::string contents;
     folly::readFile(alignment_file.c_str(), contents);
     folly::dynamic alignment = folly::parseJson(folly::json::stripComments(contents));
+    bool remove_original = config["ground_truth_visualization"].getDefault("remove_original_objects", true).asBool();
+    double padding_size = config["ground_truth_visualization"].getDefault("padding_size", 0.0).asDouble();
+
 
     for (const auto &obj : alignment.keys()) {
         std::string obj_name = obj.asString();
@@ -114,14 +121,42 @@ void VisualizeGroundTruth(const folly::dynamic &config) {
         for (int i = 0; i < v.rows(); ++i) {
             vertices.push_back(v.row(i));
         }
+        if (remove_original) {
+            std::array<Eigen::Vector3d, 2> bounds;
+            bounds[0] = Eigen::Vector3d::Ones() * std::numeric_limits<double>::max();
+            bounds[1] = Eigen::Vector3d::Ones() * std::numeric_limits<double>::lowest();
+            for (int i = 0; i < v.rows(); ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    if (v(i, j) < bounds[0](j)) bounds[0](j) = v(i, j);
+                    if (v(i, j) > bounds[1](j)) bounds[1](j) = v(i, j);
+                }
+            }
+            // expand the bounds a little bit
+            bounds[0].array() -= padding_size;
+            bounds[1].array() += padding_size;
+            for (auto it = sceneV.begin(); it != sceneV.end(); ) {
+                Eigen::Vector3d v = it->head<3>();
+                bool in_bound = true;
+                for (int i = 0; i < 3; ++i)
+                    if (!(v(i) > bounds[0](i) && v(i) < bounds[1](i))) {
+                        in_bound = false;
+                        break;
+                    }
+                if (in_bound) {
+                    it = sceneV.erase(it);
+                } else ++it;
+            }
+        }
         for (int i = 0; i < f.rows(); ++i) {
             faces.push_back({vertex_counter + f(i, 0), vertex_counter + f(i, 1), vertex_counter + f(i, 2)});
         }
         // UPDATE VERTEX INDEX OFFSET
         vertex_counter += v.rows();
         // CONSTRUCT SCENE MESH BY APPENDING OBJECT MESH TO SCENE MESH
+        // remove scene points within the bound
     }
-    igl::writeOBJ("test.obj",
+    vertices.insert(vertices.end(), sceneV.begin(), sceneV.end());
+    igl::writeOBJ(fragment_dir + "/ground_truth_augmented_view.obj",
                   StdVectorOfEigenVectorToEigenMatrix(vertices),
                   StdVectorOfEigenVectorToEigenMatrix(faces));
 }

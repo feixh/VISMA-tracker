@@ -25,5 +25,10 @@
     "voxel_size": 0.05, // voxel size for downsample
     "max_distance": 0.075, // threshold for ICP
     "samples_per_model": 50000  // for ICP refinement
+  },
+
+  "ground_truth_visualization": {
+    "remove_original_objects": true,
+    "padding_size": 0
   }
 }
