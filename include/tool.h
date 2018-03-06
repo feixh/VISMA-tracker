@@ -101,7 +101,10 @@ three::RegistrationResult ICPRefinement(std::shared_ptr<three::PointCloud> scene
                                         const folly::dynamic &options);
 
 
-void VisualizationTool(const folly::dynamic &config);
+/// \brief: Visualize semantic reconstruction with sparse point cloud from VIO.
+void VisualizeResult(const folly::dynamic &config);
+/// \brief: Visualize ground truth with annotation.
+void VisualizeGroundTruth(const folly::dynamic &config);
 
 
 }

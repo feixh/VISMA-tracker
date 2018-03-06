@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     folly::fbstring contents;
     folly::readFile("../cfg/tool.json", contents);
     folly::dynamic config = folly::parseJson(folly::json::stripComments(contents));
+    bool failed = false;
     if (argc == 3) {
         config["dataset"] = std::string(argv[2]);
     }
@@ -40,9 +41,16 @@ int main(int argc, char **argv) {
     } else if (argv[1][0] == 'e') {
         EvaluationTool(config);
     } else if (argv[1][0] == 'v') {
-        VisualizationTool(config);
-    }
-    else {
+        if (argv[1][1] == 'g') {
+            VisualizeGroundTruth(config);
+        } else if (argv[1][1] == 'r') {
+            VisualizeResult(config);
+        } else {
+            failed = true;
+        }
+    } else failed = true;
+
+    if (failed) {
         std::cout << "USAGE:\n tool OPTION\n OPTION=[a|e|v]\n a for annotation\n e for evaluation\n v for visualization";
         exit(-1);
     }

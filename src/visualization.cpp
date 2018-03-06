@@ -9,6 +9,8 @@
 #include "folly/Format.h"
 // libigl
 #include "igl/readOBJ.h"
+#include <igl/writeOBJ.h>
+#include "igl/readPLY.h"
 // Open3D
 #include "IO/IO.h"
 #include "Visualization/Visualization.h"
@@ -18,7 +20,7 @@
 #include "geometry.h"
 
 namespace feh {
-void VisualizationTool(const folly::dynamic &config) {
+void VisualizeResult(const folly::dynamic &config) {
 
     // EXTRACT PATHS
     std::string database_dir = config["CAD_database_root"].getString();
@@ -67,36 +69,55 @@ void VisualizationTool(const folly::dynamic &config) {
     }
 
     three::DrawGeometries({scene_est}, "reconstructed scene");
-
-//    auto ret = RegisterScenes(models, models_est);
-//    auto T_ef_corvis = ret.transformation_;
-//    std::cout << "T_ef_corvis=\n" << T_ef_corvis << "\n";
-//    for (int i = 0; i < ret.correspondence_set_.size(); ++i) {
-//        std::cout << folly::format("{}-{}\n", ret.correspondence_set_[i][0], ret.correspondence_set_[i][1]);
-//    }
-//
-//    if (config["evaluation"]["ICP_refinement"].asBool()) {
-//        // RE-LOAD THE SCENE
-//        std::shared_ptr<three::PointCloud> raw_scene = std::make_shared<three::PointCloud>();
-//        three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *raw_scene);
-//        // FIXME: MIGHT NEED CROP THE 3D REGION-OF-INTEREST HERE
-//        auto result = ICPRefinement(raw_scene,
-//                                    models_est,
-//                                    T_ef_corvis,
-//                                    config["evaluation"]);
-//        T_ef_corvis = result.transformation_;
-//    }
-//
-////    three::ReadPointCloudFromPLY(config["scene_directory"].getString() + "/test.klg.ply", *scene);
-//    // NOW LETS LOOK AT THE ESTIMATED SCENE IN RGB-D SCENE FRAME
-//    for (const auto &kv : models_est) {
-//        const auto &this_model = kv.second;
-//        this_model.pcd_ptr_->Transform(T_ef_corvis);
-//        *scene += *(this_model.pcd_ptr_);
-//    }
-//    three::DrawGeometries({scene});
-//    three::WritePointCloud(fragment_dir+"/augmented_view.ply", *scene);
 }
 
+void VisualizeGroundTruth(const folly::dynamic &config) {
+    std::string database_dir = config["CAD_database_root"].getString();
+
+    std::string dataroot = config["dataroot"].getString();
+    std::string dataset = config["dataset"].getString();
+    std::string scene_dir = dataroot + "/" + dataset + "/";
+    std::string fragment_dir = scene_dir + "/fragments/";
+    // LOAD SCENE POINT CLOUD
+    auto scene = std::make_shared<three::PointCloud>();
+    three::ReadPointCloudFromPLY(scene_dir + "/test.klg.ply", *scene);
+
+    std::vector<Eigen::Matrix<double, 6, 1>> vertices;
+    std::vector<Eigen::Matrix<int, 3, 1>> faces;
+
+
+    // LOAD RESULT FILE
+    std::string alignment_file = fragment_dir + "/alignment.json";
+    std::string contents;
+    folly::readFile(alignment_file.c_str(), contents);
+    folly::dynamic alignment = folly::parseJson(folly::json::stripComments(contents));
+
+    int vertex_counter(0);
+    for (const auto &obj : alignment.keys()) {
+        std::string obj_name = obj.asString();
+        std::string model_name = obj_name.substr(0, obj_name.find_last_of('_'));
+        auto pose = io::GetMatrixFromDynamic<double, 3, 4>(alignment, obj_name);
+        std::cout << obj_name << "\n" << model_name << "\n" << pose << "\n";
+        // LOAD MESH
+        Eigen::Matrix<double, Eigen::Dynamic, 6> v;
+        Eigen::Matrix<int, Eigen::Dynamic, 3> f;
+        igl::readOBJ(folly::sformat("{}/{}.obj", database_dir, model_name), v, f);
+        std::cout << "v.size=" << v.rows() << "x" << v.cols() << "\n";
+        // TRANSFORM TO SCENE FRAME
+        v.leftCols(3) = (v.leftCols(3) * pose.block<3,3>(0,0).transpose()).rowwise() + pose.block<3, 1>(0, 3).transpose();
+        for (int i = 0; i < v.rows(); ++i) {
+            vertices.push_back(v.row(i));
+        }
+        for (int i = 0; i < f.rows(); ++i) {
+            faces.push_back({vertex_counter + f(i, 0), vertex_counter + f(i, 1), vertex_counter + f(i, 2)});
+        }
+        // UPDATE VERTEX INDEX OFFSET
+        vertex_counter += v.rows();
+        // CONSTRUCT SCENE MESH BY APPENDING OBJECT MESH TO SCENE MESH
+    }
+    igl::writeOBJ("test.obj",
+                  StdVectorOfEigenVectorToEigenMatrix(vertices),
+                  StdVectorOfEigenVectorToEigenMatrix(faces));
+}
 
 }
