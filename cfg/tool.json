@@ -34,9 +34,13 @@
     "show_pointcloud": false
   },
 
-  "scene_visualization": {
+  "scene_assembler": {
     "remove_original_objects": true,
     "padding_size": 0.0,
     "show_original_scene": true
+  },
+
+  "frame_inspector": {
+    "idnex": 0
   }
 }

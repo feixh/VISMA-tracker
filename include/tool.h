@@ -123,7 +123,14 @@ void VisualizeResult(const folly::dynamic &config);
 void AssembleGroundTruth(const folly::dynamic &config,
                           Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
                           Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
+/// \brief: Entrance to quantitative evaluation of surface reconstruction.
+/// MeasureSurfaceError is called internally to compute error measure.
 void QuantitativeEvaluation(folly::dynamic config);
+
+/// \brief: Inspect input and intermediate results of a given frame.
+void FrameInspector(const folly::dynamic &config);
+
+
 
 
 }

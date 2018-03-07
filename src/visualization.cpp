@@ -19,12 +19,13 @@
 #include "Visualization/Visualization.h"
 // Sophus
 #include "sophus/se3.hpp"
+// OpenCV
+#include "opencv2/opencv.hpp"
 
 // feh
 #include "io_utils.h"
 #include "geometry.h"
-
-// stl
+#include "dataset_loaders.h"
 
 namespace feh {
 
@@ -40,9 +41,9 @@ void AssembleScene(const folly::dynamic &config,
     std::string fragment_dir = scene_dir + "/fragments/";
 
     // LOAD FLAGS
-    bool show_original = config["scene_visualization"].getDefault("show_original_scene", true).asBool();
-    bool remove_original = config["scene_visualization"].getDefault("remove_original_objects", true).asBool();
-    double padding_size = config["scene_visualization"].getDefault("padding_size", 0.0).asDouble();
+    bool show_original = config["scene_assembler"].getDefault("show_original_scene", true).asBool();
+    bool remove_original = config["scene_assembler"].getDefault("remove_original_objects", true).asBool();
+    double padding_size = config["scene_assembler"].getDefault("padding_size", 0.0).asDouble();
 
     // LOAD SCENE POINT CLOUD
     std::list<Eigen::Matrix<double, 6, 1>> sceneV;
@@ -299,6 +300,22 @@ void VisualizeResult(const folly::dynamic &config) {
     igl::writeOBJ(scene_dir + "/result_with_trajectory_and_pointcloud.obj",
                   Vtot, F);
 
+}
+
+void FrameInspector(const folly::dynamic &config) {
+    std::string dataset_path = folly::sformat("{}/{}/", config["experiment_root"].getString(), config["dataset"].getString());
+    std::string database_root = config["CAD_database_root"].getString();
+
+    // LOAD THE INPUT IMAGE
+    int index = config["frame_inspector"]["index"].getInt();
+    VlslamDatasetLoader loader(dataset_path);
+    Sophus::SE3f gwc;
+    Sophus::SO3f Rg;
+    cv::Mat img, edgemap;
+    vlslam_pb::BoundingBoxList bboxlist;
+    loader.Grab(index, img, edgemap, bboxlist, gwc, Rg);
+    cv::imshow("input image", img);
+    cv::waitKey();
 }
 
 }
