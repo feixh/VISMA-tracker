@@ -169,6 +169,9 @@ add_executable(tool
         src/visualization.cpp)
 target_link_libraries(tool feh)
 
+add_executable(inspector app/inspector.cpp)
+target_link_libraries(inspector feh)
+
 add_executable(linemod app/linemod.cpp)
 target_link_libraries(linemod feh)
 

@@ -93,6 +93,11 @@ VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
         LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
     }
 
+//    for (int i = 0; i < png_files_.size(); ++i) {
+//        std::cout << png_files_[i] << "\n";
+//    }
+
+
     if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
         LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
     }
@@ -141,7 +146,7 @@ bool VlslamDatasetLoader::Grab(int i,
 
     // read image
     image = cv::imread(png_file);
-    CHECK(!image.empty()) << "empty image";
+    CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
     if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {

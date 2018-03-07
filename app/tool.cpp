@@ -54,12 +54,6 @@ int main(int argc, char **argv) {
         // AND ONLY COMPARE MESHES CONSIST OF OBJECTS-OF-INTEREST
         config["scene_visualization"]["show_original_scene"] = false;
         QuantitativeEvaluation(config);
-    } else if (argv[1][0] == 'f') {
-        if (argc == 4) {
-            config["frame_inspector"]["index"] = folly::to<int>(argv[3]);
-            std::cout << "frame index=" << config["frame_inspector"]["index"].getInt() << "\n";
-        }
-        FrameInspector(config);
     } else {
         failed = true;
     }
@@ -70,8 +64,7 @@ int main(int argc, char **argv) {
             "e for evaluation\n"
             "vg for ground truth visualization\n"
             "vr for results visualization\n"
-            "q for quantitative evaluation\n"
-            "f for frame inspection\n";
+            "q for quantitative evaluation\n";
         exit(-1);
     }
 }

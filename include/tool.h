@@ -127,9 +127,6 @@ void AssembleGroundTruth(const folly::dynamic &config,
 /// MeasureSurfaceError is called internally to compute error measure.
 void QuantitativeEvaluation(folly::dynamic config);
 
-/// \brief: Inspect input and intermediate results of a given frame.
-void FrameInspector(const folly::dynamic &config);
-
 
 
 

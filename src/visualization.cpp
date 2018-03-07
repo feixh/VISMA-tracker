@@ -302,20 +302,5 @@ void VisualizeResult(const folly::dynamic &config) {
 
 }
 
-void FrameInspector(const folly::dynamic &config) {
-    std::string dataset_path = folly::sformat("{}/{}/", config["experiment_root"].getString(), config["dataset"].getString());
-    std::string database_root = config["CAD_database_root"].getString();
-
-    // LOAD THE INPUT IMAGE
-    int index = config["frame_inspector"]["index"].getInt();
-    VlslamDatasetLoader loader(dataset_path);
-    Sophus::SE3f gwc;
-    Sophus::SO3f Rg;
-    cv::Mat img, edgemap;
-    vlslam_pb::BoundingBoxList bboxlist;
-    loader.Grab(index, img, edgemap, bboxlist, gwc, Rg);
-    cv::imshow("input image", img);
-    cv::waitKey();
-}
 
 }
