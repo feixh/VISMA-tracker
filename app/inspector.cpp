@@ -3,7 +3,6 @@
 //
 // Frame Inspector
 #include <io_utils.h>
-#include "common/eigen_alias.h"
 #include "dataset_loaders.h"
 #include "tracker_utils.h"
 #include "renderer.h"
@@ -11,10 +10,9 @@
 
 // 3rd party
 #include "opencv2/opencv.hpp"
-#include "folly/dynamic.h"
 #include "folly/FileUtil.h"
 #include "folly/json.h"
-#include "igl/readOBJ.h"
+#include "tbb/parallel_for.h"
 
 int main(int argc, char **argv) {
     CHECK_EQ(argc, 3);
@@ -59,14 +57,15 @@ int main(int argc, char **argv) {
 
     // INVERT EDGEMAP FOR PLEASING VISUALIZATION
     edgemap = 255 - edgemap;
+    cv::cvtColor(edgemap, input_with_proposals, CV_GRAY2RGB);
     cv::imshow("edgemap", edgemap);
     cv::imwrite(basename + "_edgemap.png", edgemap);
 
     // Z-BUFFER COLOR-ENCODED BY INSTANCE LABEL
     folly::readFile((scene_dir + "/result.json").c_str(), contents);
-    folly::dynamic result = folly::parseJson(folly::json::stripComments(contents)).at(index);
+    // FIXME: RESULT FILE SHOULD KEEP TRACK OF TIMESTAMP
+    folly::dynamic result = folly::parseJson(folly::json::stripComments(contents)).at(index); //-130);
     // OVERWRITE SOME PARAMETERS
-    std::vector<cv::Mat> depth_maps;
     feh::RendererPtr render_engine = std::make_shared<feh::Renderer>(img.rows, img.cols);
     {
         folly::readFile("../cfg/camera.json", contents);
@@ -82,6 +81,15 @@ int main(int argc, char **argv) {
 //        render_engine->SetCamera(gwc.inverse().matrix());
         std::cout << "gwc=\n" << gwc.matrix() << "\n";
     }
+
+    cv::Size size(render_engine->cols(), render_engine->rows());
+    cv::Mat zbuf(size, CV_32FC1);
+    zbuf.setTo(0);
+    cv::Mat segmask(size, CV_32SC1);
+    segmask.setTo(-1);
+    auto cm = feh::GenerateRandomColorMap<8>();
+    cm[0] = {255, 255, 255};    // white background
+    cv::Mat input_with_contour = img.clone();
 
     for (const auto &obj : result) {
         auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
@@ -103,15 +111,65 @@ int main(int argc, char **argv) {
             folly::sformat("{}/{}.obj", database_dir, model_name),
             v, f);
         render_engine->SetMesh(v, f);
-        cv::Mat depth(render_engine->rows(), render_engine->cols(), CV_32FC1);
+        cv::Mat depth(size, CV_32FC1);
+        depth.setTo(0);
         render_engine->RenderDepth(gcm.matrix(), depth);
-        cv::imshow(folly::sformat("depth#{}", instance_id), depth);
+        feh::tracker::PrettyDepth(depth);
+
+        cv::Mat contour(size, CV_8UC1);
+        render_engine->RenderEdge(gcm.matrix(), contour);
+        cv::dilate(contour, contour, cv::Mat());
+        feh::tracker::OverlayMaskOnImage(contour, input_with_contour, false, &cm[instance_id+1][0]);
+//        cv::imshow(folly::sformat("depth#{}", instance_id), depth);
 //        cv::Mat mask(render_engine->rows(), render_engine->cols(), CV_8UC1);
 //        render_engine->RenderMask(gcm.matrix(), mask);
 //        cv::imshow(folly::sformat("mask#{}", instance_id), mask);
+
+        auto op = [instance_id, &depth, &segmask, &zbuf]
+            (const tbb::blocked_range<int> &range) {
+            for (int i = range.begin(); i < range.end(); ++i) {
+                for (int j = 0; j < depth.cols; ++j) {
+                    float val(depth.at<float>(i, j));
+                    if (val > 0) {
+                        // only on foreground
+                        float zbuf_val(zbuf.at<float>(i, j));
+                        if (zbuf_val == 0 || val < zbuf_val) {
+                            zbuf.at<float>(i, j) = val;
+                            segmask.at<int32_t>(i, j) = instance_id;
+                        }
+                    }
+                }
+            }};
+        tbb::parallel_for(tbb::blocked_range<int>(0, depth.rows), op);
     }
 
-    // MEAN CONTOUR OVERLAID ON INPUT IMAGE
+    // GENERATE COLOR-ENCODED DEPTH MAP
+    cv::Mat zbuf_viz = feh::tracker::PrettyZBuffer(zbuf);
+    auto segmask_viz = feh::tracker::PrettyLabelMap(segmask, cm);
+    auto shade_op = [&zbuf_viz, &segmask_viz]
+        (const tbb::blocked_range<int> &range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+            for (int j = 0; j < zbuf_viz.cols; ++j) {
+                if (zbuf_viz.at<uint8_t>(i, j) > 0)
+                    segmask_viz.at<cv::Vec3b>(i, j) *= zbuf_viz.at<uint8_t>(i, j) / 255.0;
+            }
+        }
+    };
+    tbb::parallel_for(tbb::blocked_range<int>(0, zbuf_viz.rows), shade_op);
+    for (int i = 0; i < segmask_viz.rows; ++i) {
+        for (int j = 0; j < segmask_viz.cols; ++j) {
+            auto color = segmask_viz.at<cv::Vec3b>(i, j);
+            if (!(color[0] == 255 && color[1] == 255 && color[2] == 255)) {
+                input_with_contour.at<cv::Vec3b>(i, j) = color;
+            }
+        }
+    }
+
+    cv::imshow("segmask", input_with_contour);
+    cv::imwrite(basename + "_mask.png", input_with_contour);
+
+//    cv::imshow("input with contour", input_with_contour);
+//    cv::imwrite(basename + "_contour.png", input_with_contour);
 
     cv::waitKey();
 
