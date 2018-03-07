@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         float cx = camera["cx"].getDouble();
         float cy = camera["cy"].getDouble();
         render_engine->SetCamera(z_near, z_far, fx, fy, cx, cy);
-        render_engine->SetCamera(gwc.inverse().matrix());
+//        render_engine->SetCamera(gwc.inverse().matrix());
         std::cout << "gwc=\n" << gwc.matrix() << "\n";
     }
 
@@ -91,25 +91,24 @@ int main(int argc, char **argv) {
                                    obj["model_name"].asString())
                   << pose << "\n";
 
+        Sophus::SE3f gwm(pose.block<3,3>(0,0), pose.block<3,1>(0, 3));
+        Sophus::SE3f gcm = gwc.inverse() * gwm;
+
 
         int instance_id = obj["id"].asInt();
         std::string model_name = obj["model_name"].asString();
-//        Eigen::Matrix<float, Eigen::Dynamic, 3> v;
-//        Eigen::Matrix<int, Eigen::Dynamic, 3> f;
-//        igl::readOBJ(, v, f);
-//        v = (v * pose.block<3, 3>(0,0)).rowwise() + pose.block<3, 1>(0, 3).transpose();
         std::vector<float> v;
         std::vector<int> f;
         feh::io::LoadMeshFromObjFile(
             folly::sformat("{}/{}.obj", database_dir, model_name),
             v, f);
         render_engine->SetMesh(v, f);
-        Eigen::Matrix4f g;
-        g.setIdentity();
-        g.block<3, 4>(0, 0) = pose;
         cv::Mat depth(render_engine->rows(), render_engine->cols(), CV_32FC1);
-        render_engine->RenderDepth(g, depth);
+        render_engine->RenderDepth(gcm.matrix(), depth);
         cv::imshow(folly::sformat("depth#{}", instance_id), depth);
+//        cv::Mat mask(render_engine->rows(), render_engine->cols(), CV_8UC1);
+//        render_engine->RenderMask(gcm.matrix(), mask);
+//        cv::imshow(folly::sformat("mask#{}", instance_id), mask);
     }
 
     // MEAN CONTOUR OVERLAID ON INPUT IMAGE
