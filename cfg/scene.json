@@ -1,17 +1,20 @@
 {
   "configure_files": {
-    "chair": "../cfg/chair_tracker.json"
+    "chair": "../cfg/chair_tracker.json",
+    "couch": "../cfg/couch_tracker.json"
   },
 
   "bbox_score_thresh": {
-    "chair": 0.6
+    "chair": 0.6,
+    "couch": 0.6
   },
 
   "bbox_area_thresh": {
-    "chair": 0.05
+    "chair": 0.05,
+    "couch": 0.05
   },
 
-  "camera_config": "../cfg/camera.json",
+  "camera_config": "../cfg/camera_icl.json",
 
   "result_logger": {
     "use": true,

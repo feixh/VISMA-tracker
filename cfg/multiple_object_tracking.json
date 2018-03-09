@@ -15,7 +15,7 @@
   "dataset_root": "/local/Data/ICL_NUIM/",
   "dataset": "lr_kt0",
 
-  "scene_config": "../cfg/scene_icl.json",
+  "scene_config": "../cfg/scene.json",
   "wait_time": 5,
   "start_index": 0,
   "save": true
