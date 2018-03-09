@@ -33,7 +33,14 @@ int main(int argc, char **argv) {
     wait_time = config["wait_time"].asInt();
 
 
-    feh::VlslamDatasetLoader loader(dataset_root);
+    std::shared_ptr<feh::VlslamDatasetLoader> loader;
+    if (config["datatype"].getString() == "VLSLAM") {
+        std::cout << dataset_root << "\n";
+        loader = std::make_shared<feh::VlslamDatasetLoader>(dataset_root);
+    } else if (config["datatype"].getString() == "ICL") {
+        std::cout << dataset_root << "\n";
+        loader = std::make_shared<feh::ICLDatasetLoader>(dataset_root);
+    }
 
     feh::tracker::Scene scene;
     scene.Initialize(config["scene_config"].asString());
@@ -49,14 +56,16 @@ int main(int argc, char **argv) {
     }
 
 
-    for (int i = 0; i < loader.size(); ++i) {
+    for (int i = 0; i < loader->size(); ++i) {
+        std::cout << "outer loop " <<  i << "/" << loader->size() << "\n";
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
         Sophus::SE3f gwc;
         Sophus::SO3f Rg;
 
         std::string imagepath;
-        loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        loader->Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        std::cout << imagepath << "\n";
         if (i == 0) {
             // global reference frame
             scene.SetInitCameraToWorld(gwc);

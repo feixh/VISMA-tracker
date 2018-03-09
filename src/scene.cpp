@@ -180,7 +180,7 @@ void Scene::Build2DView() {
     }
 
     // TRACKER STATUS
-    cv::Point2i debug_info_pos(display_.cols-240, 10);
+    cv::Point2i debug_info_pos(display_.cols-(display_.cols >> 2), 10);
     for (TrackerPtr tracker : trackers_) {
         std::string status_str = folly::sformat("T#{}-B#{}<{:0.2f}> s:{} v:{:0.2f} ({:0.1f}, {:0.1f})",
                                                 tracker->id(),

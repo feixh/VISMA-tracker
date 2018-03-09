@@ -80,87 +80,6 @@ bool LinemodDatasetLoader::Grab(int i,
     return true;
 }
 
-VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
-    dataroot_(dataroot){
-
-    std::ifstream in_file(dataroot_ + "/dataset");
-    CHECK(in_file.is_open()) << "failed to open dataset";
-
-    dataset_.ParseFromIstream(&in_file);
-    in_file.close();
-
-    if (!feh::Glob(dataroot_, ".png", png_files_)) {
-        LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
-    }
-
-//    for (int i = 0; i < png_files_.size(); ++i) {
-//        std::cout << png_files_[i] << "\n";
-//    }
-
-
-    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
-        LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
-    }
-
-    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
-        LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
-    }
-
-    CHECK_EQ(png_files_.size(), edge_files_.size());
-    CHECK_EQ(png_files_.size(), bbox_files_.size());
-    size_ = png_files_.size();
-}
-
-
-bool VlslamDatasetLoader::Grab(int i,
-                               cv::Mat &image,
-                               cv::Mat &edgemap,
-                               vlslam_pb::BoundingBoxList &bboxlist,
-                               Sophus::SE3f &gwc,
-                               Sophus::SO3f &Rg,
-                               std::string &fullpath) {
-    fullpath = png_files_[i];
-    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
-}
-
-bool VlslamDatasetLoader::Grab(int i,
-                               cv::Mat &image,
-                               cv::Mat &edgemap,
-                               vlslam_pb::BoundingBoxList &bboxlist,
-                               Sophus::SE3f &gwc,
-                               Sophus::SO3f &Rg) {
-
-    if (i >= size_ || i < 0) return false;
-    std::cout << i << "\n";
-
-    vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
-    gwc = Sophus::SE3f(feh::io::SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
-
-    // gravity alignment rotation
-    feh::Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
-    Rg = Sophus::SO3f::exp(Wg);
-
-    std::string png_file = png_files_[i];
-    std::string edge_file = edge_files_[i];
-    std::string bbox_file = bbox_files_[i];
-
-    // read image
-    image = cv::imread(png_file);
-    CHECK(!image.empty()) << "empty image: " << png_file;
-
-    // read edgemap
-    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
-        LOG(FATAL) << "failed to load edge map @ " << edge_file;
-    }
-
-    // read bounding box
-    std::ifstream in_file(bbox_file, std::ios::in);
-    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
-    bboxlist.ParseFromIstream(&in_file);
-    in_file.close();
-    return true;
-}
-
 RigidPoseDatasetLoader::RigidPoseDatasetLoader(
     const std::string &dataroot,
     const std::string &dataset,
@@ -258,6 +177,183 @@ Sophus::SE3f RigidPoseDatasetLoader::GetPose(int i) const {
     Eigen::Matrix3f R = Eigen::AngleAxisf(g_[i].tail<3>().norm(), g_[i].tail<3>()).toRotationMatrix();
     return Sophus::SE3f(Sophus::SO3f::fitToSO3(R), g_[i].head<3>());
 }
+
+VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
+    dataroot_(dataroot){
+
+    std::ifstream in_file(dataroot_ + "/dataset");
+    CHECK(in_file.is_open()) << "failed to open dataset";
+
+    dataset_.ParseFromIstream(&in_file);
+    in_file.close();
+
+    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+        LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
+    }
+
+//    for (int i = 0; i < png_files_.size(); ++i) {
+//        std::cout << png_files_[i] << "\n";
+//    }
+
+
+    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+        LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
+    }
+
+    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+        LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
+    }
+
+    CHECK_EQ(png_files_.size(), edge_files_.size());
+    CHECK_EQ(png_files_.size(), bbox_files_.size());
+    size_ = png_files_.size();
+}
+
+
+bool VlslamDatasetLoader::Grab(int i,
+                               cv::Mat &image,
+                               cv::Mat &edgemap,
+                               vlslam_pb::BoundingBoxList &bboxlist,
+                               Sophus::SE3f &gwc,
+                               Sophus::SO3f &Rg,
+                               std::string &fullpath) {
+    fullpath = png_files_[i];
+    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
+}
+
+bool VlslamDatasetLoader::Grab(int i,
+                               cv::Mat &image,
+                               cv::Mat &edgemap,
+                               vlslam_pb::BoundingBoxList &bboxlist,
+                               Sophus::SE3f &gwc,
+                               Sophus::SO3f &Rg) {
+
+    if (i >= size_ || i < 0) return false;
+    std::cout << i << "\n";
+
+    vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
+    gwc = Sophus::SE3f(feh::io::SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
+
+    // gravity alignment rotation
+    feh::Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
+    Rg = Sophus::SO3f::exp(Wg);
+
+    std::string png_file = png_files_[i];
+    std::string edge_file = edge_files_[i];
+    std::string bbox_file = bbox_files_[i];
+
+    // read image
+    image = cv::imread(png_file);
+    CHECK(!image.empty()) << "empty image: " << png_file;
+
+    // read edgemap
+    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+        LOG(FATAL) << "failed to load edge map @ " << edge_file;
+    }
+
+    // read bounding box
+    std::ifstream in_file(bbox_file, std::ios::in);
+    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
+    bboxlist.ParseFromIstream(&in_file);
+    in_file.close();
+    return true;
+}
+
+ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot):
+    dataroot_(dataroot) {
+
+
+    // load camera pose
+    std::ifstream fid(dataroot_ + "/traj", std::ios::in);
+    CHECK(fid.is_open()) << "failed to open pose file";
+    float tmp[12];
+    for (;;) {
+        Sophus::SE3f pose;
+        for (int i = 0; i < 12; ++i) if (!(fid >> tmp[i])) break;
+        pose.setRotationMatrix((Mat3f() << tmp[0], tmp[1], tmp[2],
+            tmp[4], tmp[5], tmp[6],
+            tmp[8], tmp[9], tmp[10]).finished());
+        pose.translation() << tmp[3], tmp[7], tmp[8];
+        poses_.push_back(pose);
+//        std::cout << "pose=\n" << pose.matrix3x4() << "\n";
+        if (fid.eof()) break;
+    }
+    fid.close();
+
+    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+        LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
+    }
+    // remove leading and trailing item
+    png_files_.pop_back();
+    png_files_.erase(png_files_.begin());
+
+    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+        LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
+    }
+    edge_files_.pop_back();
+    edge_files_.erase(edge_files_.begin());
+
+    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+        LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
+    }
+    bbox_files_.pop_back();
+    bbox_files_.erase(bbox_files_.begin());
+
+    CHECK_EQ(png_files_.size(), edge_files_.size());
+    CHECK_EQ(png_files_.size(), bbox_files_.size());
+//    CHECK_EQ(png_files_.size(), poses_.size());
+    poses_.resize(png_files_.size());   // HACK: STUPID FILE IO
+    size_ = png_files_.size();
+}
+
+
+bool ICLDatasetLoader::Grab(int i,
+                            cv::Mat &image,
+                            cv::Mat &edgemap,
+                            vlslam_pb::BoundingBoxList &bboxlist,
+                            Sophus::SE3f &gwc,
+                            Sophus::SO3f &Rg) {
+
+    if (i >= size_ || i < 0) return false;
+    std::cout << i << "/" << size_ << "\n";
+
+
+    gwc = poses_[i];
+    // FIXME: MAKE UP GRAVITY
+    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+
+    std::string png_file = png_files_[i];
+    std::string edge_file = edge_files_[i];
+    std::string bbox_file = bbox_files_[i];
+
+    // read image
+    image = cv::imread(png_file);
+    CHECK(!image.empty()) << "empty image: " << png_file;
+
+    // read edgemap
+    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+        LOG(FATAL) << "failed to load edge map @ " << edge_file;
+    }
+
+    // read bounding box
+    std::ifstream in_file(bbox_file, std::ios::in);
+    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
+    bboxlist.ParseFromIstream(&in_file);
+    in_file.close();
+    return true;
+}
+
+bool ICLDatasetLoader::Grab(int i,
+                               cv::Mat &image,
+                               cv::Mat &edgemap,
+                               vlslam_pb::BoundingBoxList &bboxlist,
+                               Sophus::SE3f &gwc,
+                               Sophus::SO3f &Rg,
+                               std::string &fullpath) {
+    fullpath = png_files_[i];
+    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
+}
+
 
 
 }   // namespace feh

@@ -69,9 +69,14 @@ bool Glob(const std::string &directory,
                 filenames.push_back(entry_name.substr(0, entry_name.length() - suffix.length()));
             }
         }
-        std::sort(filenames.begin(),
-                  filenames.end(),
-                  [](const std::string &a, const std::string &b) { return std::stof(a) < std::stof(b); });
+        try {
+            std::sort(filenames.begin(),
+                      filenames.end(),
+                      [](const std::string &a, const std::string &b) { return std::stof(a) < std::stof(b); });
+        } catch (const std::invalid_argument &e) {
+            std::sort(filenames.begin(),
+                      filenames.end());
+        }
         for (auto &filename: filenames) filename = path + filename + suffix;
         closedir(dir_ptr);
         return true;
@@ -98,9 +103,14 @@ bool Glob(const std::string &directory,
                                                       entry_name.length() - suffix.length() - prefix.length()));
             }
         }
-        std::sort(filenames.begin(),
-                  filenames.end(),
-                  [](const std::string &a, const std::string &b) { return std::stof(a) < std::stof(b); });
+        try {
+            std::sort(filenames.begin(),
+                      filenames.end(),
+                      [](const std::string &a, const std::string &b) { return std::stof(a) < std::stof(b); });
+        } catch (const std::invalid_argument &e) {
+            std::sort(filenames.begin(),
+                      filenames.end());
+        }
         for (auto &filename: filenames) filename = path + prefix + filename + suffix;
         closedir(dir_ptr);
         return true;

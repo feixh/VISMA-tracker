@@ -38,7 +38,10 @@ if __name__ == '__main__':
         save_path = os.path.join(args.path, '..')
     elif os.path.isdir(args.path):
         filenames = glob.glob(args.path + '/*.png')
-        filenames.sort(key=lambda x: float(os.path.basename(x)[:-4]))
+        try:
+            filenames.sort(key=lambda x: float(os.path.basename(x)[:-4]))
+        except ValueError:
+            filenames.sort()
         save_path = args.path
 
     plt.ion()

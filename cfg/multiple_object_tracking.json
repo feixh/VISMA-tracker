@@ -1,17 +1,22 @@
 {
-  "dataset_root": "/local/feixh/experiments/",
+//  "dataset_root": "/local/feixh/experiments/",
 //    "dataset_root": "/local/feixh/tmp/",
- "dataset": "clutter1",
-  "dataset": "clutter2",
-  "dataset": "occlusion1",
-  "dataset": "occlusion2",
-  "dataset": "chairs_around",
-  "dataset": "long_walk",
+// "dataset": "clutter1",
+//  "dataset": "clutter2",
+//  "dataset": "occlusion1",
+//  "dataset": "occlusion2",
+//  "dataset": "chairs_around",
+//  "dataset": "long_walk",
   //  "dataset": "meeting_area1",
   //  "dataset": "meeting_area2",
   //  "dataset": "double_swivel_chairs_whiteboard",
-  "scene_config": "../cfg/scene.json",
+
+  "datatype": "ICL", // other options: VLSLAM, SceneNN
+  "dataset_root": "/local/Data/ICL_NUIM/",
+  "dataset": "lr_kt0",
+
+  "scene_config": "../cfg/scene_icl.json",
   "wait_time": 5,
-  "start_index": 300,
+  "start_index": 0,
   "save": true
 }

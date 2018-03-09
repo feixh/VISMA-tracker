@@ -52,6 +52,7 @@ public:
 
 class VlslamDatasetLoader {
 public:
+    VlslamDatasetLoader() {}
     VlslamDatasetLoader(const std::string &dataroot);
     /// \brief: Grab datum at index i.
     /// \param i: index
@@ -60,12 +61,39 @@ public:
     /// \param bboxlist:
     /// \param gwc: camera to world transformation
     /// \param Rg: gravity rotation
+    virtual bool Grab(int i,
+                      cv::Mat &image,
+                      cv::Mat &edgemap,
+                      vlslam_pb::BoundingBoxList &bboxlist,
+                      Sophus::SE3f &gwc,
+                      Sophus::SO3f &Rg);
+    /// \param fullpath: full path to the image file
+    virtual bool Grab(int i,
+                      cv::Mat &image,
+                      cv::Mat &edgemap,
+                      vlslam_pb::BoundingBoxList &bboxlist,
+                      Sophus::SE3f &gwc,
+                      Sophus::SO3f &Rg,
+                      std::string &fullpath);
+
+    virtual int size() const { return size_; }
+private:
+    std::string dataroot_;
+    vlslam_pb::Dataset dataset_;
+    std::vector<std::string> png_files_, edge_files_, bbox_files_;
+    int size_;
+};
+
+class ICLDatasetLoader : public VlslamDatasetLoader {
+public:
+    ICLDatasetLoader(const std::string &dataroot);
+
     bool Grab(int i,
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
               Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg);
+              Sophus::SO3f &Rg) override ;
     /// \param fullpath: full path to the image file
     bool Grab(int i,
               cv::Mat &image,
@@ -73,15 +101,15 @@ public:
               vlslam_pb::BoundingBoxList &bboxlist,
               Sophus::SE3f &gwc,
               Sophus::SO3f &Rg,
-              std::string &fullpath);
+              std::string &fullpath) override;
 
-    int size() const { return size_; }
+    int size() const override { return size_; }
 private:
     std::string dataroot_;
     vlslam_pb::Dataset dataset_;
     std::vector<std::string> png_files_, edge_files_, bbox_files_;
+    std::vector<Sophus::SE3f> poses_;
     int size_;
-
 };
 
 /// \link: http://www.karlpauwels.com/datasets/rigid-pose/
