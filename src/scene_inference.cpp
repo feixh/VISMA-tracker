@@ -328,7 +328,7 @@ void Scene::MergeObjects() {
 void Scene::EliminateBadObjects() {
     for (auto it = trackers_.begin(); it != trackers_.end(); ) {
         Vec3f c = (*it)->CentroidInCurrentView();
-        if ((*it)->status() != TrackerStatus::OUT_OF_VIEW && c(2) <= 0.2 ) {
+        if ((*it)->status() != TrackerStatus::OUT_OF_VIEW && c(2) <= 0.0 ) {
             std::cout << TermColor::bold+TermColor::red << "ELIMINATE OBJECTS CLOSE TO THE CAMERA: #" << (*it)->id() << TermColor::endl;
             it = trackers_.erase(it);
         } else {
@@ -336,7 +336,7 @@ void Scene::EliminateBadObjects() {
             int size = mask.rows * mask.cols;
             auto total = std::count_if(mask.data, mask.data + size,
                                        [](uint8_t p) { return p == 0;});
-            if (total > 0.33 * size) {
+            if (total > 0.5 * size) {
                 std::cout << TermColor::bold+TermColor::red << "ELIMINATE OBJECTS COVERING MOST OF THE IMAGE: #" << (*it)->id() << TermColor::endl;
                 it = trackers_.erase(it);
             } else ++it;

@@ -322,7 +322,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 timer_.Tock("particle update");
 
                 // ESTABLISH CONVERGENCE CRITERION HERE
-                if (StationaryEnough() && CloseEnough(0.85, 10, 0.0)) {
+                if (/*StationaryEnough()  && */ CloseEnough(0.75, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
                     proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
                      azi_uniform_mix_ = 0;
@@ -361,7 +361,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                     return kObjectOutOfView;
                 } else {
                     // FIXME: need to tune parameters
-                    if (!CloseEnough(0.75, 15, 0.0)) {
+                    if (!CloseEnough(0.65, 15, 0.0)) {
                         status_ = TrackerStatus::INITIALIZING;
                         auto filter_cfg = config_["filter"];
                         keep_id_prob_ = filter_cfg["keep_shape_id_probability"].asDouble();
@@ -420,6 +420,8 @@ int Tracker::Update(const cv::Mat &in_evidence,
         }
 //        else used_bbox_index = kTooManyInitializationTrials;
     }
+
+//    if (quality_.CNN_score_ < 0.2) used_bbox_index = kTooManyInitializationTrials;
 
 
     // switch to full meshes for visualization

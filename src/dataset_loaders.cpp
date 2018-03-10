@@ -271,7 +271,7 @@ ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot) {
         pose.setRotationMatrix((Mat3f() << tmp[0], tmp[1], tmp[2],
             tmp[4], tmp[5], tmp[6],
             tmp[8], tmp[9], tmp[10]).finished());
-        pose.translation() << tmp[3], tmp[7], tmp[8];
+        pose.translation() << tmp[3], tmp[7], tmp[11];
         poses_.push_back(pose);
 //        std::cout << "pose=\n" << pose.matrix3x4() << "\n";
         if (fid.eof()) break;
@@ -367,7 +367,7 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
             (Mat3f() << tmp[0], tmp[1], tmp[2],
                 tmp[4], tmp[5], tmp[6],
                 tmp[8], tmp[9], tmp[10]).finished());
-        pose.translation() << tmp[3], tmp[7], tmp[8];
+        pose.translation() << tmp[3], tmp[7], tmp[11];
         poses_.push_back(pose);
 //        std::cout << "pose=\n" << pose.matrix3x4() << "\n";
         if (fid.eof()) break;
