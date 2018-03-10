@@ -18,7 +18,7 @@
     "keep_shape_id_probability": 0.6,
     "initial_depth": 2.5,
     "initial_azimuth_interval": 15,
-    "initialization_num_particles": 500,
+    "initialization_num_particles": 1000,
     "tracking_num_particles": 500,
     "initialized_thresh": 0.8,
     "reinitialization_thresh": 0.7,

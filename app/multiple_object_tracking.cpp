@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
 
 
     std::shared_ptr<feh::VlslamDatasetLoader> loader;
+    bool is_sceneNN(false);
     if (config["datatype"].getString() == "VLSLAM") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::VlslamDatasetLoader>(dataset_root);
@@ -43,6 +44,7 @@ int main(int argc, char **argv) {
     } else if (config["datatype"].getString() == "SceneNN") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::SceneNNDatasetLoader>(dataset_root);
+        is_sceneNN = true;
     }
 
     feh::tracker::Scene scene;
@@ -71,7 +73,11 @@ int main(int argc, char **argv) {
         std::cout << imagepath << "\n";
         if (i == 0) {
             // global reference frame
-            scene.SetInitCameraToWorld(gwc);
+            if (is_sceneNN) {
+                scene.SetInitCameraToWorld(Sophus::SE3f{});
+            } else {
+                scene.SetInitCameraToWorld(gwc);
+            }
         } else if (i < start_index) {
             continue;
         }

@@ -166,10 +166,11 @@ void Tracker::Initialize(const std::string &config_file) {
     auto cad_list = io::LoadMeshDatabase(config_["CAD_database_root"].asString(), config_["CAD_category_json"].asString());
     for (int i = 0; i < cad_list.size(); ++i) {
         shape_ids_.push_back(i);
-        shapes_[i].name_ = cad_list[i].substr(0, cad_list[i].find('.'));
+        shapes_[i].name_ = cad_list[i];
 
         try {
             std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + ".obj";
+            std::cout << "loading mesh @ " << mesh_file << "\n";
             std::tie(shapes_[i].vertices_, shapes_[i].faces_) = io::LoadMeshFromObjFile(mesh_file);
         } catch (std::exception &e) {
             std::cout << TermColor::red << e.what() << TermColor::endl;
@@ -178,6 +179,7 @@ void Tracker::Initialize(const std::string &config_file) {
         if (use_partial_mesh_) {
             try {
                 std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + "_part.obj";
+                std::cout << "loading partial mesh @ " << mesh_file << "\n";
                 std::tie(shapes_[i].part_vertices_, shapes_[i].part_faces_) = io::LoadMeshFromObjFile(mesh_file);
             } catch (std::exception &e){
                 std::cout << TermColor::red << e.what() << TermColor::endl;
