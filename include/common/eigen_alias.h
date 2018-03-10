@@ -20,6 +20,7 @@ using Mat34f = Eigen::Matrix<float, 3, 4>;
 using Mat23f = Eigen::Matrix<float, 2, 3>;
 using Mat24f = Eigen::Matrix<float, 2, 4>;
 using MatXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+using MatX3f = Eigen::Matrix<float, Eigen::Dynamic, 3>;
 
 using Mat3d = Eigen::Matrix<double, 3, 3>;
 using Mat4d = Eigen::Matrix<double, 4, 4>;
@@ -27,6 +28,7 @@ using Mat34d = Eigen::Matrix<double, 3, 4>;
 using Mat23d = Eigen::Matrix<double, 2, 3>;
 using Mat24d = Eigen::Matrix<double, 2, 4>;
 using MatXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+using MatX3d = Eigen::Matrix<double, Eigen::Dynamic, 3>;
 
 using Vec2f = Eigen::Matrix<float, 2, 1>;
 using Vec3f = Eigen::Matrix<float, 3, 1>;
@@ -43,6 +45,7 @@ using Vec3i = Eigen::Matrix<int, 3, 1>;
 using Vec4i = Eigen::Matrix<int, 4, 1>;
 using VecXi = Eigen::Matrix<int, Eigen::Dynamic, 1>;
 using MatXi = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic>;
+using MatX3i = Eigen::Matrix<int, Eigen::Dynamic, 3>;
 
 static const float eps = 1e-4f;
 

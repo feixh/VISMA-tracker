@@ -169,6 +169,10 @@ add_executable(tool
         src/visualization.cpp)
 target_link_libraries(tool feh)
 
+add_executable(evaluation_scenenn
+        app/evaluation_scenenn.cpp)
+target_link_libraries(evaluation_scenenn feh)
+
 add_executable(inspector app/inspector.cpp)
 target_link_libraries(inspector feh)
 
