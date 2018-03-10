@@ -5,6 +5,9 @@
 #include "geometry.h"
 #include "io_utils.h"
 
+// stl
+#include <sstream>
+
 // 3rd party
 #include "folly/dynamic.h"
 #include "folly/json.h"
@@ -15,6 +18,24 @@
 
 using namespace feh;
 
+std::list<std::array<double, 10>> GetOBBoxFromAnnotation(const folly::dynamic &annotation) {
+    std::list<std::array<double, 10>> obbox_list;
+    folly::dynamic labels = annotation["annotation"]["label"];
+    for (auto each : labels) {
+        bool is_chair = false;
+        if (each.getDefault("-text", "invalid") == "chair") {
+            std::cout << each["-obbox"].getString() << "\n";
+            std::array<double, 10> obbox;
+            std::istringstream(each["-obbox"].getString()) >> obbox[0] >> obbox[1] >> obbox[2]
+                                                           >> obbox[3] >> obbox[4] >> obbox[5]
+                                                           >> obbox[6] >> obbox[7] >> obbox[8]
+                                                           >> obbox[9];
+            obbox_list.push_back(obbox);
+        }
+    }
+    return obbox_list;
+}
+
 int main() {
     std::string contents;
     folly::readFile("../cfg/scenenn.json", contents);
@@ -24,10 +45,18 @@ int main() {
     dataroot = dataroot + "/" + dataset + "/";
     std::string database_dir = dataroot;
 
+//    // load annotation
+//    folly::readFile((dataroot+dataset+".json").c_str(), contents);
+//    GetOBBoxFromAnnotation(folly::parseJson((folly::json::stripComments(contents))));
+//    exit(0);
+
     // load ground truth scene mesh
     MatX3d Vg;
     MatX3i Fg;
-    igl::readPLY(dataroot+dataset+".ply", Vg, Fg);
+    igl::readOBJ(dataroot+dataset+"_objects.obj", Vg, Fg);
+
+    // save out ground truth for inspection
+    igl::writeOBJ(dataroot+"tmp.obj", Vg, Fg);
 
     // locate the object poses
     folly::readFile((dataroot+"result.json").c_str(), contents);
