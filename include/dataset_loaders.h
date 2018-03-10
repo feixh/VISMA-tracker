@@ -77,7 +77,7 @@ public:
                       std::string &fullpath);
 
     virtual int size() const { return size_; }
-private:
+protected:
     std::string dataroot_;
     vlslam_pb::Dataset dataset_;
     std::vector<std::string> png_files_, edge_files_, bbox_files_;
@@ -102,14 +102,29 @@ public:
               Sophus::SE3f &gwc,
               Sophus::SO3f &Rg,
               std::string &fullpath) override;
-
-    int size() const override { return size_; }
 private:
-    std::string dataroot_;
-    vlslam_pb::Dataset dataset_;
-    std::vector<std::string> png_files_, edge_files_, bbox_files_;
     std::vector<Sophus::SE3f> poses_;
-    int size_;
+};
+
+class SceneNNDatasetLoader : public VlslamDatasetLoader {
+public:
+    SceneNNDatasetLoader(const std::string &dataroot);
+    bool Grab(int i,
+              cv::Mat &image,
+              cv::Mat &edgemap,
+              vlslam_pb::BoundingBoxList &bboxlist,
+              Sophus::SE3f &gwc,
+              Sophus::SO3f &Rg) override ;
+    /// \param fullpath: full path to the image file
+    bool Grab(int i,
+              cv::Mat &image,
+              cv::Mat &edgemap,
+              vlslam_pb::BoundingBoxList &bboxlist,
+              Sophus::SE3f &gwc,
+              Sophus::SO3f &Rg,
+              std::string &fullpath) override;
+private:
+    std::vector<Sophus::SE3f> poses_;
 };
 
 /// \link: http://www.karlpauwels.com/datasets/rigid-pose/

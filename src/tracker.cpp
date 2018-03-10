@@ -492,7 +492,7 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
     int best_bbox_index(kCompatibleBBoxNotFound);
     int counter(0);
     for (const auto &bbox : bbox_list0_.bounding_boxes()) {
-        CHECK_EQ(bbox.class_name(), class_name_ );
+//        CHECK_EQ(bbox.class_name(), class_name_ );
         if (bbox.label() != -1) {   // SUPER HACK: RE-USE LABEL FIELD AS ACTIVE/INACTIVE FLAG
             // scale bounding boxes accordingly
             float iou = ComputeIoU(rect,

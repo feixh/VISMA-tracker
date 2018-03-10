@@ -179,7 +179,7 @@ Sophus::SE3f RigidPoseDatasetLoader::GetPose(int i) const {
 }
 
 VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
-    dataroot_(dataroot){
+dataroot_(dataroot) {
 
     std::ifstream in_file(dataroot_ + "/dataset");
     CHECK(in_file.is_open()) << "failed to open dataset";
@@ -259,10 +259,8 @@ bool VlslamDatasetLoader::Grab(int i,
     return true;
 }
 
-ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot):
-    dataroot_(dataroot) {
-
-
+ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot) {
+    dataroot_ = dataroot;
     // load camera pose
     std::ifstream fid(dataroot_ + "/traj", std::ios::in);
     CHECK(fid.is_open()) << "failed to open pose file";
@@ -319,7 +317,7 @@ bool ICLDatasetLoader::Grab(int i,
 
 
     gwc = poses_[i];
-    // FIXME: MAKE UP GRAVITY
+    // world frame is already gravity aligned thanks to the nice ICL-NUIM dataset
     Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
 
     std::string png_file = png_files_[i];
@@ -350,6 +348,94 @@ bool ICLDatasetLoader::Grab(int i,
                                Sophus::SE3f &gwc,
                                Sophus::SO3f &Rg,
                                std::string &fullpath) {
+    fullpath = png_files_[i];
+    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
+}
+
+SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
+    dataroot_ = dataroot;
+    // load camera pose
+    std::ifstream fid(dataroot_ + "/trajectory.log", std::ios::in);
+    CHECK(fid.is_open()) << "failed to open pose file";
+    float tmp[16];
+    for (;;) {
+        Sophus::SE3f pose;
+        int x;
+        fid >> x; fid >> x; fid >> x;
+        for (int i = 0; i < 16; ++i) if (!(fid >> tmp[i])) break;
+        pose.so3() = Sophus::SO3f::fitToSO3(
+            (Mat3f() << tmp[0], tmp[1], tmp[2],
+                tmp[4], tmp[5], tmp[6],
+                tmp[8], tmp[9], tmp[10]).finished());
+        pose.translation() << tmp[3], tmp[7], tmp[8];
+        poses_.push_back(pose);
+//        std::cout << "pose=\n" << pose.matrix3x4() << "\n";
+        if (fid.eof()) break;
+    }
+    fid.close();
+    size_ = std::min<int>(std::numeric_limits<int>::max(), poses_.size());
+
+    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+        LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
+    }
+    // remove leading and trailing item
+    size_ = std::min<int>(png_files_.size(), size_);
+
+    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+        LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
+    }
+    size_ = std::min<int>(edge_files_.size(), size_);
+
+    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+        LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
+    }
+    size_ = std::min<int>(bbox_files_.size(), size_);
+}
+
+
+bool SceneNNDatasetLoader::Grab(int i,
+                            cv::Mat &image,
+                            cv::Mat &edgemap,
+                            vlslam_pb::BoundingBoxList &bboxlist,
+                            Sophus::SE3f &gwc,
+                            Sophus::SO3f &Rg) {
+
+    if (i >= size_ || i < 0) return false;
+    std::cout << i << "/" << size_ << "\n";
+
+
+    gwc = poses_[i];
+    // FIXME: MAKE UP GRAVITY
+    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+
+    std::string png_file = png_files_[i];
+    std::string edge_file = edge_files_[i];
+    std::string bbox_file = bbox_files_[i];
+
+    // read image
+    image = cv::imread(png_file);
+    CHECK(!image.empty()) << "empty image: " << png_file;
+
+    // read edgemap
+    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+        LOG(FATAL) << "failed to load edge map @ " << edge_file;
+    }
+
+    // read bounding box
+    std::ifstream in_file(bbox_file, std::ios::in);
+    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
+    bboxlist.ParseFromIstream(&in_file);
+    in_file.close();
+    return true;
+}
+
+bool SceneNNDatasetLoader::Grab(int i,
+                            cv::Mat &image,
+                            cv::Mat &edgemap,
+                            vlslam_pb::BoundingBoxList &bboxlist,
+                            Sophus::SE3f &gwc,
+                            Sophus::SO3f &Rg,
+                            std::string &fullpath) {
     fullpath = png_files_[i];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
 }

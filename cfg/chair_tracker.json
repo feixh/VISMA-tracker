@@ -1,10 +1,11 @@
 {
-  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
+//  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
+  "CAD_database_root": "/local/Data/SceneNN/047/",
   "CAD_category_json": "chair.json",
 
   "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
   "max_num_allowed_null_observations": 15,
-  "camera_config": "../cfg/camera_icl.json",
+  "camera_config": "../cfg/camera_scenenn.json",
 
   "fixed_seed": false,
   "do_filtering": true,

@@ -40,6 +40,9 @@ int main(int argc, char **argv) {
     } else if (config["datatype"].getString() == "ICL") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::ICLDatasetLoader>(dataset_root);
+    } else if (config["datatype"].getString() == "SceneNN") {
+        std::cout << dataset_root << "\n";
+        loader = std::make_shared<feh::SceneNNDatasetLoader>(dataset_root);
     }
 
     feh::tracker::Scene scene;

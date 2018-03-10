@@ -14,7 +14,7 @@
     "couch": 0.05
   },
 
-  "camera_config": "../cfg/camera_icl.json",
+  "camera_config": "../cfg/camera_scenenn.json",
 
   "result_logger": {
     "use": true,

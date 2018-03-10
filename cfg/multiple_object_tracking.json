@@ -11,9 +11,9 @@
   //  "dataset": "meeting_area2",
   //  "dataset": "double_swivel_chairs_whiteboard",
 
-  "datatype": "ICL", // other options: VLSLAM, SceneNN
-  "dataset_root": "/local/Data/ICL_NUIM/",
-  "dataset": "lr_kt0",
+  "datatype": "SceneNN", // other options: VLSLAM, SceneNN
+  "dataset_root": "/local/Data/SceneNN/",
+  "dataset": "047",
 
   "scene_config": "../cfg/scene.json",
   "wait_time": 5,
