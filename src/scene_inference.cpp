@@ -279,8 +279,9 @@ void Scene::UpdateLog() {
         io::WriteMatrixToDynamic(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
         obj_array.push_back(tracker_obj);
     }
-    folly::dynamic data = folly::dynamic::object(frame_counter_, obj_array);
-    if (!obj_array.empty()) {
+    folly::dynamic data = folly::dynamic::object(std::to_string(frame_counter_), obj_array);
+//    if (!obj_array.empty())
+    {
         log_.push_back(obj_array);
     }
 }
