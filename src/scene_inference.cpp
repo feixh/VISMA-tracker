@@ -296,8 +296,8 @@ bool Scene::BBoxTooCloseToBoundary(const vlslam_pb::BoundingBox &bbox) const {
 
     bool bad2 = bad1;
 
-    bad2 = bad2 || bbox.top_left_x() < 0.01 * cols_ || bbox.top_left_y() < 0.01 * rows_
-    || bbox.bottom_right_x() > 0.99 * cols_ || bbox.bottom_right_y() > 0.99 * rows_;
+//    bad2 = bad2 || bbox.top_left_x() < 0.01 * cols_ || bbox.top_left_y() < 0.01 * rows_
+//    || bbox.bottom_right_x() > 0.99 * cols_ || bbox.bottom_right_y() > 0.99 * rows_;
 
     return bad2;
 }
@@ -310,19 +310,27 @@ bool Scene::BBoxBadAspectRatio(const vlslam_pb::BoundingBox &bbox) const {
 }
 
 void Scene::MergeObjects() {
-    for (auto it = trackers_.begin(); it != trackers_.end(); ++it) {
+    for (auto it = trackers_.begin(); it != trackers_.end(); ) {
+        bool good(true);
         for (auto it2 = std::next(it); it2 != trackers_.end(); ) {
             auto c1 = (*it)->pose().block<3, 1>(0, 3);
             auto c2 = (*it2)->pose().block<3, 1>(0, 3);
-            if ((c1.head<2>()-c2.head<2>()).norm() < 0.5
-                && as_integer((*it)->status()) >= as_integer((*it2)->status())) {
-                // IF IT2 HAS HIGHER PRIORITY, DO NOT REMOVE IT
-                it2 = trackers_.erase(it2);
-                std::cout << TermColor::bold+TermColor::red << "MERGING REDUDANT OBJECT" << TermColor::endl;
-                std::cout << "c1=" << c1.transpose() << "c2=" << c2.transpose() << "\n";
-
-            } else ++it2;
+            if ((c1-c2).norm() < 0.5) {
+                if (as_integer((*it)->status()) >= as_integer((*it2)->status())) {
+                    // IF IT2 HAS HIGHER PRIORITY, DO NOT REMOVE IT
+                    it2 = trackers_.erase(it2);
+                    std::cout << TermColor::bold+TermColor::red << "MERGING REDUDANT OBJECT" << TermColor::endl;
+                    std::cout << "c1=" << c1.transpose() << "c2=" << c2.transpose() << "\n";
+                } else {
+                    it = trackers_.erase(it);
+                    good = false;
+                    break;
+                }
+            } else {
+                ++it2;
+            }
         }
+        if (good) ++it;
     }
 }
 
@@ -337,7 +345,7 @@ void Scene::EliminateBadObjects() {
             int size = mask.rows * mask.cols;
             auto total = std::count_if(mask.data, mask.data + size,
                                        [](uint8_t p) { return p == 0;});
-            if (total > 0.5 * size) {
+            if (total > 0.9 * size) {
                 std::cout << TermColor::bold+TermColor::red << "ELIMINATE OBJECTS COVERING MOST OF THE IMAGE: #" << (*it)->id() << TermColor::endl;
                 it = trackers_.erase(it);
             } else ++it;

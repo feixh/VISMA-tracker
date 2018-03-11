@@ -335,6 +335,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                     particles_.Subsample(config_["filter"]["tracking_num_particles"].asInt());
                     timer_.Reset();
                     initialization_counter_ = 0;
+                    no_observation_counter_ = 0;
 
 //                    for (auto kv : shapes_) {
 //                        for (auto r : kv.second.render_engines_) {
@@ -389,6 +390,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
 
                         timer_.Reset();
                         initialization_counter_ = 0;
+                        no_observation_counter_ = 0;
 
 //                        for (auto kv : shapes_) {
 //                            for (auto r : kv.second.render_engines_) {
