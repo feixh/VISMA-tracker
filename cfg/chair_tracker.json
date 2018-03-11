@@ -1,6 +1,6 @@
 {
 //  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
-  "CAD_database_root": "/local/Data/SceneNN/025/",
+  "CAD_database_root": "/local/Data/SceneNN/080/",
   "CAD_category_json": "chair.json",
 
   "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
@@ -27,7 +27,7 @@
     "use_CNN": true,
     "CNN_probability_threshold": 1e-10, // set zero weight if confidence below this
     "CNN_log_likelihood_weight": 50, // CNN log likelihood weight
-    "log_likelihood_weight": 400.0,
+    "log_likelihood_weight": 200.0,
     "log_prior_weight": 0.0,
     "log_proposal_weight": 0.0,
     "average_distance_weight": 1.0,
@@ -62,7 +62,7 @@
     "step_length": 1,
     "search_line_length": 40,
     "intensity_thresh": 64,
-    "direction_thresh": 0.85,
+    "direction_thresh": 0.8,
     "parallel": true
   },
 

@@ -36,12 +36,13 @@ std::list<std::array<double, 10>> GetOBBoxFromAnnotation(const folly::dynamic &a
     return obbox_list;
 }
 
-int main() {
+int main(int argc, char **argv) {
     std::string contents;
     folly::readFile("../cfg/scenenn.json", contents);
     folly::dynamic config = folly::parseJson(folly::json::stripComments(contents));
     std::string dataroot = config["dataroot"].getString();
     std::string dataset  = config["dataset"].getString();
+    if (argc > 1) dataset = argv[1];    // overwrite dataset
     dataroot = dataroot + "/" + dataset + "/";
     std::string database_dir = dataroot;
 
@@ -74,10 +75,10 @@ int main() {
         objects.push_back(std::make_pair(model_name, pose));
     }
 
-
     // assemble result scene mesh
     std::vector<Vec3d> vertices;
     std::vector<Vec3i> faces;
+    std::vector<std::pair<MatX3d, MatX3i>> vf;
     for (const auto &obj : objects) {
         std::string model_name = obj.first;
         auto pose = obj.second;
@@ -88,13 +89,38 @@ int main() {
         std::cout << "v.size=" << v.rows() << "x" << v.cols() << "\n";
         // TRANSFORM TO SCENE FRAME
         v.leftCols(3) = (v.leftCols(3) * pose.block<3,3>(0,0).transpose()).rowwise() + pose.block<3, 1>(0, 3).transpose();
-//        v.leftCols(3) = (v.leftCols(3) * alignment.block<3,3>(0,0).transpose()).rowwise() + alignment.block<3, 1>(0, 3).transpose();
-        int v_offset = vertices.size();
-        for (int i = 0; i < v.rows(); ++i) {
-            vertices.push_back(v.row(i));
+        vf.push_back(std::make_pair(v, f));
+    }
+
+    //
+    std::vector<int> support_set;
+    int max_support_size;
+    double best_floor;
+    for (int i = 0; i < vf.size(); ++i) {
+        double floor = vf[i].first.col(1).minCoeff();
+        int support_size = 1;
+        for (int j = 0; j < vf.size(); ++j) {
+            if (i != j && fabs(vf[j].first.col(1).minCoeff()-floor) < 0.2) {
+                ++support_size;
+            }
         }
-        for (int i = 0; i < f.rows(); ++i) {
-            faces.push_back({v_offset + f(i, 0), v_offset + f(i, 1), v_offset + f(i, 2)});
+        if (support_size > max_support_size) {
+            max_support_size = support_size;
+            best_floor = floor;
+        }
+    }
+
+    for (int k = 0; k < vf.size(); ++k) {
+        auto v = vf[k].first;
+        auto f = vf[k].second;
+        int v_offset = vertices.size();
+        if (fabs(v.col(1).minCoeff()-best_floor) < 0.2) {
+            for (int i = 0; i < v.rows(); ++i) {
+                vertices.push_back(v.row(i));
+            }
+            for (int i = 0; i < f.rows(); ++i) {
+                faces.push_back({v_offset + f(i, 0), v_offset + f(i, 1), v_offset + f(i, 2)});
+            }
         }
     }
 
@@ -102,10 +128,12 @@ int main() {
     auto Fr = StdVectorOfEigenVectorToEigenMatrix(faces);
 
     // dump assembled mesh
+    std::cout << TermColor::cyan << "writing result.obj" << TermColor::endl;
     igl::writeOBJ(dataroot + "/result.obj", Vr, Fr);
 
     // compare reconstructed mesh to ground truth mesh
-    folly::dynamic options = folly::dynamic::object("num_samples", 500000);
+    folly::dynamic options = folly::dynamic::object("num_samples", 50000);
+    std::cout << TermColor::cyan << "computing surface error " << TermColor::endl;
     auto stats = MeasureSurfaceError(Vr, Fr, Vg, Fg, options);
 
     // save quantitative results
