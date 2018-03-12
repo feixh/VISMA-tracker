@@ -125,6 +125,7 @@ public:
               std::string &fullpath) override;
 private:
     std::vector<Sophus::SE3f> poses_;
+    int skip_head_, until_last_;
 };
 
 /// \link: http://www.karlpauwels.com/datasets/rigid-pose/

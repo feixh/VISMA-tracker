@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
         Sophus::SO3f Rg;
 
         std::string imagepath;
-        loader->Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        bool succeed = loader->Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        if (!succeed) break;
         std::cout << imagepath << "\n";
         if (i == 0) {
             // global reference frame

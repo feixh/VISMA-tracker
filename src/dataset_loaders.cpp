@@ -2,6 +2,12 @@
 // Created by feixh on 11/15/17.
 //
 #include "dataset_loaders.h"
+
+// 3rd party
+#include "folly/FileUtil.h"
+#include "folly/dynamic.h"
+#include "folly/json.h"
+
 // own
 #include "io_utils.h"
 #include "tracker_utils.h"
@@ -357,6 +363,20 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
     // load camera pose
     std::ifstream fid(dataroot_ + "/trajectory.log", std::ios::in);
     CHECK(fid.is_open()) << "failed to open pose file";
+
+    try {
+        std::string contents;
+        folly::readFile((dataroot_+"/skip.json").c_str(), contents);
+        folly::dynamic skip_js = folly::parseJson(folly::json::stripComments(contents));
+        skip_head_ = skip_js.getDefault("head", 0).asInt();
+        until_last_ = skip_js.getDefault("last", 0).asInt();
+    } catch (...) {
+        skip_head_ = 0;
+        until_last_ = -1;
+    }
+
+
+
     float tmp[16];
     for (;;) {
         Sophus::SE3f pose;
@@ -399,9 +419,12 @@ bool SceneNNDatasetLoader::Grab(int i,
                             vlslam_pb::BoundingBoxList &bboxlist,
                             Sophus::SE3f &gwc,
                             Sophus::SO3f &Rg) {
+    i += skip_head_;
 
     if (i >= size_ || i < 0) return false;
     std::cout << i << "/" << size_ << "\n";
+
+    if (until_last_ != -1 && i > until_last_) return false;
 
 
     gwc = poses_[i];
@@ -436,7 +459,7 @@ bool SceneNNDatasetLoader::Grab(int i,
                             Sophus::SE3f &gwc,
                             Sophus::SO3f &Rg,
                             std::string &fullpath) {
-    fullpath = png_files_[i];
+    fullpath = png_files_[i+skip_head_];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
 }
 
