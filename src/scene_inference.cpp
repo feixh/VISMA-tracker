@@ -296,8 +296,8 @@ bool Scene::BBoxTooCloseToBoundary(const vlslam_pb::BoundingBox &bbox) const {
 
     bool bad2 = bad1;
 
-//    bad2 = bad2 || bbox.top_left_x() < 0.01 * cols_ || bbox.top_left_y() < 0.01 * rows_
-//    || bbox.bottom_right_x() > 0.99 * cols_ || bbox.bottom_right_y() > 0.99 * rows_;
+    bad2 = bad2 || bbox.top_left_x() < 0.01 * cols_ || bbox.top_left_y() < 0.01 * rows_
+    || bbox.bottom_right_x() > 0.99 * cols_ || bbox.bottom_right_y() > 0.99 * rows_;
 
     return bad2;
 }

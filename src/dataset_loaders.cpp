@@ -375,18 +375,18 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
     fid.close();
     size_ = std::min<int>(std::numeric_limits<int>::max(), poses_.size());
 
-    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+    if (!feh::Glob(dataroot_+"/image/", ".png", png_files_)) {
         LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
     }
     // remove leading and trailing item
     size_ = std::min<int>(png_files_.size(), size_);
 
-    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+    if (!feh::Glob(dataroot_+"/image/", ".edge", edge_files_)) {
         LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
     }
     size_ = std::min<int>(edge_files_.size(), size_);
 
-    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+    if (!feh::Glob(dataroot_+"/image/", ".bbox", bbox_files_)) {
         LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
     }
     size_ = std::min<int>(bbox_files_.size(), size_);

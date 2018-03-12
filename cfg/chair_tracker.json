@@ -1,6 +1,6 @@
 {
 //  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
-  "CAD_database_root": "/local/Data/SceneNN/080/",
+  "CAD_database_root": "/local/Data/SceneNN/073/",
   "CAD_category_json": "chair.json",
 
   "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
@@ -16,7 +16,7 @@
     "proposal_std": [0.01, 0.02, 0.05, 1.0],
     "small_proposal_std": [0.001, 0.001, 0.005, 0.01],  // proposal distribution after convergence
     "keep_shape_id_probability": 0.6,
-    "initial_depth": 1.5,
+    "initial_depth": 2.5,
     "initial_azimuth_interval": 15,
     "initialization_num_particles": 300,
     "tracking_num_particles": 500,
