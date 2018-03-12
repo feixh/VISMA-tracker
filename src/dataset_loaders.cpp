@@ -369,7 +369,7 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
         folly::readFile((dataroot_+"/skip.json").c_str(), contents);
         folly::dynamic skip_js = folly::parseJson(folly::json::stripComments(contents));
         skip_head_ = skip_js.getDefault("head", 0).asInt();
-        until_last_ = skip_js.getDefault("last", 0).asInt();
+        until_last_ = skip_js.getDefault("last", -1).asInt();
     } catch (...) {
         skip_head_ = 0;
         until_last_ = -1;

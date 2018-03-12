@@ -33,12 +33,24 @@ int main(int argc, char **argv) {
     int index = config["frame_inspector"]["index"].getInt();
     std::string basename = folly::sformat("./{}_{:06d}", config["dataset"].getString(), index);
 
-    feh::VlslamDatasetLoader loader(dataset_path);
+    std::shared_ptr<feh::VlslamDatasetLoader> loader;
+
+    folly::dynamic camera;
+    if (config["datatype"].getString() == "VLSLAM") {
+        loader = std::make_shared<feh::VlslamDatasetLoader>(dataset_path);
+        folly::readFile("../cfg/camera.json", contents);
+        camera = folly::parseJson(folly::json::stripComments(contents));
+    } else if (config["datatype"].getString() == "SceneNN") {
+        loader = std::make_shared<feh::SceneNNDatasetLoader>(dataset_path);
+        folly::readFile("../cfg/camera_scenenn.json", contents);
+        camera = folly::parseJson(folly::json::stripComments(contents));
+    }
+
     Sophus::SE3f gwc;
     Sophus::SO3f Rg;
     cv::Mat img, edgemap;
     vlslam_pb::BoundingBoxList bboxlist;
-    loader.Grab(index, img, edgemap, bboxlist, gwc, Rg);
+    loader->Grab(index, img, edgemap, bboxlist, gwc, Rg);
     cv::imshow("input", img);
 
     // OVERLAY BOUNDING BOX PROPOSALS ON INPUT IMAGE
@@ -68,8 +80,7 @@ int main(int argc, char **argv) {
     // OVERWRITE SOME PARAMETERS
     feh::RendererPtr render_engine = std::make_shared<feh::Renderer>(img.rows, img.cols);
     {
-        folly::readFile("../cfg/camera.json", contents);
-        folly::dynamic camera = folly::parseJson(folly::json::stripComments(contents));
+
         // OVERWRITE SOME PARAMETERS
         float z_near = camera["z_near"].getDouble();
         float z_far = camera["z_far"].getDouble();

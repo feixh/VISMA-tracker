@@ -13,7 +13,7 @@
 
   "datatype": "SceneNN", // other options: VLSLAM, SceneNN
   "dataset_root": "/local/Data/SceneNN/",
-  "dataset": "084",
+  "dataset": "279",
 
   "scene_config": "../cfg/scene.json",
   "wait_time": 5,
