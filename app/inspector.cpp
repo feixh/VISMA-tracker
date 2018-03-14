@@ -56,12 +56,12 @@ int main(int argc, char **argv) {
     // OVERLAY BOUNDING BOX PROPOSALS ON INPUT IMAGE
     cv::Mat input_with_proposals = img.clone();
     for (auto bbox : bboxlist.bounding_boxes()) {
-        if (bbox.class_name() == "chair") {
+        if (bbox.class_name() == "chair" && bbox.scores(0) > 0.8) {
             auto c = feh::tracker::kColorMap.at(bbox.class_name());
             cv::rectangle(input_with_proposals,
                           cv::Point((int)(bbox.top_left_x()), (int)(bbox.top_left_y())),
                           cv::Point((int)(bbox.bottom_right_x()), (int)(bbox.bottom_right_y())),
-                          cv::Scalar(c[0], c[1], c[2]));
+                          cv::Scalar(c[0], c[1], c[2]), 2);
         }
     }
     cv::imshow("input image with proposals", input_with_proposals);

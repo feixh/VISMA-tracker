@@ -10,7 +10,7 @@
   },
 
   "bbox_area_thresh": {
-    "chair": 0.10,
+    "chair": 0.1,
     "couch": 0.05
   },
 
