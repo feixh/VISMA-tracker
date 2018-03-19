@@ -15,6 +15,9 @@
 #include "visualization_msgs/Marker.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "pcl_ros/point_cloud.h"
+#include "tf/tf.h"
+#include "tf/transform_broadcaster.h"
+
 
 int main(int argc, char **argv) {
     // setup rosnode
@@ -24,6 +27,8 @@ int main(int argc, char **argv) {
     ros::Publisher mask_pub = nh.advertise<sensor_msgs::Image>("visma/mask", 1);
     ros::Publisher obj_pub = nh.advertise<visualization_msgs::Marker>("visma/object", 10);
     ros::Publisher traj_pub = nh.advertise<sensor_msgs::PointCloud2>("visma/traj", 10);
+    tf::TransformBroadcaster tf_broadcaster;
+
     std::string proj_root;
     nh.getParam("proj_root", proj_root);
 //    std::cout << "==========\n===============\n=================\n project root=" << proj_root << "\n======================\n====================\n==================\n";
@@ -122,6 +127,7 @@ int main(int argc, char **argv) {
 //        std::cout << "input image with masks published\n";
 
         auto tc = gwc.translation();
+        auto qc = gwc.so3().unit_quaternion();
         // draw objects
         {
 
@@ -131,34 +137,6 @@ int main(int argc, char **argv) {
             marker.type = marker.MESH_RESOURCE;
             marker.action = marker.DELETEALL;
             obj_pub.publish(marker);
-
-//            for (int old_id : existing_objs) {
-//                visualization_msgs::Marker marker;
-//                marker.header.frame_id = "/map";
-//                marker.ns = "ns";
-//                marker.id = old_id;
-//                marker.type = marker.MESH_RESOURCE;
-//                marker.action = marker.DELETEALL;
-//                marker.pose.position.x = ts(0);
-//                marker.pose.position.y = ts(1);
-//                marker.pose.position.z = ts(2);
-//                marker.pose.orientation.x = qs.x();
-//                marker.pose.orientation.y = qs.y();
-//                marker.pose.orientation.z = qs.z();
-//                marker.pose.orientation.w = qs.w();
-//                marker.scale.x = 1;
-//                marker.scale.y = 1;
-//                marker.scale.z = 1;
-//                marker.color.a = 1;
-//                marker.color.r = color[2] / 255.0;
-//                marker.color.g = color[1] / 255.0;
-//                marker.color.b = color[0] / 255.0;
-//                std::string uri = "file://" + database_dir + "/" + model_name + ".obj";
-//                marker.mesh_resource = uri;
-////                    std::cout << "uri=" << uri << "\n";
-//                obj_pub.publish(marker);
-//
-//            }
             existing_objs.clear();
 
             auto cm = feh::GenerateRandomColorMap<8>();
@@ -229,21 +207,34 @@ int main(int argc, char **argv) {
 //        traj->is_dense = true;
 //        traj->points.clear();
 
-        pcl::PointXYZRGB tmpPt;
-        tmpPt.x = tc(0);
-        tmpPt.y = tc(1);
-        tmpPt.z = tc(2);
-        tmpPt.r = 255;
-        tmpPt.g = 255;
-        tmpPt.b = 0;
-        traj.push_back(tmpPt);
-        traj.width = traj.points.size();
+        {
+            // TRAJECTORY
+            pcl::PointXYZRGB tmpPt;
+            tmpPt.x = tc(0);
+            tmpPt.y = tc(1);
+            tmpPt.z = tc(2);
+            tmpPt.r = 255;
+            tmpPt.g = 255;
+            tmpPt.b = 0;
+            traj.push_back(tmpPt);
+            traj.width = traj.points.size();
 
-        auto traj_msg   = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
-        pcl::toROSMsg(traj,*(traj_msg.get()));
-        traj_msg->header.frame_id = "/map";
-//        traj_msg->header.stamp    = CorTypes::toRos(now);
-        traj_pub.publish(traj_msg);
+            auto traj_msg   = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
+            pcl::toROSMsg(traj,*(traj_msg.get()));
+            traj_msg->header.frame_id = "/map";
+            traj_pub.publish(traj_msg);
+        }
+
+
+        tf::StampedTransform transformC;
+        transformC.setOrigin(
+            tf::Vector3(tc(0), tc(1), tc(2)));
+        transformC.setRotation(tf::Quaternion(qc.x(), qc.y(), qc.z(), qc.w()));
+
+        transformC.frame_id_       = "/map"; //ros::names::resolve("pose");;
+        transformC.child_frame_id_ = ros::names::resolve("cam");
+//        transformC.stamp_          = CorTypes::toRos(now_);
+        tf_broadcaster.sendTransform(transformC);
 
 
         ros::spinOnce();
