@@ -6,21 +6,21 @@
 #include "viewer.h"
 
 // 3rd party
-#include "opencv2/opencv.hpp"
 #include "folly/FileUtil.h"
 #include "folly/json.h"
-#include "tbb/parallel_for.h"
 
 // ros
 #include "ros/ros.h"
 #include "cv_bridge/cv_bridge.h"
+#include "visualization_msgs/Marker.h"
 
 int main(int argc, char **argv) {
     // setup rosnode
     ros::init(argc, argv, "rosviewer");
     ros::NodeHandle nh("~");
-    ros::Publisher proposal_pub = nh.advertise<sensor_msgs::Image>("vismap/proposal", 1);
-    ros::Publisher mask_pub = nh.advertise<sensor_msgs::Image>("vismap/mask", 1);
+    ros::Publisher proposal_pub = nh.advertise<sensor_msgs::Image>("visma/proposal", 1);
+    ros::Publisher mask_pub = nh.advertise<sensor_msgs::Image>("visma/mask", 1);
+    ros::Publisher obj_pub = nh.advertise<visualization_msgs::Marker>("visma/object", 10);
     std::string proj_root;
     nh.getParam("proj_root", proj_root);
 //    std::cout << "==========\n===============\n=================\n project root=" << proj_root << "\n======================\n====================\n==================\n";
@@ -90,18 +90,6 @@ int main(int argc, char **argv) {
                      &input_with_proposals,
                      &inverse_edgemap,
                      &input_with_contour);
-//            cv::imshow("input image with proposals", input_with_proposals);
-//            cv::imwrite(basename + "_input.png", input_with_proposals);
-
-//            cv::imshow("edgemap", inverse_edgemap);
-//            cv::imwrite(basename + "_edgemap.png", inverse_edgemap);
-
-//            cv::imshow("segmask", input_with_contour);
-//            cv::imwrite(basename + "_mask.png", input_with_contour);
-//            char ckey = cv::waitKey(24);
-//            if (ckey == 'q') {
-//                break;
-//            }
 
         cv_bridge::CvImage proposal_img;
 //            proposal_img.header.stamp = ;
@@ -122,6 +110,73 @@ int main(int argc, char **argv) {
         mask_img.toImageMsg(mask_img_msg);
         mask_pub.publish(mask_img_msg);
 //        std::cout << "input image with masks published\n";
+
+
+        // draw objects
+        {
+
+                auto cm = feh::GenerateRandomColorMap<8>();
+                cm[0] = {255, 255, 255};    // white background
+
+                for (const auto &obj : result) {
+                    auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
+//            std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
+//                                       obj["id"].asInt(),
+//                                       obj["status"].asInt(),
+//                                       obj["model_name"].asString())
+//                      << pose << "\n";
+
+                    Sophus::SE3f gwm(pose.block<3,3>(0,0), pose.block<3,1>(0, 3));
+                    Sophus::SE3f gcm = gwc.inverse() * gwm;
+
+                    // translation and quaternion of gwm
+                    auto ts = gwm.translation();
+                    auto qs = gwm.so3().unit_quaternion();
+
+                    int instance_id = obj["id"].asInt();
+                    std::string model_name = obj["model_name"].asString();
+                    auto color = cm[instance_id+1];
+//                    std::vector<float> v;
+//                    std::vector<int> f;
+//                    feh::io::LoadMeshFromObjFile(
+//                        folly::sformat("{}/{}.obj", database_dir, model_name),
+//                        v, f);
+//                    render_engine->SetMesh(v, f);
+//                    cv::Mat depth(size, CV_32FC1);
+//                    depth.setTo(0);
+//                    render_engine->RenderDepth(gcm.matrix(), depth);
+//                    feh::tracker::PrettyDepth(depth);
+//                    cv::Mat contour(size, CV_8UC1);
+//                    render_engine->RenderEdge(gcm.matrix(), contour);
+                    visualization_msgs::Marker marker;
+                    marker.header.frame_id = "/map";
+                    marker.ns = "ns";
+                    marker.id = instance_id;
+                    marker.type = marker.MESH_RESOURCE;
+                    marker.action = marker.MODIFY;
+                    marker.pose.position.x = ts(0);
+                    marker.pose.position.y = ts(1);
+                    marker.pose.position.z = ts(2);
+                    marker.pose.orientation.x = qs.x();
+                    marker.pose.orientation.y = qs.y();
+                    marker.pose.orientation.z = qs.z();
+                    marker.pose.orientation.w = qs.w();
+                    marker.scale.x = 1;
+                    marker.scale.y = 1;
+                    marker.scale.z = 1;
+                    marker.color.a = 1;
+                    marker.color.r = color[0] / 255.0;
+                    marker.color.g = color[1] / 255.0;
+                    marker.color.b = color[2] / 255.0;
+                    std::string uri = "file://" + database_dir + "/" + model_name + ".obj";
+                    marker.mesh_resource = uri;
+//                    std::cout << "uri=" << uri << "\n";
+
+                    obj_pub.publish(marker);
+
+                }
+        }
+
 
         ros::spinOnce();
         sleep(0.03);
