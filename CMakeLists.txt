@@ -28,6 +28,40 @@ add_definitions(-DFEH_MULTI_OBJECT_MODEL)
 add_definitions(-DFEH_CORE_USE_COLOR_INFO)
 #add_definitions(-DFEH_USE_REGION_TRACKER)
 
+
+################################################################################
+################################################################################
+################################################################################
+# ROS
+################################################################################
+################################################################################
+################################################################################
+find_package(catkin REQUIRED COMPONENTS
+        std_msgs
+        message_generation
+        image_transport
+        sensor_msgs
+        cv_bridge
+        roscpp)
+find_package(roscpp REQUIRED)
+
+catkin_package(CATKIN_DEPENDS
+        std_msgs
+        message_runtime
+        message_generation
+        sensor_msgs
+        image_transport
+        cv_bridge
+        roscpp
+        CATKIN_DEPENDS message_runtime
+        INCLUDE_DIRS
+        LIBRARIES)
+include_directories(${catkin_INCLUDE_DIRS})
+################################################################################
+################################################################################
+################################################################################
+
+
 # opengl
 find_package(OpenGL REQUIRED)
 # glfw
@@ -173,9 +207,6 @@ add_executable(evaluation_scenenn
         app/evaluation_scenenn.cpp)
 target_link_libraries(evaluation_scenenn feh)
 
-add_executable(inspector app/inspector.cpp)
-target_link_libraries(inspector feh)
-
 add_executable(floor app/floor.cpp)
 target_link_libraries(floor feh)
 
@@ -184,6 +215,18 @@ target_link_libraries(linemod feh)
 
 add_executable(test_surface_error test/test_surface_error.cpp)
 target_link_libraries(test_surface_error feh)
+
+add_executable(inspector app/inspector.cpp app/viewer.cpp)
+target_link_libraries(inspector feh)
+
+add_executable(rosviewer app/rosviewer.cpp app/viewer.cpp)
+target_link_libraries(rosviewer
+        feh
+        ${catkin_LIBRARIES}
+        ${roscpp_LIBRARIES})
+
+
+
 
 #add_executable(test_octree test/test_octree.cpp)
 
@@ -237,30 +280,13 @@ target_link_libraries(test_surface_error feh)
 #add_executable(test_ukf_mackey_glass test/test_ukf_mackey_glass.cpp)
 #target_link_libraries(test_ukf_mackey_glass)
 
-#################################################
-# CUDA components
-#################################################
-#add_executable(cuhello src/hello.cu)
-#target_compile_features(cuhello PUBLIC cxx_std_11)
-#target_link_libraries(cuhello glog)
-#set_target_properties(cuhello PROPERTIES
-#        CUDA_SEPARABLE_COMPILATION ON)
-#
-#add_executable(reduction
-#        reduction/reduction.cpp
-#        reduction/reduction_kernel.cu)
-#target_compile_features(reduction PUBLIC cxx_std_11)
-##target_link_libraries(reduction glog)
-#set_target_properties(reduction PROPERTIES
-#        CUDA_SEPARABLE_COMPILATION ON)
-
 
 #################################################
 # installation command
 #################################################
 install(TARGETS feh
-        RUNTIME DESTINATION /usr/local/bin
-        LIBRARY DESTINATION /usr/local/lib)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 
 
