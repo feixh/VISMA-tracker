@@ -29,38 +29,6 @@ add_definitions(-DFEH_CORE_USE_COLOR_INFO)
 #add_definitions(-DFEH_USE_REGION_TRACKER)
 
 
-################################################################################
-################################################################################
-################################################################################
-# ROS
-################################################################################
-################################################################################
-################################################################################
-find_package(catkin REQUIRED COMPONENTS
-        std_msgs
-        message_generation
-        image_transport
-        sensor_msgs
-        cv_bridge
-        roscpp)
-find_package(roscpp REQUIRED)
-
-catkin_package(CATKIN_DEPENDS
-        std_msgs
-        message_runtime
-        message_generation
-        sensor_msgs
-        image_transport
-        cv_bridge
-        roscpp
-        CATKIN_DEPENDS message_runtime
-        INCLUDE_DIRS
-        LIBRARIES)
-include_directories(${catkin_INCLUDE_DIRS})
-################################################################################
-################################################################################
-################################################################################
-
 
 # opengl
 find_package(OpenGL REQUIRED)
@@ -112,6 +80,7 @@ include_directories(
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
         ${FOLLY_INCLUDE_DIR}
+#        ${PCL_INCLUDE_DIRS}
 #        ${GLEW_INCLUDE_DIRS}
         /opt/ros/kinetic/include/opencv-3.2.0-dev
 )
@@ -120,6 +89,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/Open3D/lib
+#        ${PCL_LIBRARY_DIRS}
         /opt/ros/kinetic/lib    #non-standard opencv lib dir
 )
 
@@ -148,6 +118,7 @@ link_libraries(
         double-conversion   # for folly
 #        ${GLEW_LIBRARIES}
         GL
+#        ${PCL_COMMON_LIBRARIES}
 )
 
 
@@ -219,11 +190,52 @@ target_link_libraries(test_surface_error feh)
 add_executable(inspector app/inspector.cpp app/viewer.cpp)
 target_link_libraries(inspector feh)
 
+################################################################################
+################################################################################
+################################################################################
+# ROS
+################################################################################
+################################################################################
+################################################################################
+find_package(catkin REQUIRED COMPONENTS
+        std_msgs
+        message_generation
+        image_transport
+        sensor_msgs
+        cv_bridge
+        roscpp
+        pcl_ros)
+find_package(roscpp REQUIRED)
+
+catkin_package(CATKIN_DEPENDS
+        std_msgs
+        message_runtime
+        message_generation
+        sensor_msgs
+        image_transport
+        cv_bridge
+        roscpp
+        CATKIN_DEPENDS message_runtime
+        INCLUDE_DIRS
+        LIBRARIES)
+include_directories(${catkin_INCLUDE_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+include_directories(
+        ${PCL_INCLUDE_DIRS}
+)
+link_libraries(
+        ${PCL_LIBRARY_DIRS}
+)
+################################################################################
+################################################################################
+################################################################################
+
 add_executable(rosviewer app/rosviewer.cpp app/viewer.cpp)
 target_link_libraries(rosviewer
         feh
         ${catkin_LIBRARIES}
-        ${roscpp_LIBRARIES})
+        ${roscpp_LIBRARIES}
+        ${PCL_COMMON_LIBRARIES})
 
 
 

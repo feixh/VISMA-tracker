@@ -13,6 +13,8 @@
 #include "ros/ros.h"
 #include "cv_bridge/cv_bridge.h"
 #include "visualization_msgs/Marker.h"
+#include "sensor_msgs/PointCloud2.h"
+#include "pcl_ros/point_cloud.h"
 
 int main(int argc, char **argv) {
     // setup rosnode
@@ -21,6 +23,7 @@ int main(int argc, char **argv) {
     ros::Publisher proposal_pub = nh.advertise<sensor_msgs::Image>("visma/proposal", 1);
     ros::Publisher mask_pub = nh.advertise<sensor_msgs::Image>("visma/mask", 1);
     ros::Publisher obj_pub = nh.advertise<visualization_msgs::Marker>("visma/object", 10);
+    ros::Publisher traj_pub = nh.advertise<sensor_msgs::PointCloud2>("visma/traj", 10);
     std::string proj_root;
     nh.getParam("proj_root", proj_root);
 //    std::cout << "==========\n===============\n=================\n project root=" << proj_root << "\n======================\n====================\n==================\n";
@@ -77,6 +80,13 @@ int main(int argc, char **argv) {
     cv::Mat img, edgemap;
     vlslam_pb::BoundingBoxList bboxlist;
 
+    pcl::PointCloud<pcl::PointXYZRGB> traj;
+    traj.header.frame_id = "/map";
+    traj.width = 1;
+    traj.height = 1;
+    traj.is_dense = false;
+    std::vector<int> existing_objs;
+
     // LOAD THE INPUT IMAGE
     folly::readFile((scene_dir + "/result.json").c_str(), contents);
     folly::dynamic results = folly::parseJson(folly::json::stripComments(contents));
@@ -111,31 +121,68 @@ int main(int argc, char **argv) {
         mask_pub.publish(mask_img_msg);
 //        std::cout << "input image with masks published\n";
 
-
+        auto tc = gwc.translation();
         // draw objects
         {
 
-                auto cm = feh::GenerateRandomColorMap<8>();
-                cm[0] = {255, 255, 255};    // white background
+            visualization_msgs::Marker marker;
+            marker.header.frame_id = "/map";
+            marker.ns = "ns";
+            marker.type = marker.MESH_RESOURCE;
+            marker.action = marker.DELETEALL;
+            obj_pub.publish(marker);
 
-                for (const auto &obj : result) {
-                    auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
+//            for (int old_id : existing_objs) {
+//                visualization_msgs::Marker marker;
+//                marker.header.frame_id = "/map";
+//                marker.ns = "ns";
+//                marker.id = old_id;
+//                marker.type = marker.MESH_RESOURCE;
+//                marker.action = marker.DELETEALL;
+//                marker.pose.position.x = ts(0);
+//                marker.pose.position.y = ts(1);
+//                marker.pose.position.z = ts(2);
+//                marker.pose.orientation.x = qs.x();
+//                marker.pose.orientation.y = qs.y();
+//                marker.pose.orientation.z = qs.z();
+//                marker.pose.orientation.w = qs.w();
+//                marker.scale.x = 1;
+//                marker.scale.y = 1;
+//                marker.scale.z = 1;
+//                marker.color.a = 1;
+//                marker.color.r = color[2] / 255.0;
+//                marker.color.g = color[1] / 255.0;
+//                marker.color.b = color[0] / 255.0;
+//                std::string uri = "file://" + database_dir + "/" + model_name + ".obj";
+//                marker.mesh_resource = uri;
+////                    std::cout << "uri=" << uri << "\n";
+//                obj_pub.publish(marker);
+//
+//            }
+            existing_objs.clear();
+
+            auto cm = feh::GenerateRandomColorMap<8>();
+            cm[0] = {255, 255, 255};    // white background
+
+            for (const auto &obj : result) {
+                auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
 //            std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
 //                                       obj["id"].asInt(),
 //                                       obj["status"].asInt(),
 //                                       obj["model_name"].asString())
 //                      << pose << "\n";
 
-                    Sophus::SE3f gwm(pose.block<3,3>(0,0), pose.block<3,1>(0, 3));
-                    Sophus::SE3f gcm = gwc.inverse() * gwm;
+                Sophus::SE3f gwm(pose.block<3,3>(0,0), pose.block<3,1>(0, 3));
+                Sophus::SE3f gcm = gwc.inverse() * gwm;
 
-                    // translation and quaternion of gwm
-                    auto ts = gwm.translation();
-                    auto qs = gwm.so3().unit_quaternion();
+                // translation and quaternion of gwm
+                auto ts = gwm.translation();
+                auto qs = gwm.so3().unit_quaternion();
 
-                    int instance_id = obj["id"].asInt();
-                    std::string model_name = obj["model_name"].asString();
-                    auto color = cm[instance_id+1];
+                int instance_id = obj["id"].asInt();
+                std::string model_name = obj["model_name"].asString();
+                auto color = cm[instance_id+1];
+                existing_objs.push_back(instance_id);
 //                    std::vector<float> v;
 //                    std::vector<int> f;
 //                    feh::io::LoadMeshFromObjFile(
@@ -148,34 +195,55 @@ int main(int argc, char **argv) {
 //                    feh::tracker::PrettyDepth(depth);
 //                    cv::Mat contour(size, CV_8UC1);
 //                    render_engine->RenderEdge(gcm.matrix(), contour);
-                    visualization_msgs::Marker marker;
-                    marker.header.frame_id = "/map";
-                    marker.ns = "ns";
-                    marker.id = instance_id;
-                    marker.type = marker.MESH_RESOURCE;
-                    marker.action = marker.MODIFY;
-                    marker.pose.position.x = ts(0);
-                    marker.pose.position.y = ts(1);
-                    marker.pose.position.z = ts(2);
-                    marker.pose.orientation.x = qs.x();
-                    marker.pose.orientation.y = qs.y();
-                    marker.pose.orientation.z = qs.z();
-                    marker.pose.orientation.w = qs.w();
-                    marker.scale.x = 1;
-                    marker.scale.y = 1;
-                    marker.scale.z = 1;
-                    marker.color.a = 1;
-                    marker.color.r = color[0] / 255.0;
-                    marker.color.g = color[1] / 255.0;
-                    marker.color.b = color[2] / 255.0;
-                    std::string uri = "file://" + database_dir + "/" + model_name + ".obj";
-                    marker.mesh_resource = uri;
+                visualization_msgs::Marker marker;
+                marker.header.frame_id = "/map";
+                marker.ns = "ns";
+                marker.id = instance_id;
+                marker.type = marker.MESH_RESOURCE;
+                marker.action = marker.MODIFY;
+                marker.pose.position.x = ts(0);
+                marker.pose.position.y = ts(1);
+                marker.pose.position.z = ts(2);
+                marker.pose.orientation.x = qs.x();
+                marker.pose.orientation.y = qs.y();
+                marker.pose.orientation.z = qs.z();
+                marker.pose.orientation.w = qs.w();
+                marker.scale.x = 1;
+                marker.scale.y = 1;
+                marker.scale.z = 1;
+                marker.color.a = 1;
+                marker.color.r = color[2] / 255.0;
+                marker.color.g = color[1] / 255.0;
+                marker.color.b = color[0] / 255.0;
+                std::string uri = "file://" + database_dir + "/" + model_name + ".obj";
+                marker.mesh_resource = uri;
 //                    std::cout << "uri=" << uri << "\n";
+                obj_pub.publish(marker);
 
-                    obj_pub.publish(marker);
-
-                }
+            }
         }
+
+//        auto traj = pcl::PointCloud<pclPt>::Ptr(new pcl::PointCloud<pclPt>);
+//        traj->width  = 1;
+//        traj->height = 1;
+//        traj->is_dense = true;
+//        traj->points.clear();
+
+        pcl::PointXYZRGB tmpPt;
+        tmpPt.x = tc(0);
+        tmpPt.y = tc(1);
+        tmpPt.z = tc(2);
+        tmpPt.r = 255;
+        tmpPt.g = 255;
+        tmpPt.b = 0;
+        traj.push_back(tmpPt);
+        traj.width = traj.points.size();
+
+        auto traj_msg   = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
+        pcl::toROSMsg(traj,*(traj_msg.get()));
+        traj_msg->header.frame_id = "/map";
+//        traj_msg->header.stamp    = CorTypes::toRos(now);
+        traj_pub.publish(traj_msg);
 
 
         ros::spinOnce();
