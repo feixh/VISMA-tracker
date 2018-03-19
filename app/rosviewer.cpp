@@ -20,6 +20,7 @@
 
 
 int main(int argc, char **argv) {
+    std::getchar();
     // setup rosnode
     ros::init(argc, argv, "rosviewer");
     ros::NodeHandle nh("~");
@@ -27,6 +28,7 @@ int main(int argc, char **argv) {
     ros::Publisher mask_pub = nh.advertise<sensor_msgs::Image>("visma/mask", 1);
     ros::Publisher obj_pub = nh.advertise<visualization_msgs::Marker>("visma/object", 10);
     ros::Publisher traj_pub = nh.advertise<sensor_msgs::PointCloud2>("visma/traj", 10);
+    ros::Publisher pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("visma/pc", 10);
     tf::TransformBroadcaster tf_broadcaster;
 
     std::string proj_root;
@@ -57,6 +59,9 @@ int main(int argc, char **argv) {
 //    std::cout << "==========\n===============\n=================\n dataset loader set \n======================\n====================\n==================\n";
 
     // load camera
+    Eigen::Matrix3f prerotate;
+    prerotate = Eigen::AngleAxisf(M_PI*0.5, Eigen::Vector3f::UnitX()).toRotationMatrix();
+    prerotate = Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitY()).toRotationMatrix() * prerotate;
     folly::dynamic camera;
     if (config["datatype"].getString() == "VLSLAM") {
         folly::readFile((proj_root + "/cfg/camera.json").c_str(), contents);
@@ -80,6 +85,7 @@ int main(int argc, char **argv) {
         render_engine->SetCamera(z_near, z_far, fx, fy, cx, cy);
     }
     // holders for variables
+//    Sophus::SE3f gwc0;
     Sophus::SE3f gwc;
     Sophus::SO3f Rg;
     cv::Mat img, edgemap;
@@ -90,13 +96,21 @@ int main(int argc, char **argv) {
     traj.width = 1;
     traj.height = 1;
     traj.is_dense = false;
+
+    std::unordered_map<int, std::array<float, 6>> total_pc;
+
     std::vector<int> existing_objs;
 
     // LOAD THE INPUT IMAGE
     folly::readFile((scene_dir + "/result.json").c_str(), contents);
     folly::dynamic results = folly::parseJson(folly::json::stripComments(contents));
     for (int index = 0; index < loader->size(); ++index) {
-        auto result = results.at(index);
+        folly::dynamic result = results.at(index);
+//        if (index >= 130) {
+//            result = results.at(index-130);
+//        } else {
+//            result = folly::dynamic::array();
+//        }
         std::string basename = folly::sformat("./{}_{:06d}", config["dataset"].getString(), index);
         loader->Grab(index, img, edgemap, bboxlist, gwc, Rg);
 
@@ -126,8 +140,13 @@ int main(int argc, char **argv) {
         mask_pub.publish(mask_img_msg);
 //        std::cout << "input image with masks published\n";
 
-        auto tc = gwc.translation();
-        auto qc = gwc.so3().unit_quaternion();
+//        if (index == 0) {
+//            gwc0 = gwc;
+//        }
+//        gwc = gwc0.inverse() * gwc;
+        feh::Vec3f tc = prerotate * gwc.translation();
+        auto qc = Eigen::Quaternionf(prerotate * gwc.so3().matrix());
+
         // draw objects
         {
 
@@ -150,16 +169,16 @@ int main(int argc, char **argv) {
 //                                       obj["model_name"].asString())
 //                      << pose << "\n";
 
-                Sophus::SE3f gwm(pose.block<3,3>(0,0), pose.block<3,1>(0, 3));
-                Sophus::SE3f gcm = gwc.inverse() * gwm;
+                Sophus::SE3f gwm(pose.block<3, 3>(0, 0), pose.block<3, 1>(0, 3));
+//                gwm = gwc0.inverse() * gwm;
 
                 // translation and quaternion of gwm
-                auto ts = gwm.translation();
-                auto qs = gwm.so3().unit_quaternion();
+                feh::Vec3f ts = prerotate * gwm.translation();
+                auto qs = Eigen::Quaternionf(prerotate * gwm.so3().matrix());
 
                 int instance_id = obj["id"].asInt();
                 std::string model_name = obj["model_name"].asString();
-                auto color = cm[instance_id+1];
+                auto color = cm[instance_id + 1];
                 existing_objs.push_back(instance_id);
 //                    std::vector<float> v;
 //                    std::vector<int> f;
@@ -219,26 +238,66 @@ int main(int argc, char **argv) {
             traj.push_back(tmpPt);
             traj.width = traj.points.size();
 
-            auto traj_msg   = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
-            pcl::toROSMsg(traj,*(traj_msg.get()));
+            auto traj_msg = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
+            pcl::toROSMsg(traj, *(traj_msg.get()));
             traj_msg->header.frame_id = "/map";
             traj_pub.publish(traj_msg);
         }
 
+        {
+            // TF
+            tf::StampedTransform transformC;
+            transformC.setOrigin(
+                tf::Vector3(tc(0), tc(1), tc(2)));
+            transformC.setRotation(tf::Quaternion(qc.x(), qc.y(), qc.z(), qc.w()));
 
-        tf::StampedTransform transformC;
-        transformC.setOrigin(
-            tf::Vector3(tc(0), tc(1), tc(2)));
-        transformC.setRotation(tf::Quaternion(qc.x(), qc.y(), qc.z(), qc.w()));
-
-        transformC.frame_id_       = "/map"; //ros::names::resolve("pose");;
-        transformC.child_frame_id_ = ros::names::resolve("cam");
+            transformC.frame_id_ = "/map"; //ros::names::resolve("pose");;
+            transformC.child_frame_id_ = ros::names::resolve("cam");
 //        transformC.stamp_          = CorTypes::toRos(now_);
-        tf_broadcaster.sendTransform(transformC);
+            tf_broadcaster.sendTransform(transformC);
+        }
+
+
+        if (config["datatype"].getString() == "VLSLAM") {
+            auto tmpPts = loader->GrabPointCloud(index, img);
+
+            // update total_pc
+            for (auto each : tmpPts) {
+                total_pc[each.first] = each.second;
+            }
+
+            // construct pc list from total_pc
+            pcl::PointCloud<pcl::PointXYZRGB> pc;
+            pc.header.frame_id = "/map";
+            pc.width = 1;
+            pc.height = 1;
+            pc.is_dense = false;
+            for (auto each : total_pc) {
+                auto x = each.second;
+                pcl::PointXYZRGB tmpPt;
+                tmpPt.x = x[0];
+                tmpPt.y = x[1];
+                tmpPt.z = x[2];
+//                tmpPt.r = 50;
+//                tmpPt.g = 132;
+//                tmpPt.b = 191;
+                tmpPt.r = x[5];
+                tmpPt.g = x[4];
+                tmpPt.b = x[3];
+                pc.push_back(tmpPt);
+            }
+            pc.width = pc.points.size();
+
+
+            auto pc_msg = sensor_msgs::PointCloud2::Ptr(new sensor_msgs::PointCloud2());
+            pcl::toROSMsg(pc, *(pc_msg.get()));
+            pc_msg->header.frame_id = "/map";
+            pointcloud_pub.publish(pc_msg);
+        }
 
 
         ros::spinOnce();
-        sleep(0.03);
+        sleep(0.005);
     }
 }
 

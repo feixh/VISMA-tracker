@@ -6,6 +6,7 @@
 // stl
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 // 3rd party
 #include "sophus/se3.hpp"
@@ -14,6 +15,7 @@
 
 // own
 #include "vlslam.pb.h"
+#include "common/eigen_alias.h"
 
 namespace feh {
 
@@ -75,6 +77,7 @@ public:
                       Sophus::SE3f &gwc,
                       Sophus::SO3f &Rg,
                       std::string &fullpath);
+    std::unordered_map<int, std::array<float, 6>> GrabPointCloud(int i, const cv::Mat &img);
 
     virtual int size() const { return size_; }
 protected:
