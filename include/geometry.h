@@ -231,16 +231,44 @@ Octree<T, L>::~Octree() {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T>
-struct SurfaceErrorMetric {
+struct GenericErrorMetric {
     T mean_, std_, median_, min_, max_;
 };
+
+template <typename T>
+GenericErrorMetric<T> ComputeErrorMetric(std::vector<T> errors) {
+    GenericErrorMetric<T> out{0, 0, 0,
+                              std::numeric_limits<T>::max(),
+                              std::numeric_limits<T>::lowest()};
+    for (int i = 0; i < errors.size(); ++i) {
+        out.mean_ += errors[i];
+        out.std_ += errors[i] * errors[i];
+        out.min_ = std::min(out.min_, errors[i]);
+        out.max_ = std::max(out.max_, errors[i]);
+    }
+    out.mean_ /= errors.size();
+    out.std_ = sqrt(out.std_ / errors.size() - out.mean_ * out.mean_);
+    std::sort(errors.begin(), errors.end());
+    out.median_ = errors[errors.size() >> 1];
+    return out;
+}
+
+template <typename T>
+void PrintErrorMetric(const GenericErrorMetric<T> &stats) {
+    std::cout << "median=" << stats.median_ << "\n";
+    std::cout << "mean=" << stats.mean_ << "\n";
+    std::cout << "std=" << stats.std_ << "\n";
+    std::cout << "max=" << stats.max_ << "\n";
+    std::cout << "min=" << stats.min_ << "\n";
+}
+
 /// \brief: Measure surface error.
 /// \param Vs: Source vertices.
 /// \param Fs: Source faces.
 /// \param Vt: Target vertices.
 /// \param Ft: Target faces.
 template <typename T>
-SurfaceErrorMetric<T> MeasureSurfaceError(
+GenericErrorMetric<T> MeasureSurfaceError(
     const Eigen::Matrix<T, Eigen::Dynamic, 3> &Vs,
     const Eigen::Matrix<int, Eigen::Dynamic, 3> &Fs,
     const Eigen::Matrix<T, Eigen::Dynamic, 3> &Vt,
@@ -260,22 +288,48 @@ SurfaceErrorMetric<T> MeasureSurfaceError(
     tree.squared_distance(Vt, Ft, P, D2, I, C);
     auto D = D2.cwiseSqrt();
 
-    SurfaceErrorMetric<T> out{0, 0, 0,
-                              std::numeric_limits<T>::max(),
-                              std::numeric_limits<T>::lowest()};
     std::vector<T> tmp(D.size());
-    for (int i = 0; i < D.size(); ++i) {
-        out.mean_ += D(i);
-        out.std_ += D(i) * D(i);
-        out.min_ = std::min(out.min_, D(i));
-        out.max_ = std::max(out.max_, D(i));
-        tmp[i] = D(i);
+    for (int i = 0; i < D.size(); ++i) { tmp[i] = D(i);}
+    return ComputeErrorMetric(tmp);
+}
+
+/// \brief: Measure error in pose: translational and rotational error
+/// \param Gs: source poses, a vector of 3x4 pose matrices
+/// \param Gt: target poses, a vector of 3x4 pose matrices
+/// \returns the pose error metric
+template <typename T>
+std::array<GenericErrorMetric<T>, 2> MeasurePoseError(
+    const std::vector<Eigen::Matrix<T, 3, 4>> &Gs,
+    const std::vector<Eigen::Matrix<T, 3, 4>> &Gt,
+    const folly::dynamic &options) {
+    T thresh = (T) options["dist_thresh"].getDouble();
+    int match_counter(0);
+    std::vector<T> t_err, r_err;
+    for (int i = 0; i < Gs.size(); ++i) {
+        T best_dist = thresh;
+        int best_idx = -1;
+        for (int j = 0; j < Gt.size(); ++j) {
+            auto dt = Gt[j].block(0, 3, 3, 3) - Gs[i].block(0, 3, 3, 1);
+            if (dt.norm() < best_dist) {
+                best_dist = dt.norm();
+                best_idx = j;
+            }
+            if (best_idx != -1) {
+                // found a match
+                Eigen::Matrix<T, 3, 3> dR = Gt[best_idx].block(0, 0, 3, 3).transpose()
+                    * Gs[i].block(0, 0, 3, 3);
+                T dt = (Gt[best_idx].block(0, 3, 3, 1) - Gs[i].block(0, 3, 3, 1)).norm();
+                assert(dt == best_dist);
+                Eigen::AngleAxis<T> aa(dR);
+
+                // collect error
+                t_err.push_back(dt);
+                r_err.push_back(aa.angle());
+                match_counter += 1;
+            }
+        }
     }
-    out.mean_ /= D.size();
-    out.std_ = sqrt(out.std_ / D.size() - out.mean_ * out.mean_);
-    std::sort(tmp.begin(), tmp.end());
-    out.median_ = tmp[tmp.size() >> 1];
-    return out;
+    return {ComputeErrorMetric(t_err), ComputeErrorMetric(r_err)};
 }
 
 

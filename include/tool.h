@@ -115,14 +115,20 @@ void AssembleScene(const folly::dynamic &config,
                    std::vector<Eigen::Matrix<double, 6, 1>> &vertices,
                    std::vector<Eigen::Matrix<int, 3, 1>> &faces);
 /// \brief: Visualize semantic reconstruction with sparse point cloud from VIO.
+/// \param V, F: optional output vertex and face arrays in ElasticFusion frame
+/// \param G: optional output array of object poses aligned to ElasticFusion frame
 void AssembleResult(const folly::dynamic &config,
-                     Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
-                     Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
+                    Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
+                    Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr,
+                    std::vector<Eigen::Matrix<double, 3, 4>> *G=nullptr);
 void VisualizeResult(const folly::dynamic &config);
 /// \brief: Visualize ground truth with annotation.
+/// \param V, F: optional output vertex and face arrays in ElasticFusion frame
+/// \param G: optional output array of object poses aligned to ElasticFusion frame
 void AssembleGroundTruth(const folly::dynamic &config,
-                          Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
-                          Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr);
+                         Eigen::Matrix<double, Eigen::Dynamic, 6> *V=nullptr,
+                         Eigen::Matrix<int, Eigen::Dynamic, 3> *F=nullptr,
+                         std::vector<Eigen::Matrix<double, 3, 4>> *G=nullptr);
 /// \brief: Entrance to quantitative evaluation of surface reconstruction.
 /// MeasureSurfaceError is called internally to compute error measure.
 void QuantitativeEvaluation(folly::dynamic config);

@@ -277,37 +277,68 @@ void QuantitativeEvaluation(folly::dynamic config) {
 
     Eigen::Matrix<double, Eigen::Dynamic, 3> Vr;
     Eigen::Matrix<int, Eigen::Dynamic, 3> Fr;
-    AssembleResult(config, &tmp, &Fr);
+    std::vector<Eigen::Matrix<double, 3, 4>> Gr;
+    AssembleResult(config, &tmp, &Fr, &Gr);
     Vr = tmp.leftCols(3);
     std::cout << TermColor::cyan << "Result scene mesh assembled" << TermColor::endl;
 
     // assemble ground truth scene mesh
     Eigen::Matrix<double, Eigen::Dynamic, 3> Vg;
     Eigen::Matrix<int, Eigen::Dynamic, 3> Fg;
-    AssembleGroundTruth(config, &tmp, &Fg);
+    std::vector<Eigen::Matrix<double, 3, 4>> Gg; // ground truth poses
+    AssembleGroundTruth(config, &tmp, &Fg, &Gg);
     Vg = tmp.leftCols(3);
     std::cout << TermColor::cyan << "Ground truth scene mesh assembled" << TermColor::endl;
 
+    // debug
+    for (int i = 0; i < Gr.size(); ++i) {
+        std::cout << "Gr[" << i << "]=\n" << Gr[i] << "\n";
+    }
+    for (int i = 0; i < Gg.size(); ++i) {
+        std::cout << "Gg[" << i << "]=\n" << Gg[i] << "\n";
+    }
+
+    std::cout << TermColor::cyan << "Computing pose error ..." << TermColor::endl;
+    // searching NN within threshold, and compute the average distance
+    auto pose_stats = MeasurePoseError(Gr, Gg, folly::dynamic::object("dist_thresh", 0.5));
+    std::cout << "translation errors:\n";
+    PrintErrorMetric(pose_stats[0]);
+    std::cout << "rotation errors:\n";
+    PrintErrorMetric(pose_stats[1]);
+
     // measure surface error
-    std::cout << TermColor::cyan << "Computing error measure ..." << TermColor::endl;
+    std::cout << TermColor::cyan << "Computing surface error ..." << TermColor::endl;
     auto stats = MeasureSurfaceError(Vr, Fr, Vg, Fg,
                                      folly::dynamic::object("num_samples", std::min<uint64_t>(500000, Fg.rows()*100)));
-    std::cout << "mean=" << stats.mean_ << "\n";
-    std::cout << "std=" << stats.std_ << "\n";
-    std::cout << "min=" << stats.min_ << "\n";
-    std::cout << "max=" << stats.max_ << "\n";
-    std::cout << "median=" << stats.median_ << "\n";
+    std::cout << "surface errors:\n";
+    PrintErrorMetric(stats);
+
+    auto save_metric = [] (std::string filename, const GenericErrorMetric<double>& metric) {
+        folly::dynamic out_json = folly::dynamic::object
+            ("mean", metric.mean_)
+            ("std", metric.std_)
+            ("min", metric.min_)
+            ("max", metric.max_)
+            ("median", metric.median_);
+        folly::writeFile(folly::toPrettyJson(out_json), filename.c_str());
+    };
 
     // write out result
-    std::string quant_file = folly::sformat("{}/{}/surface_error.json", config["dataroot"].getString(), config["dataset"].getString());
-    folly::dynamic out_json = folly::dynamic::object
-        ("mean", stats.mean_)
-        ("std", stats.std_)
-        ("min", stats.min_)
-        ("max", stats.max_)
-        ("median", stats.median_);
+    std::string error_filename = folly::sformat("{}/{}/surface_error.json",
+                                                config["dataroot"].getString(),
+                                                config["dataset"].getString());
+    save_metric(error_filename, stats);
 
-    folly::writeFile(folly::toPrettyJson(out_json), quant_file.c_str());
+    error_filename = folly::sformat("{}/{}/translation_error.json",
+                                    config["dataroot"].getString(),
+                                    config["dataset"].getString());
+    save_metric(error_filename, pose_stats[0]);
+
+    error_filename = folly::sformat("{}/{}/rotation_error.json",
+                                    config["dataroot"].getString(),
+                                    config["dataset"].getString());
+    save_metric(error_filename, pose_stats[1]);
+
 }
 
 }

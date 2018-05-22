@@ -111,8 +111,9 @@ void AssembleScene(const folly::dynamic &config,
 }
 
 void AssembleResult(const folly::dynamic &config,
-                     Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
-                     Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
+                    Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
+                    Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout,
+                    std::vector<Eigen::Matrix<double, 3, 4>> *Gout) {
     // EXTRACT PATHS
     std::string database_dir = config["CAD_database_root"].getString();
 
@@ -169,11 +170,20 @@ void AssembleResult(const folly::dynamic &config,
         *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices);
         *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
     }
+
+    if (Gout) {
+        for (const auto &obj : objects) {
+            auto R = T_ef_corvis.block<3, 3>(0, 0) * obj.second.block<3, 3>(0, 0);
+            auto T = T_ef_corvis.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3);
+            Gout->push_back((Eigen::Matrix<double, 3, 4>() << R, T).finished());
+        }
+    }
 }
 
 void AssembleGroundTruth(const folly::dynamic &config,
-                          Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
-                          Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout) {
+                         Eigen::Matrix<double, Eigen::Dynamic, 6> *Vout,
+                         Eigen::Matrix<int, Eigen::Dynamic, 3> *Fout,
+                         std::vector<Eigen::Matrix<double, 3, 4>> *Gout) {
     std::string database_dir = config["CAD_database_root"].getString();
     std::string dataroot = config["dataroot"].getString();
     std::string dataset = config["dataset"].getString();
@@ -209,6 +219,14 @@ void AssembleGroundTruth(const folly::dynamic &config,
     if (Vout && Fout) {
         *Vout = StdVectorOfEigenVectorToEigenMatrix(vertices);
         *Fout = StdVectorOfEigenVectorToEigenMatrix(faces);
+    }
+
+    if (Gout) {
+        for (const auto &obj : objects) {
+            auto R = identity.block<3, 3>(0, 0) * obj.second.block<3, 3>(0, 0);
+            auto T = identity.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3);
+            Gout->push_back((Eigen::Matrix<double, 3, 4>() << R, T).finished());
+        }
     }
 }
 
