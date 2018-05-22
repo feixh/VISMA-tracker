@@ -174,7 +174,7 @@ void AssembleResult(const folly::dynamic &config,
     if (Gout) {
         for (const auto &obj : objects) {
             auto R = T_ef_corvis.block<3, 3>(0, 0) * obj.second.block<3, 3>(0, 0);
-            auto T = T_ef_corvis.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3);
+            auto T = T_ef_corvis.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3) + T_ef_corvis.block<3, 1>(0, 3);
             Gout->push_back((Eigen::Matrix<double, 3, 4>() << R, T).finished());
         }
     }
@@ -224,7 +224,8 @@ void AssembleGroundTruth(const folly::dynamic &config,
     if (Gout) {
         for (const auto &obj : objects) {
             auto R = identity.block<3, 3>(0, 0) * obj.second.block<3, 3>(0, 0);
-            auto T = identity.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3);
+            auto T = identity.block<3, 3>(0, 0) * obj.second.block<3, 1>(0, 3)
+                + identity.block<3, 1>(0, 3);
             Gout->push_back((Eigen::Matrix<double, 3, 4>() << R, T).finished());
         }
     }

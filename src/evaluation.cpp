@@ -304,6 +304,12 @@ void QuantitativeEvaluation(folly::dynamic config) {
     std::cout << "translation errors:\n";
     PrintErrorMetric(pose_stats[0]);
     std::cout << "rotation errors:\n";
+    // convert rotation from rad to degree
+    pose_stats[1].mean_ *= 180 / 3.14;
+    pose_stats[1].median_ *= 180 / 3.14;
+    pose_stats[1].min_ *= 180 / 3.14;
+    pose_stats[1].max_ *= 180 / 3.14;
+    pose_stats[1].std_ *= 180 / 3.14;
     PrintErrorMetric(pose_stats[1]);
 
     // measure surface error
