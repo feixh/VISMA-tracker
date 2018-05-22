@@ -270,7 +270,7 @@ three::RegistrationResult ICPRefinement(std::shared_ptr<three::PointCloud> scene
 
 void QuantitativeEvaluation(folly::dynamic config) {
     // disable original mesh
-    CHECK(!config["scene_visualization"]["show_original_scene"].getBool());
+    CHECK(!config["result_visualization"]["show_original_scene"].getBool());
 
     // assemble result scene mesh
     Eigen::Matrix<double, Eigen::Dynamic, 6> tmp;

@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     } else if (argv[1][0] == 'q') {
         // TURN OFF ORIGINAL SCENE MESH IN QUANTITATIVE EVALUATION
         // AND ONLY COMPARE MESHES CONSIST OF OBJECTS-OF-INTEREST
-        config["scene_visualization"]["show_original_scene"] = false;
+        config["result_visualization"]["show_original_scene"] = false;
         QuantitativeEvaluation(config);
     } else {
         failed = true;
