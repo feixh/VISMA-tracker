@@ -1,7 +1,8 @@
 {
-//  "dataset_root": "/local/feixh/experiments/",
-//    "dataset_root": "/local/feixh/tmp/",
-// "dataset": "clutter1",
+  "datatype": "VLSLAM", // other options: VLSLAM, SceneNN
+  // "dataset_root": "/local/feixh/experiments/",
+  "dataset_root": "/local/feixh/experiments/oldlab",
+  "dataset": "clutter1",
 //  "dataset": "clutter2",
 //  "dataset": "occlusion1",
 //  "dataset": "occlusion2",
@@ -11,9 +12,9 @@
   //  "dataset": "meeting_area2",
   //  "dataset": "double_swivel_chairs_whiteboard",
 
-  "datatype": "SceneNN", // other options: VLSLAM, SceneNN
-  "dataset_root": "/local/Data/SceneNN/",
-  "dataset": "249",
+  // "datatype": "SceneNN", // other options: VLSLAM, SceneNN
+  // "dataset_root": "/local/Data/SceneNN/",
+  // "dataset": "249",
 
   "scene_config": "../cfg/scene.json",
   "wait_time": 5,
