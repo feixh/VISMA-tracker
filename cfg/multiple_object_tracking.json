@@ -1,7 +1,7 @@
 {
   "datatype": "VLSLAM", // other options: VLSLAM, SceneNN
-  // "dataset_root": "/local/feixh/experiments/",
-  "dataset_root": "/local/feixh/experiments/oldlab",
+  "dataset_root": "/local/feixh/experiments/",
+  // "dataset_root": "/local/feixh/experiments/oldlab",
   "dataset": "clutter1",
 //  "dataset": "clutter2",
 //  "dataset": "occlusion1",

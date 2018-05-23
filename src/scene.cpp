@@ -22,8 +22,8 @@ Scene::Scene() :
     frame_counter_(0),
     initial_pose_set_(false),
     timer_("Scene") {
-    // can only handle chair now
     valid_categories_.insert("chair");
+    valid_categories_.insert("car");
 //    valid_categories_.insert("couch");
 //    valid_categories_.insert("table");
     timer_.report_average = true;

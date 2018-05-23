@@ -1,0 +1,76 @@
+{
+  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
+  // "CAD_database_root": "/local/Data/SceneNN/249/",
+  "CAD_category_json": "car.json",
+
+  "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
+  "max_num_allowed_null_observations": 15,
+  // "camera_config": "../cfg/camera_scenenn.json",
+  "camera_config": "../cfg/camera.json",
+
+  "fixed_seed": false,
+  "do_filtering": true,
+  "dump_debug_view": false,
+
+  "filter": {
+    "initial_std": [0.10, 0.2, 1.0, 0.5],
+    "proposal_std": [0.01, 0.02, 0.05, 1.0],
+    "small_proposal_std": [0.001, 0.001, 0.005, 0.01],  // proposal distribution after convergence
+    "keep_shape_id_probability": 0.6,
+    "initial_depth": 2.5,
+    "initial_azimuth_interval": 15,
+    "initialization_num_particles": 1000,
+    "tracking_num_particles": 500,
+    "initialized_thresh": 0.8,
+    "reinitialization_thresh": 0.7,
+
+    "use_partial_mesh": false,
+    "use_CNN": true,
+    "CNN_probability_threshold": 1e-10, // set zero weight if confidence below this
+    "CNN_log_likelihood_weight": 50, // CNN log likelihood weight
+    "log_likelihood_weight": 200.0,
+    "log_prior_weight": 0.0,
+    "log_proposal_weight": 0.0,
+    "average_distance_weight": 1.0,
+    "area_discrepancy_weight": 0.1,
+    "evidence_blur_kernel_size": 3,
+    "prediction_blur_kernel_size": 0,
+    "compatibility_factor": 1.0,
+    "print": false,
+    "use_MC_move": false,
+    "azimuth_flip_rate": 0.45,
+    "azimuth_uniform_mix": 1.0,
+    "scale_level": 2
+  },
+
+
+  "visualization": {
+    "show_bounding_boxes": false,
+    "show_projections": true,
+    "show_mean_projection": true,
+    "show_mean_boundary": true,
+    "show_wireframe": true,
+    "show_evidence_as_thumbnail": true,
+    "show_correspondences": false
+  },
+
+  "debug_info": {
+    "print_timing": true,
+    "save_to_file": false
+  },
+
+  "oned_search": {
+    "step_length": 1,
+    "search_line_length": 20,
+    "intensity_thresh": 64,
+    "direction_thresh": 0.80,
+    "parallel": true
+  },
+
+  "hack": {
+    "azimuth": 0,
+    "best_shape_match": 0
+  }
+
+
+}
