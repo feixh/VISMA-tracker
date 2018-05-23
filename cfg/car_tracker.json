@@ -17,7 +17,7 @@
     "proposal_std": [0.01, 0.02, 0.05, 1.0],
     "small_proposal_std": [0.001, 0.001, 0.005, 0.01],  // proposal distribution after convergence
     "keep_shape_id_probability": 0.6,
-    "initial_depth": 2.5,
+    "initial_depth": 5.5,
     "initial_azimuth_interval": 15,
     "initialization_num_particles": 1000,
     "tracking_num_particles": 500,

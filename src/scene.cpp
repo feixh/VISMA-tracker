@@ -22,7 +22,7 @@ Scene::Scene() :
     frame_counter_(0),
     initial_pose_set_(false),
     timer_("Scene") {
-    valid_categories_.insert("chair");
+    // valid_categories_.insert("chair");
     valid_categories_.insert("car");
 //    valid_categories_.insert("couch");
 //    valid_categories_.insert("table");
@@ -133,7 +133,7 @@ void Scene::Build2DView() {
                 cv::rectangle(display_,
                               cv::Point(bbox.top_left_x(), bbox.top_left_y()),
                               cv::Point(bbox.bottom_right_x(), bbox.bottom_right_y()),
-                              color, 2);
+                              color, 1);
                 cv::putText(display_,
                             bbox.class_name(),
                             cv::Point(bbox.bottom_right_x()-20, bbox.bottom_right_y() - 30),
