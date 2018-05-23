@@ -1,7 +1,7 @@
 {
   "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
   // "CAD_database_root": "/local/Data/SceneNN/249/",
-  "CAD_category_json": "car.json",
+  "CAD_category_json": "truck.json",
 
   "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
   "max_num_allowed_null_observations": 15,

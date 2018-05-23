@@ -102,7 +102,7 @@ void OverlayMaskOnImage(const cv::Mat &mask_in,
                         bool invert_mask,
                         const uint8_t *color) {
     cv::Mat mask;
-    
+    cv::dilate(mask_in, mask, cv::Mat());
     for (int i = 0; i < mask.rows; ++i) {
         for (int j = 0; j < mask.cols; ++j) {
             if (mask.type() == CV_8U) {

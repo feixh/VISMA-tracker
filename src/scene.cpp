@@ -23,7 +23,8 @@ Scene::Scene() :
     initial_pose_set_(false),
     timer_("Scene") {
     // valid_categories_.insert("chair");
-    valid_categories_.insert("car");
+    // valid_categories_.insert("car");
+    valid_categories_.insert("truck");
 //    valid_categories_.insert("couch");
 //    valid_categories_.insert("table");
     timer_.report_average = true;

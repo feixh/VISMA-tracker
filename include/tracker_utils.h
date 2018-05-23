@@ -66,7 +66,8 @@ const uint8_t kColorWhite[] = {255, 255, 255};
 const std::unordered_map<std::string, const uint8_t*> kColorMap = {
     {"chair", kColorGreen},
     {"couch", kColorGreen},
-    {"car", kColorGreen}
+    {"car", kColorGreen},
+    {"truck", kColorGreen}
 };
 
 /// \brief: Compute foreground and background per channel color distribution.
