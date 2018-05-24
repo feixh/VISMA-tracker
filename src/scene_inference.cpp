@@ -43,8 +43,9 @@ void Scene::Update(const cv::Mat &evidence,
     // iterate over bounding boxes and check which bounding box is
     // not yet explained by the scene
     cv::Mat working_evidence(evidence.clone());
+    std::unordered_map<std::string, vlslam_pb::BoundingBoxList> all_category_bboxlist;
     for (const auto &category : valid_categories_) {
-        vlslam_pb::BoundingBoxList category_bboxlist;
+        vlslam_pb::BoundingBoxList &category_bboxlist = all_category_bboxlist[category];
         float bbox_score_thresh = config_["bbox_score_thresh"][category].asDouble();
         float bbox_area_thresh = config_["bbox_area_thresh"][category].asDouble() * rows_ * cols_;
         for (const auto &bbox : bbox_list.bounding_boxes()) {
@@ -170,6 +171,12 @@ void Scene::Update(const cv::Mat &evidence,
                 new_tracker->build_visualization_ = false;
                 new_tracker->SetInitCameraToWorld(gwc0_);
                 new_tracker->InitializeFromBoundingBox(bbox, gwc_, Rg_);
+                new_tracker->Update(working_evidence,
+                                    category_bboxlist,
+                                    gwc_,
+                                    Rg_,
+                                    img,
+                                    imagepath);
                 trackers_.push_back(new_tracker);
                 LOG(INFO) << "new " << category << " created";
             }
@@ -196,9 +203,11 @@ void Scene::Update(const cv::Mat &evidence,
     for (TrackerPtr tracker : trackers_) {
         std::cout << tracker->id() << " : "
                   << tracker->class_name() << " :status="
-                  << as_integer(tracker->status());
+                  << as_integer(tracker->status()) << ";;;centroid="
+                  << tracker->CentroidInCurrentView().transpose();
+
         if (tracker->status() == TrackerStatus::OUT_OF_VIEW) {
-            std::cout << tracker->mean_.transpose();
+            std::cout << ";;;ofv: " << tracker->mean_.transpose();
         }
         std::cout << "\n";
 

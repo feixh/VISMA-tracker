@@ -13,7 +13,7 @@
   "dataset": "kitti00",
 
   "scene_config": "../cfg/scene.json",
-  "wait_time": 5,
+  "wait_time": -1,
   "start_index": 0,
   "save": false
 }

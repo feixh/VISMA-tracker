@@ -500,6 +500,11 @@ KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
     CHECK_EQ(png_files_.size(), pose_files.size());
     size_ = png_files_.size();
 
+    Mat3f swapaxis;
+    swapaxis << 1.0, 0.0, 0.0,
+        0.0, 0.0, -1.0,
+        0.0, 1.0, 0.0;
+
     // now load poses
     for (int i = 0; i < pose_files.size(); ++i) {
         // debug
@@ -510,10 +515,10 @@ KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
         for (int k = 0; k < 12; ++k) fid >> tmp[k];
         Sophus::SE3f pose;
         pose.so3() = Sophus::SO3f::fitToSO3(
-            (Mat3f() << tmp[0], tmp[1], tmp[2],
+            swapaxis * (Mat3f() << tmp[0], tmp[1], tmp[2],
                 tmp[4], tmp[5], tmp[6],
                 tmp[8], tmp[9], tmp[10]).finished());
-        pose.translation() << tmp[3], tmp[7], tmp[11];
+        pose.translation() << swapaxis * (Vec3f() << tmp[3], tmp[7], tmp[11]).finished();
         poses_.push_back(pose);
         fid.close();
     }

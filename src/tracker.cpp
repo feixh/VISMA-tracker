@@ -635,7 +635,7 @@ bool Tracker::IsOutOfView() {
     }
 
     auto c = CentroidInCurrentView();
-    if (c(2) > 10 && status_ != TrackerStatus::INITIALIZING) return true;
+    if (c(2) > 50 && status_ != TrackerStatus::INITIALIZING) return true;
 
     return false;
 }
