@@ -3,7 +3,7 @@
     "chair": "../cfg/chair_tracker.json",
     "couch": "../cfg/couch_tracker.json",
     "car": "../cfg/car_tracker.json",
-    "truck": "../cfg/car_tracker.json"
+    "truck": "../cfg/truck_tracker.json"
   },
 
   "bbox_score_thresh": {
@@ -21,7 +21,7 @@
   },
 
   // "camera_config": "../cfg/camera_scenenn.json",
-  "camera_config": "../cfg/camera.json",
+  "camera_config": "../cfg/camera_kitti.json",
 
   "result_logger": {
     "use": true,

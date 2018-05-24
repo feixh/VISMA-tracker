@@ -48,6 +48,9 @@ int main(int argc, char **argv) {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::SceneNNDatasetLoader>(dataset_root);
         is_sceneNN = true;
+    } else if (config["datatype"].getString() == "KITTI") {
+        std::cout << dataset_root << "\n";
+        loader = std::make_shared<feh::KittiDatasetLoader>(dataset_root);
     }
 
     feh::tracker::Scene scene;

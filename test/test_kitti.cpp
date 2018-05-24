@@ -25,6 +25,7 @@ int main() {
         Sophus::SO3f Rg;
         loader.Grab(i, image, edgemap, bboxlist, gwc, Rg);
         cv::imshow("image", image);
+        cv::imshow("edge", edgemap);
         cv::waitKey(24);
     }
 }
