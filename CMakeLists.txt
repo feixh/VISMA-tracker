@@ -187,6 +187,9 @@ target_link_libraries(linemod feh)
 add_executable(test_surface_error test/test_surface_error.cpp)
 target_link_libraries(test_surface_error feh)
 
+add_executable(test_kitti test/test_kitti.cpp)
+target_link_libraries(test_kitti feh)
+
 add_executable(inspector app/inspector.cpp app/viewer.cpp)
 target_link_libraries(inspector feh)
 
@@ -236,9 +239,6 @@ target_link_libraries(rosviewer
         ${catkin_LIBRARIES}
         ${roscpp_LIBRARIES}
         ${PCL_COMMON_LIBRARIES})
-
-
-
 
 #add_executable(test_octree test/test_octree.cpp)
 

@@ -487,6 +487,83 @@ bool SceneNNDatasetLoader::Grab(int i,
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
 }
 
+KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
+    dataroot_ = dataroot;
+    feh::Glob(dataroot_, "png", png_files_);
+    feh::Glob(dataroot_, "edge", edge_files_);
+    feh::Glob(dataroot_, "bbox", bbox_files_);
+    std::vector<std::string> pose_files;
+    feh::Glob(dataroot_, "txt", pose_files);
+    CHECK_EQ(png_files_.size(), edge_files_.size());
+    CHECK_EQ(png_files_.size(), bbox_files_.size());
+    CHECK_EQ(png_files_.size(), pose_files.size());
+    size_ = png_files_.size();
+
+    // now load poses
+    for (int i = 0; i < pose_files.size(); ++i) {
+        // debug
+        std::cout << "loading " << i << "/" << size_ << " ... " << pose_files[i] << "\n";
+        std::ifstream fid(pose_files[i], std::ios::in);
+        CHECK(fid.is_open()) << "failed to open pose file " << pose_files[i];
+        float tmp[12];
+        for (;;) {
+            Sophus::SE3f pose;
+            for (int i = 0; i < 12; ++i) if (!(fid >> tmp[i])) break;
+            pose.so3() = Sophus::SO3f::fitToSO3(
+                (Mat3f() << tmp[0], tmp[1], tmp[2],
+                    tmp[4], tmp[5], tmp[6],
+                    tmp[8], tmp[9], tmp[10]).finished());
+            pose.translation() << tmp[3], tmp[7], tmp[11];
+            poses_.push_back(pose);
+            if (fid.eof()) break;
+        }
+        fid.close();
+    }
+}
+
+bool KittiDatasetLoader::Grab(int i,
+                              cv::Mat &image,
+                              cv::Mat &edgemap,
+                              vlslam_pb::BoundingBoxList &bboxlist,
+                              Sophus::SE3f &gwc,
+                              Sophus::SO3f &Rg) {
+    gwc = poses_[i];
+    // FIXME: MAKE UP GRAVITY
+    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+
+    std::string png_file = png_files_[i];
+    std::string edge_file = edge_files_[i];
+    std::string bbox_file = bbox_files_[i];
+
+    // read image
+    image = cv::imread(png_file);
+    CHECK(!image.empty()) << "empty image: " << png_file;
+
+    // read edgemap
+    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+        LOG(FATAL) << "failed to load edge map @ " << edge_file;
+    }
+
+    // read bounding box
+    std::ifstream in_file(bbox_file, std::ios::in);
+    CHECK(in_file.is_open()) << "FATAL::failed to open bbox file @ " << bbox_file;
+    bboxlist.ParseFromIstream(&in_file);
+    in_file.close();
+    return true;
+}
+
+
+bool KittiDatasetLoader::Grab(int i,
+                              cv::Mat &image,
+                              cv::Mat &edgemap,
+                              vlslam_pb::BoundingBoxList &bboxlist,
+                              Sophus::SE3f &gwc,
+                              Sophus::SO3f &Rg,
+                              std::string &fullpath) {
+    fullpath = png_files_[i];
+    return Grab(i, image, edgemap, bboxlist, gwc, Rg);
+}
+
 
 
 }   // namespace feh

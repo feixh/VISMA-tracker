@@ -87,6 +87,27 @@ protected:
     int size_;
 };
 
+class KittiDatasetLoader : public VlslamDatasetLoader{
+public:
+    KittiDatasetLoader(const std::string &dataroot);
+    bool Grab(int i,
+              cv::Mat &image,
+              cv::Mat &edgemap,
+              vlslam_pb::BoundingBoxList &bboxlist,
+              Sophus::SE3f &gwc,
+              Sophus::SO3f &Rg) override;
+
+    bool Grab(int i,
+              cv::Mat &image,
+              cv::Mat &edgemap,
+              vlslam_pb::BoundingBoxList &bboxlist,
+              Sophus::SE3f &gwc,
+              Sophus::SO3f &Rg,
+              std::string &fullpath) override;
+private:
+    std::vector<Sophus::SE3f> poses_;
+};
+
 class ICLDatasetLoader : public VlslamDatasetLoader {
 public:
     ICLDatasetLoader(const std::string &dataroot);
