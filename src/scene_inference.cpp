@@ -171,14 +171,21 @@ void Scene::Update(const cv::Mat &evidence,
                 new_tracker->build_visualization_ = false;
                 new_tracker->SetInitCameraToWorld(gwc0_);
                 new_tracker->InitializeFromBoundingBox(bbox, gwc_, Rg_);
-                new_tracker->Update(working_evidence,
+                trackers_.push_back(new_tracker);
+                LOG(INFO) << "new " << category << " created";
+
+                // Only use the proposal form which the object is initialized in inference.
+                cv::Mat restricted_evidence(working_evidence.size(), working_evidence.type());
+                cv::Rect rect(cv::Point(bbox.top_left_x(), bbox.top_left_y()),
+                              cv::Point(bbox.bottom_right_x(), bbox.bottom_right_y()));
+                working_evidence(rect).copyTo(restricted_evidence(rect));
+
+                new_tracker->Update(restricted_evidence,
                                     category_bboxlist,
                                     gwc_,
                                     Rg_,
                                     img,
                                     imagepath);
-                trackers_.push_back(new_tracker);
-                LOG(INFO) << "new " << category << " created";
             }
         }
         // FIXME: SINCE WE HAVE ONLY ONE CATEGORY FOR NOW, ASSIGN CATEGORY_BBOXLIST TO INPUT_BBOXLIST
@@ -221,7 +228,7 @@ void Scene::UpdateSegMask() {
     zbuffer_.setTo(0);
     segmask_.setTo(-1);
     for (auto tracker : trackers_) {
-        if (tracker->CentroidInCurrentView()(2) < 10)
+        if (tracker->CentroidInCurrentView()(2) < 30)
         {
             cv::Mat depth = tracker->RenderDepth();
             auto op = [this, tracker, &depth](const tbb::blocked_range<int> &range) {

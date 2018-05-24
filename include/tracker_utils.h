@@ -42,7 +42,7 @@ void FlipVertices(std::vector<float> &vertices);
 /// \param color: color of the mask
 void OverlayMaskOnImage(const cv::Mat &mask, cv::Mat &image, bool invert_mask=false, const uint8_t *color=nullptr);
 /// \brief: Make it easier to visualize depth map by removing invalid depth values and linearize valid ones.
-void PrettyDepth(cv::Mat &out, float z_near = 0.05f, float z_far = 50.0f);
+void PrettyDepth(cv::Mat &out, float z_near = 0.05f, float z_far = 20.0f);
 /// \brief: Convert from radian to an integer number which is azimuth index.
 int AzimuthIndexFromRadian(float rad);
 /// \brief: From azimuth index to radian.
@@ -128,9 +128,9 @@ void ComputePixelwisePosterior(const cv::Mat &image,
                                std::vector<VecXf> &hist_b);
 
 /// \brief: Make float type zbuffer to char type
-cv::Mat PrettyZBuffer(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=50.0f);
+cv::Mat PrettyZBuffer(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=20.0f);
 /// \brief: Linearize a depth map for visualization.
-cv::Mat LinearizeDepthMap(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=50.0f);
+cv::Mat LinearizeDepthMap(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=20.0f);
 cv::Mat PrettyLabelMap(const cv::Mat &label_map, const std::vector<std::array<uint8_t, 3>> &color_map);
 
 }   // namespace tracker
