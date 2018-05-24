@@ -1,0 +1,15 @@
+<launch>
+
+    <node pkg="vlslam_plus" type="rosviewer" name="rosviewer" output="screen" >
+        <param name="proj_root" value="$(find vlslam_plus)/" />
+    </node>
+
+    <!--<node pkg="image_view" type="image_view" name="proposal_image" >-->
+        <!--<remap from="image" to="rosviewer/vismap/proposal" />-->
+    <!--</node>-->
+
+    <!--<node pkg="image_view" type="image_view" name="mask_image" >-->
+        <!--<remap from="image" to="rosviewer/vismap/mask" />-->
+    <!--</node>-->
+
+</launch>

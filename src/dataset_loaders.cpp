@@ -265,6 +265,30 @@ bool VlslamDatasetLoader::Grab(int i,
     return true;
 }
 
+std::unordered_map<int, std::array<float, 6>> VlslamDatasetLoader::GrabPointCloud(int i,
+                                                                                  const cv::Mat &img) {
+    std::unordered_map<int, std::array<float, 6>> out;
+    vlslam_pb::Packet *packet_ptr = dataset_.mutable_packets(i);
+    for (auto f : packet_ptr->features()) {
+        if (f.status() == vlslam_pb::Feature_Status_INSTATE
+            || f.status() == vlslam_pb::Feature_Status_GOODDROP) {
+            auto color = img.at<cv::Vec3b>(int(f.xp(1)), int(f.xp(0)));
+            if (out.count(f.id())) {
+                color[0] += out.at(f.id())[3];
+                color[1] += out.at(f.id())[4];
+                color[2] += out.at(f.id())[5];
+                color[0] >>= 1;
+                color[1] >>= 1;
+                color[2] >>= 1;
+                out[f.id()] = {f.xw(0), f.xw(1), f.xw(2), color[0], color[1], color[2]};
+            } else {
+                out[f.id()] = {f.xw(0), f.xw(1), f.xw(2), color[0], color[1], color[2]};
+            }
+        }
+    }
+    return out;
+};
+
 ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot) {
     dataroot_ = dataroot;
     // load camera pose

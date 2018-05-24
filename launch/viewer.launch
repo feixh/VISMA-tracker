@@ -1,0 +1,10 @@
+<launch>
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d  $(find vlslam_plus)/cfg/viewer.rviz" /> -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d  $(find vlslam_plus)/cfg/viewer_scenenn.rviz" />
+
+
+   <!-- Get the covis Node -->
+  <include file="$(find vlslam_plus)/launch/viewer.xml" />
+
+
+</launch>
