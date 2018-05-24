@@ -65,7 +65,7 @@
 
   "oned_search": {
     "step_length": 1,
-    "search_line_length": 20,
+    "search_line_length": 40,
     "intensity_thresh": 64,
     "direction_thresh": 0.80,
     "parallel": true
