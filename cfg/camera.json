@@ -18,7 +18,7 @@
   "cols": 960,
 
   "z_near": 0.05,
-  "z_far": 5.0
+  "z_far": 10.0
 
   // original ATAN model
   //    "fx": 0.561859,

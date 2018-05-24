@@ -12,6 +12,9 @@
 #include "tracker_utils.h"
 #include "scene.h"
 #include "dataset_loaders.h"
+#include "common/utils.h"
+
+using TermColor = feh::TermColor;
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/multiple_object_tracking.json");
@@ -70,6 +73,7 @@ int main(int argc, char **argv) {
 
         std::string imagepath;
         bool succeed = loader->Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        std::cout << TermColor::red + TermColor::bold << "BOX NUMBER=" << bboxlist.bounding_boxes_size() << TermColor::endl;
         if (!succeed) break;
         std::cout << imagepath << "\n";
         if (i == 0) {

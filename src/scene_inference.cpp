@@ -212,7 +212,7 @@ void Scene::UpdateSegMask() {
     zbuffer_.setTo(0);
     segmask_.setTo(-1);
     for (auto tracker : trackers_) {
-        if (tracker->CentroidInCurrentView()(2) < 3)
+        if (tracker->CentroidInCurrentView()(2) < 10)
         {
             cv::Mat depth = tracker->RenderDepth();
             auto op = [this, tracker, &depth](const tbb::blocked_range<int> &range) {
@@ -315,7 +315,7 @@ void Scene::MergeObjects() {
         for (auto it2 = std::next(it); it2 != trackers_.end(); ) {
             auto c1 = (*it)->pose().block<3, 1>(0, 3);
             auto c2 = (*it2)->pose().block<3, 1>(0, 3);
-            if ((c1-c2).norm() < 0.5) {
+            if ((c1-c2).norm() < 2.5) {
                 if (as_integer((*it)->status()) >= as_integer((*it2)->status())) {
                     // IF IT2 HAS HIGHER PRIORITY, DO NOT REMOVE IT
                     it2 = trackers_.erase(it2);

@@ -1,17 +1,23 @@
 {
   "configure_files": {
     "chair": "../cfg/chair_tracker.json",
-    "couch": "../cfg/couch_tracker.json"
+    "couch": "../cfg/couch_tracker.json",
+    "car": "../cfg/car_tracker.json",
+    "truck": "../cfg/car_tracker.json"
   },
 
   "bbox_score_thresh": {
     "chair": 0.8,
-    "couch": 0.8
+    "couch": 0.8,
+    "car": 0.7,
+    "truck": 0.7
   },
 
   "bbox_area_thresh": {
     "chair": 0.01,
-    "couch": 0.05
+    "couch": 0.05,
+    "car": 0.05,
+    "truck": 0.05
   },
 
   // "camera_config": "../cfg/camera_scenenn.json",

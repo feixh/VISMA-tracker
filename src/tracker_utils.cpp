@@ -97,10 +97,12 @@ void FlipVertices(std::vector<float> &vertices) {
     }
 }
 
-void OverlayMaskOnImage(const cv::Mat &mask,
+void OverlayMaskOnImage(const cv::Mat &mask_in,
                         cv::Mat &image,
                         bool invert_mask,
                         const uint8_t *color) {
+    cv::Mat mask;
+    cv::dilate(mask_in, mask, cv::Mat());
     for (int i = 0; i < mask.rows; ++i) {
         for (int j = 0; j < mask.cols; ++j) {
             if (mask.type() == CV_8U) {
