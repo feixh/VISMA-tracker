@@ -16,8 +16,8 @@
   "bbox_area_thresh": {
     "chair": 0.01,
     "couch": 0.05,
-    "car": 0.05,
-    "truck": 0.05
+    "car": 0.01,
+    "truck": 0.10
   },
 
   // "camera_config": "../cfg/camera_scenenn.json",

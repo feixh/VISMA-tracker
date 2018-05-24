@@ -224,6 +224,7 @@ void Tracker::Initialize(const std::string &config_file) {
         evidence_dir_.push_back(cv::Mat(rows_[i], cols_[i], CV_32FC1));
         image_.push_back(cv::Mat(rows_[i], cols_[i], CV_8UC3));
     }
+    // std::cout << "rows=" << rows_[0] << ";;;cols=" << cols_[0] << std::endl;
     visible_mask_ = cv::Mat(rows_[0], cols_[0], CV_8UC1);
     visible_mask_.setTo(1);
 

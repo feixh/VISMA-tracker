@@ -11,6 +11,7 @@
 // own
 #include "io_utils.h"
 #include "tracker_utils.h"
+#include "opencv2/imgproc.hpp"
 
 namespace feh {
 
@@ -506,17 +507,14 @@ KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
         std::ifstream fid(pose_files[i], std::ios::in);
         CHECK(fid.is_open()) << "failed to open pose file " << pose_files[i];
         float tmp[12];
-        for (;;) {
-            Sophus::SE3f pose;
-            for (int i = 0; i < 12; ++i) if (!(fid >> tmp[i])) break;
-            pose.so3() = Sophus::SO3f::fitToSO3(
-                (Mat3f() << tmp[0], tmp[1], tmp[2],
-                    tmp[4], tmp[5], tmp[6],
-                    tmp[8], tmp[9], tmp[10]).finished());
-            pose.translation() << tmp[3], tmp[7], tmp[11];
-            poses_.push_back(pose);
-            if (fid.eof()) break;
-        }
+        for (int k = 0; k < 12; ++k) fid >> tmp[k];
+        Sophus::SE3f pose;
+        pose.so3() = Sophus::SO3f::fitToSO3(
+            (Mat3f() << tmp[0], tmp[1], tmp[2],
+                tmp[4], tmp[5], tmp[6],
+                tmp[8], tmp[9], tmp[10]).finished());
+        pose.translation() << tmp[3], tmp[7], tmp[11];
+        poses_.push_back(pose);
         fid.close();
     }
 }
@@ -537,12 +535,14 @@ bool KittiDatasetLoader::Grab(int i,
 
     // read image
     image = cv::imread(png_file);
+    cv::resize(image, image, cv::Size(1240, 376));
     CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
     if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
         LOG(FATAL) << "failed to load edge map @ " << edge_file;
     }
+    cv::resize(edgemap, edgemap, cv::Size(1240, 376));
 
     // read bounding box
     std::ifstream in_file(bbox_file, std::ios::in);

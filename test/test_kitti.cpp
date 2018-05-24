@@ -24,6 +24,7 @@ int main() {
         Sophus::SE3f gwc;
         Sophus::SO3f Rg;
         loader.Grab(i, image, edgemap, bboxlist, gwc, Rg);
+        std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
         cv::imshow("image", image);
         cv::imshow("edge", edgemap);
         cv::waitKey(24);
