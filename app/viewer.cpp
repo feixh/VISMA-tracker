@@ -14,10 +14,6 @@
 #include "folly/json.h"
 #include "tbb/parallel_for.h"
 
-// ros
-#include "ros/ros.h"
-#include "cv_bridge/cv_bridge.h"
-
 void DrawOneFrame(const cv::Mat &img,
                   const cv::Mat &edgemap,
                   const vlslam_pb::BoundingBoxList &bboxlist,

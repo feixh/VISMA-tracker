@@ -9,15 +9,8 @@
 #include "viewer.h"
 
 // 3rd party
-#include "opencv2/opencv.hpp"
 #include "folly/FileUtil.h"
 #include "folly/json.h"
-#include "tbb/parallel_for.h"
-
-// ros
-#include "ros/ros.h"
-#include "cv_bridge/cv_bridge.h"
-
 
 
 int main(int argc, char **argv) {

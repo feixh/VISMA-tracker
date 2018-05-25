@@ -196,49 +196,49 @@ target_link_libraries(inspector feh)
 ################################################################################
 ################################################################################
 ################################################################################
-# ROS
+# ROS (optionally build ros-based viewer)
 ################################################################################
 ################################################################################
 ################################################################################
-find_package(catkin REQUIRED COMPONENTS
-        std_msgs
-        message_generation
-        image_transport
-        sensor_msgs
-        cv_bridge
-        roscpp
-        pcl_ros)
-find_package(roscpp REQUIRED)
+set(build_viewer False)
+if (build_viewer)
+    find_package(catkin REQUIRED COMPONENTS
+            std_msgs
+            message_generation
+            image_transport
+            sensor_msgs
+            cv_bridge
+            roscpp
+            pcl_ros)
+    find_package(roscpp REQUIRED)
 
-catkin_package(CATKIN_DEPENDS
-        std_msgs
-        message_runtime
-        message_generation
-        sensor_msgs
-        image_transport
-        cv_bridge
-        roscpp
-        CATKIN_DEPENDS message_runtime
-        INCLUDE_DIRS
-        LIBRARIES)
-include_directories(${catkin_INCLUDE_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-include_directories(
-        ${PCL_INCLUDE_DIRS}
-)
-link_libraries(
-        ${PCL_LIBRARY_DIRS}
-)
-################################################################################
-################################################################################
-################################################################################
+    catkin_package(CATKIN_DEPENDS
+            std_msgs
+            message_runtime
+            message_generation
+            sensor_msgs
+            image_transport
+            cv_bridge
+            roscpp
+            CATKIN_DEPENDS message_runtime
+            INCLUDE_DIRS
+            LIBRARIES)
+    include_directories(${catkin_INCLUDE_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+    include_directories(
+            ${PCL_INCLUDE_DIRS}
+    )
+    link_libraries(
+            ${PCL_LIBRARY_DIRS}
+    )
 
-add_executable(rosviewer app/rosviewer.cpp app/viewer.cpp)
-target_link_libraries(rosviewer
-        feh
-        ${catkin_LIBRARIES}
-        ${roscpp_LIBRARIES}
-        ${PCL_COMMON_LIBRARIES})
+    add_executable(rosviewer app/rosviewer.cpp app/viewer.cpp)
+    target_link_libraries(rosviewer
+            feh
+            ${catkin_LIBRARIES}
+            ${roscpp_LIBRARIES}
+            ${PCL_COMMON_LIBRARIES})
+endif(build_viewer)
 
 #add_executable(test_octree test/test_octree.cpp)
 
