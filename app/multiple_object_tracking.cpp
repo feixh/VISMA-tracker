@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     }
 
     feh::tracker::Scene scene;
-    scene.Initialize(config["scene_config"].asString());
+    scene.Initialize(config["scene_config"].asString(), config);
 
     // create windows
     int start_index(config["start_index"].asInt());

@@ -24,9 +24,6 @@
     "truck": 0.10
   },
 
-  // "camera_config": "../cfg/camera_scenenn.json",
-  "camera_config": "../cfg/camera_kitti.json",
-
   "result_logger": {
     "use": true,
     "log_file": "./result.json"

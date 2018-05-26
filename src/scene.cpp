@@ -2,6 +2,7 @@
 // Created by feixh on 10/31/17.
 //
 
+#include <io_utils.h>
 #include "scene.h"
 
 // 3rd party
@@ -22,7 +23,7 @@ Scene::Scene() :
     frame_counter_(0),
     initial_pose_set_(false),
     timer_("Scene") {
-    // valid_categories_.insert("chair");
+    valid_categories_.insert("chair");
     valid_categories_.insert("car");
     // valid_categories_.insert("truck");
 //    valid_categories_.insert("couch");
@@ -31,10 +32,11 @@ Scene::Scene() :
 }
 
 
-void Scene::Initialize(const std::string &config_file) {
+void Scene::Initialize(const std::string &config_file, const folly::dynamic &more_config) {
     std::string content;
     folly::readFile(config_file.c_str(), content);
     config_ = folly::parseJson(folly::json::stripComments(content));
+    config_ = io::MergeDynamic(config_, more_config);
     // LOAD SCENE CONFIGURATION
     log_ = folly::dynamic::array();
 
@@ -43,14 +45,6 @@ void Scene::Initialize(const std::string &config_file) {
     config_["camera"] = folly::parseJson(folly::json::stripComments(content));
 
     auto cam_cfg = config_["camera"];
-//    // FIXME: MAYBE WRAP THE FOLLOWING INTO A CAMERA INSTANCE
-//    float fx_          = cam_cfg["fx"].asDouble();
-//    float fy_          = cam_cfg["fy"].asDouble();
-//    float cx_          = cam_cfg["cx"].asDouble();
-//    float cy_          = cam_cfg["cy"].asDouble();
-//    float s_           = cam_cfg["s"].asDouble();
-//    float z_near_      = cam_cfg["z_near"].asDouble();
-//    float z_far_      = cam_cfg["z_far"].asDouble();
     rows_        = cam_cfg["rows"].asInt();
     cols_        = cam_cfg["cols"].asInt();
 

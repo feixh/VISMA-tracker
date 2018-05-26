@@ -26,7 +26,8 @@ namespace tracker {
 class Scene {
 public:
     Scene();
-    void Initialize(const std::string &config_file);
+    void Initialize(const std::string &config_file,
+                    const folly::dynamic &more_config=folly::dynamic{});
     void SetInitCameraToWorld(const Sophus::SE3f &gwc0);
 
     /// \brief: Entrance of semantic mapping.

@@ -1,19 +1,22 @@
 {
-  // "datatype": "VLSLAM", // other options: VLSLAM, SceneNN
-  // "dataset_root": "/local/feixh/experiments/",
-  // // "dataset_root": "/local/feixh/experiments/oldlab",
-  // "dataset": "clutter1",
+  "datatype": "VLSLAM", // other options: VLSLAM, SceneNN
+  "dataset_root": "/local/feixh/experiments/",
+  "dataset_root": "/local/feixh/experiments/oldlab",
+  "dataset": "clutter1",
+  "camera_config": "../cfg/camera.json",
 
   // "datatype": "SceneNN", // other options: VLSLAM, SceneNN
   // "dataset_root": "/local/Data/SceneNN/",
   // "dataset": "249",
+  // "camera_config": "../cfg/camera_scenenn.json",
 
-  "datatype": "KITTI", // other options: VLSLAM, SceneNN
-  "dataset_root": "/local/feixh/experiments/",
-  "dataset": "kitti00",
+  // "datatype": "KITTI", // other options: VLSLAM, SceneNN
+  // "dataset_root": "/local/feixh/experiments/",
+  // "dataset": "kitti00",
+  // "camera_config": "../cfg/camera_kitti.json",
 
   "scene_config": "../cfg/scene.json",
-  "wait_time": -1,
+  "wait_time": 5,
   "start_index": 0,
-  "save": false
+  "save": true
 }
