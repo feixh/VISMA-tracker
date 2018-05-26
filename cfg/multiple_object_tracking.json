@@ -10,13 +10,13 @@
   // "dataset": "249",
   // "camera_config": "../cfg/camera_scenenn.json",
 
-  // "datatype": "KITTI", // other options: VLSLAM, SceneNN
-  // "dataset_root": "/local/feixh/experiments/",
-  // "dataset": "kitti00",
-  // "camera_config": "../cfg/camera_kitti.json",
+  "datatype": "KITTI", // other options: VLSLAM, SceneNN
+  "dataset_root": "/local/feixh/experiments/",
+  "dataset": "kitti00",
+  "camera_config": "../cfg/camera_kitti.json",
 
   "scene_config": "../cfg/scene.json",
-  "wait_time": 5,
+  "wait_time": -1,
   "start_index": 0,
-  "save": true
+  "save": false
 }

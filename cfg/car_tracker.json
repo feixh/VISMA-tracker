@@ -17,9 +17,9 @@
     // "proposal_std": [0.001, 0.001, 0.001, 0.001],
     // "small_proposal_std": [0.001, 0.001, 0.001, 0.001],  // proposal distribution after convergence
     "keep_shape_id_probability": 0.6,
-    "initial_depth": 5,
+    "initial_depth": 12,
     "initial_azimuth_interval": 15,
-    "initialization_num_particles": 500,
+    "initialization_num_particles": 1000,
     "tracking_num_particles": 100,
     "initialized_thresh": 0.8,
     "reinitialization_thresh": 0.7,
@@ -27,7 +27,7 @@
     "use_partial_mesh": false,
     "use_CNN": true,
     "CNN_probability_threshold": 1e-10, // set zero weight if confidence below this
-    "CNN_log_likelihood_weight": 50.0, // CNN log likelihood weight
+    "CNN_log_likelihood_weight": 100.0, // CNN log likelihood weight
     "log_likelihood_weight": 200.0,
     "log_prior_weight": 0.0,
     "log_proposal_weight": 0.0,
