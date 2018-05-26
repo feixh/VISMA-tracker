@@ -88,6 +88,8 @@ void SaveMatToFile(const std::string &filename, const cv::Mat &mat, bool binary=
     ofs.close();
 }
 
+/// \brief: Merge two dynamic objects and return the merged one.
+folly::dynamic MergeDynamic(const folly::dynamic &a, const folly::dynamic &b);
 
 
 } // namespace io

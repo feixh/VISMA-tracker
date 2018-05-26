@@ -28,8 +28,6 @@ add_definitions(-DFEH_MULTI_OBJECT_MODEL)
 add_definitions(-DFEH_CORE_USE_COLOR_INFO)
 #add_definitions(-DFEH_USE_REGION_TRACKER)
 
-
-
 # opengl
 find_package(OpenGL REQUIRED)
 # glfw
@@ -116,9 +114,7 @@ link_libraries(
         Visualization
         lcm
         double-conversion   # for folly
-#        ${GLEW_LIBRARIES}
         GL
-#        ${PCL_COMMON_LIBRARIES}
 )
 
 

@@ -83,7 +83,8 @@ Tracker::~Tracker() {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void Tracker::Initialize(const std::string &config_file) {
+
+void Tracker::Initialize(const std::string &config_file, const folly::dynamic &more_config) {
     if (status_ == TrackerStatus::VALID) {
         LOG(FATAL) << "FATAL::each tracker can only be initialized ONCE!!!";
     }
@@ -93,7 +94,8 @@ void Tracker::Initialize(const std::string &config_file) {
     folly::readFile(config_file.c_str(), content);
     config_ = folly::parseJson(folly::json::stripComments(content));
 
-
+    // merge config
+    config_ = io::MergeDynamic(config_, more_config);
 
     // setup hyper-parameters of filter
     auto filter_cfg = config_["filter"];
@@ -141,13 +143,7 @@ void Tracker::Initialize(const std::string &config_file) {
 
 
     // camera parameters
-
-//    in_file.open(config_["camera_config"].asString(), std::ios::in);
-//    CHECK(in_file.is_open());
-//    in_file >> config_["camera"];
-//    in_file.close();
     folly::readFile(config_["camera_config"].asString().c_str(), content);
-
     config_["camera"] = folly::parseJson(folly::json::stripComments(content));
 
     auto cam_cfg = config_["camera"];

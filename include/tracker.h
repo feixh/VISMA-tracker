@@ -57,8 +57,8 @@ public:
     friend class Scene;
     Tracker();
     ~Tracker();
-    /// \brief: Initialize tracker from a given jason file.
-    void Initialize(const std::string &config_file);
+    /// \brief: Initialize tracker from a given jason configuration.
+    void Initialize(const std::string &config_file, const folly::dynamic &more_config=folly::dynamic{});
     /// \brief: Initialize object from a given bounding box.
     /// \param bbox: From which we initialize object pose.
     /// \param cam_pse: g(init camera <- current camera).

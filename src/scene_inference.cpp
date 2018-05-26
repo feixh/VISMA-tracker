@@ -167,7 +167,8 @@ void Scene::Update(const cv::Mat &evidence,
         for (const auto &bbox : category_bboxlist.bounding_boxes()) {
             if (bbox.label() != -1) {
                 TrackerPtr new_tracker = std::make_shared<Tracker>();
-                new_tracker->Initialize(config_["configure_files"][category].asString());
+                new_tracker->Initialize(config_["configure_files"][category].asString(),
+                                        config_);
                 new_tracker->build_visualization_ = false;
                 new_tracker->SetInitCameraToWorld(gwc0_);
                 new_tracker->InitializeFromBoundingBox(bbox, gwc_, Rg_);

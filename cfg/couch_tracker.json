@@ -1,10 +1,6 @@
 {
-  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
-  "CAD_category_json": "couch.json",
-
   "max_num_allowed_initialization": 150,  // allow 5 seconds for initialization
   "max_num_allowed_null_observations": 15,
-  "camera_config": "../cfg/camera_icl.json",
 
   "fixed_seed": false,
   "do_filtering": true,
@@ -41,16 +37,6 @@
     "scale_level": 1
   },
 
-
-  "visualization": {
-    "show_bounding_boxes": false,
-    "show_projections": true,
-    "show_mean_projection": true,
-    "show_mean_boundary": true,
-    "show_wireframe": true,
-    "show_evidence_as_thumbnail": true,
-    "show_correspondences": false
-  },
 
   "debug_info": {
     "print_timing": true,

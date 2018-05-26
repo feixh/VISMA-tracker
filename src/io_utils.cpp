@@ -114,6 +114,18 @@ Mat4f SE3FromArray(double *data) {
     return out.cast<float>();
 }
 
+folly::dynamic MergeDynamic(const folly::dynamic &a, const folly::dynamic &b) {
+    if (b == nullptr) return a;
+    folly::dynamic out(a);
+    for (auto &item : b.items()) {
+        if (out.find(item.first) != out.items().end()) {
+            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
+        }
+        out[item.first] = item.second;
+    }
+    return out;
+}
+
 }   // namespace io
 
 }   // namespace feh

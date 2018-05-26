@@ -77,7 +77,7 @@ public:
                       Sophus::SE3f &gwc,
                       Sophus::SO3f &Rg,
                       std::string &fullpath);
-    std::unordered_map<int, std::array<float, 6>> GrabPointCloud(int i, const cv::Mat &img);
+    std::unordered_map<int64_t, std::array<double, 6>> GrabPointCloud(int i, const cv::Mat &img);
 
     virtual int size() const { return size_; }
 protected:
