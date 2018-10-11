@@ -56,8 +56,6 @@ find_package(TBB REQUIRED)
 # facebook folly
 find_package(Folly REQUIRED)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/Open3D/src)
-
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -66,7 +64,6 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/Sophus/include
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/include
         ${PROJECT_SOURCE_DIR}/thirdparty/libigl/include
-        ${PROJECT_SOURCE_DIR}/thirdparty/Open3D/src
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
@@ -78,17 +75,13 @@ include_directories(
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
         ${FOLLY_INCLUDE_DIR}
-#        ${PCL_INCLUDE_DIRS}
-#        ${GLEW_INCLUDE_DIRS}
-        /opt/ros/kinetic/include/opencv-3.2.0-dev
 )
 
 link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
-        ${PROJECT_SOURCE_DIR}/thirdparty/Open3D/lib
-#        ${PCL_LIBRARY_DIRS}
-        /opt/ros/kinetic/lib    #non-standard opencv lib dir
+
+        /usr/local/lib
 )
 
 set(OpenCV_MINIMAL
@@ -109,9 +102,6 @@ link_libraries(
         ${GMP_LIBRARIES}
         ${MPFR_LIBRARIES}
         ${FOLLY_LIBRARY}
-        Core
-        IO
-        Visualization
         lcm
         double-conversion   # for folly
         GL
@@ -156,26 +146,8 @@ target_link_libraries(sot feh)
 add_executable(mot app/multiple_object_tracking.cpp)
 target_link_libraries(mot feh)
 
-add_executable(undistort_images app/undistort_images.cpp src/undistorter.cpp)
-target_link_libraries(undistort_images feh)
-
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 target_link_libraries(preprocess_mesh feh)
-
-add_executable(tool
-        app/tool.cpp
-        src/constrained_icp.cpp
-        src/annotation.cpp
-        src/evaluation.cpp
-        src/visualization.cpp)
-target_link_libraries(tool feh)
-
-add_executable(evaluation_scenenn
-        app/evaluation_scenenn.cpp)
-target_link_libraries(evaluation_scenenn feh)
-
-add_executable(floor app/floor.cpp)
-target_link_libraries(floor feh)
 
 add_executable(linemod app/linemod.cpp)
 target_link_libraries(linemod feh)
