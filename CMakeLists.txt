@@ -75,22 +75,25 @@ include_directories(
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
         ${FOLLY_INCLUDE_DIR}
+
+#        /usr/local/include
 )
 
 link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
 
-        /usr/local/lib
+#        /usr/local/lib
+#        /usr/lib/x86_64-linux-gnu
 )
 
 set(OpenCV_MINIMAL
-        opencv_highgui3
-        opencv_core3
-        opencv_imgcodecs3
-        opencv_imgproc3
-        opencv_videoio3
-        opencv_calib3d3)
+        opencv_highgui
+        opencv_core
+        opencv_imgcodecs
+        opencv_imgproc
+        opencv_videoio
+        opencv_calib3d)
 
 
 link_libraries(
@@ -152,8 +155,8 @@ target_link_libraries(preprocess_mesh feh)
 add_executable(linemod app/linemod.cpp)
 target_link_libraries(linemod feh)
 
-add_executable(test_surface_error test/test_surface_error.cpp)
-target_link_libraries(test_surface_error feh)
+#add_executable(test_surface_error test/test_surface_error.cpp)
+#target_link_libraries(test_surface_error feh)
 
 add_executable(test_kitti test/test_kitti.cpp)
 target_link_libraries(test_kitti feh)
