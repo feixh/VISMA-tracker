@@ -1,6 +1,6 @@
 {
   // shared by different object trackers
-  "CAD_database_root": "/local/feixh/Dropbox/ECCV18/data/CAD_database/",
+  "CAD_database_root": "/local/feixh/Dropbox/Data/VISMA/CAD/",
   // "CAD_database_root": "/local/Data/SceneNN/249/",
 
   "configure_files": {
