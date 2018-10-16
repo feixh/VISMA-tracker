@@ -2,7 +2,7 @@
 // Created by feixh on 10/31/17.
 //
 
-#include <io_utils.h>
+#include "utils.h"
 #include "scene.h"
 
 // 3rd party
@@ -36,7 +36,7 @@ void Scene::Initialize(const std::string &config_file, const folly::dynamic &mor
     std::string content;
     folly::readFile(config_file.c_str(), content);
     config_ = folly::parseJson(folly::json::stripComments(content));
-    config_ = io::MergeDynamic(config_, more_config);
+    config_ = MergeDynamic(config_, more_config);
     // LOAD SCENE CONFIGURATION
     log_ = folly::dynamic::array();
 

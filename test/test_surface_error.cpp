@@ -9,7 +9,7 @@
 // Use libigl AABB (Axis Aligned Bounding Box, an instantitation of quadtree) data structure for
 // fast closest point query.
 
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 // stl
 
 // 3rd party

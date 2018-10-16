@@ -1,4 +1,4 @@
-#include "common/matdiff.h"
+#include "matdiff.h"
 
 namespace feh
 {

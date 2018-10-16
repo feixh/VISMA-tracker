@@ -1,7 +1,7 @@
 //
 // Created by feixh on 11/15/17.
 //
-#include "dataset_loaders.h"
+#include "dataloaders.h"
 
 // 3rd party
 #include "folly/FileUtil.h"
@@ -9,7 +9,6 @@
 #include "folly/json.h"
 
 // own
-#include "io_utils.h"
 #include "tracker_utils.h"
 #include "opencv2/imgproc.hpp"
 
@@ -17,8 +16,8 @@ namespace feh {
 
 LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
     dataroot_(dataroot) {
-    feh::io::LoadMeshFromPlyFile(dataroot + "/mesh.ply", vertices_, faces_);
-    feh::tracker::ScaleVertices(vertices_, 1e-3);
+    LoadMeshFromPlyFile(dataroot + "/mesh.ply", vertices_, faces_);
+    tracker::ScaleVertices(vertices_, 1e-3);
 
     // transformation to register oldmesh
     std::string transform_file = dataroot_ + "/transform.dat";
@@ -26,7 +25,7 @@ LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
     CHECK(ifs.is_open()) << "failed to open transform.dat at " << transform_file;
     float tmp;
     ifs >> tmp;
-    feh::Mat4f transform_data;
+    Mat4f transform_data;
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 4; ++j) {
             ifs >> tmp >> tmp;
@@ -39,9 +38,9 @@ LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
     std::cout << "transform=\n" << transform_.matrix() << "\n";
 
     // read in jpg files
-    feh::Glob(dataroot_ + "/data", "jpg", "color", jpg_files_);
-    feh::Glob(dataroot_ + "/data", "tra", "tra", trans_files_);
-    feh::Glob(dataroot_ + "/data", "rot", "rot", rot_files_);
+    Glob(dataroot_ + "/data", "jpg", "color", jpg_files_);
+    Glob(dataroot_ + "/data", "tra", "tra", trans_files_);
+    Glob(dataroot_ + "/data", "rot", "rot", rot_files_);
     CHECK_EQ(jpg_files_.size(), trans_files_.size());
     CHECK_EQ(jpg_files_.size(), rot_files_.size());
     size_ = jpg_files_.size();
@@ -59,7 +58,7 @@ bool LinemodDatasetLoader::Grab(int i,
     CHECK(ifs.is_open());
     int tmp;
     ifs >> tmp >> tmp;
-    feh::Vec3f T;
+    Vec3f T;
     ifs >> T(0) >> T(1) >> T(2);
     T *= 0.01;  // cm -> meter
     ifs.close();
@@ -68,7 +67,7 @@ bool LinemodDatasetLoader::Grab(int i,
     ifs.open(rot_files_[i], std::ios::in);
     CHECK(ifs.is_open());
     ifs >> tmp >> tmp;
-    feh::Mat3f R;
+    Mat3f R;
     for (int i =0 ; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             ifs >> R(i, j);
@@ -77,7 +76,7 @@ bool LinemodDatasetLoader::Grab(int i,
     ifs.close();
 
     // fill in homogeneous matrix
-    feh::Mat4f RT;
+    Mat4f RT;
     RT.block<3, 3>(0, 0) = R;
     RT.block<3, 1>(0, 3) = T;
     RT(3, 3) = 1.0;
@@ -138,8 +137,8 @@ RigidPoseDatasetLoader::RigidPoseDatasetLoader(
 
     // load model
     std::string model_path(dataroot_ + "/models/" + dataset_ + "/" + dataset_ + ".obj");
-    io::LoadMeshFromObjFile(model_path, vertices_, faces_);
-    feh::tracker::ScaleVertices(vertices_, 1e-3);   // mm -> meters
+    LoadMeshFromObjFile(model_path, vertices_, faces_);
+    tracker::ScaleVertices(vertices_, 1e-3);   // mm -> meters
     // flip z
     for (int i = 0; i < vertices_.size() / 3; ++i) {
 //        vertices_[i * 3 + 0] = -vertices_[i * 3 + 0];
@@ -194,7 +193,7 @@ dataroot_(dataroot) {
     dataset_.ParseFromIstream(&in_file);
     in_file.close();
 
-    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+    if (!Glob(dataroot_, ".png", png_files_)) {
         LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
     }
 
@@ -203,11 +202,11 @@ dataroot_(dataroot) {
 //    }
 
 
-    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+    if (!Glob(dataroot_, ".edge", edge_files_)) {
         LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
     }
 
-    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+    if (!Glob(dataroot_, ".bbox", bbox_files_)) {
         LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
     }
 
@@ -239,10 +238,10 @@ bool VlslamDatasetLoader::Grab(int i,
     std::cout << i << "\n";
 
     vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
-    gwc = Sophus::SE3f(feh::io::SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
+    gwc = Sophus::SE3f(SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
 
     // gravity alignment rotation
-    feh::Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
+    Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
     Rg = Sophus::SO3f::exp(Wg);
 
     std::string png_file = png_files_[i];
@@ -254,7 +253,7 @@ bool VlslamDatasetLoader::Grab(int i,
     CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
-    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+    if (!LoadEdgeMap(edge_file, edgemap)) {
         LOG(FATAL) << "failed to load edge map @ " << edge_file;
     }
 
@@ -315,20 +314,20 @@ ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot) {
     }
     fid.close();
 
-    if (!feh::Glob(dataroot_, ".png", png_files_)) {
+    if (!Glob(dataroot_, ".png", png_files_)) {
         LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
     }
     // remove leading and trailing item
     png_files_.pop_back();
     png_files_.erase(png_files_.begin());
 
-    if (!feh::Glob(dataroot_, ".edge", edge_files_)) {
+    if (!Glob(dataroot_, ".edge", edge_files_)) {
         LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
     }
     edge_files_.pop_back();
     edge_files_.erase(edge_files_.begin());
 
-    if (!feh::Glob(dataroot_, ".bbox", bbox_files_)) {
+    if (!Glob(dataroot_, ".bbox", bbox_files_)) {
         LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
     }
     bbox_files_.pop_back();
@@ -366,7 +365,7 @@ bool ICLDatasetLoader::Grab(int i,
     CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
-    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+    if (!LoadEdgeMap(edge_file, edgemap)) {
         LOG(FATAL) << "failed to load edge map @ " << edge_file;
     }
 
@@ -426,18 +425,18 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
     fid.close();
     size_ = std::min<int>(std::numeric_limits<int>::max(), poses_.size());
 
-    if (!feh::Glob(dataroot_+"/image/", ".png", png_files_)) {
+    if (!Glob(dataroot_+"/image/", ".png", png_files_)) {
         LOG(FATAL) << "FATAL::failed to read png file list @" << dataroot_;
     }
     // remove leading and trailing item
     size_ = std::min<int>(png_files_.size(), size_);
 
-    if (!feh::Glob(dataroot_+"/image/", ".edge", edge_files_)) {
+    if (!Glob(dataroot_+"/image/", ".edge", edge_files_)) {
         LOG(FATAL) << "FATAL::failed to read edge map list @" << dataroot_;
     }
     size_ = std::min<int>(edge_files_.size(), size_);
 
-    if (!feh::Glob(dataroot_+"/image/", ".bbox", bbox_files_)) {
+    if (!Glob(dataroot_+"/image/", ".bbox", bbox_files_)) {
         LOG(FATAL) << "FATAL::failed to read bounding box lisst @" << dataroot_;
     }
     size_ = std::min<int>(bbox_files_.size(), size_);
@@ -471,7 +470,7 @@ bool SceneNNDatasetLoader::Grab(int i,
     CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
-    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+    if (!LoadEdgeMap(edge_file, edgemap)) {
         LOG(FATAL) << "failed to load edge map @ " << edge_file;
     }
 
@@ -496,11 +495,11 @@ bool SceneNNDatasetLoader::Grab(int i,
 
 KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
     dataroot_ = dataroot;
-    feh::Glob(dataroot_, "png", png_files_);
-    feh::Glob(dataroot_, "edge", edge_files_);
-    feh::Glob(dataroot_, "bbox", bbox_files_);
+    Glob(dataroot_, "png", png_files_);
+    Glob(dataroot_, "edge", edge_files_);
+    Glob(dataroot_, "bbox", bbox_files_);
     std::vector<std::string> pose_files;
-    feh::Glob(dataroot_, "txt", pose_files);
+    Glob(dataroot_, "txt", pose_files);
     CHECK_EQ(png_files_.size(), edge_files_.size());
     CHECK_EQ(png_files_.size(), bbox_files_.size());
     CHECK_EQ(png_files_.size(), pose_files.size());
@@ -550,7 +549,7 @@ bool KittiDatasetLoader::Grab(int i,
     CHECK(!image.empty()) << "empty image: " << png_file;
 
     // read edgemap
-    if (!feh::io::LoadEdgeMap(edge_file, edgemap)) {
+    if (!LoadEdgeMap(edge_file, edgemap)) {
         LOG(FATAL) << "failed to load edge map @ " << edge_file;
     }
     cv::resize(edgemap, edgemap, cv::Size(1240, 376));

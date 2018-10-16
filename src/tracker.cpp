@@ -11,7 +11,6 @@
 #include "folly/Format.h"
 
 // own
-#include "io_utils.h"
 #include "tracker_utils.h"
 #include "parallel_kernels.h"
 
@@ -95,7 +94,7 @@ void Tracker::Initialize(const std::string &config_file, const folly::dynamic &m
     config_ = folly::parseJson(folly::json::stripComments(content));
 
     // merge config
-    config_ = io::MergeDynamic(config_, more_config);
+    config_ = MergeDynamic(config_, more_config);
 
     // setup hyper-parameters of filter
     auto filter_cfg = config_["filter"];
@@ -103,8 +102,8 @@ void Tracker::Initialize(const std::string &config_file, const folly::dynamic &m
     keep_id_prob_      = filter_cfg["keep_shape_id_probability"].asDouble();
     azi_flip_rate_     = filter_cfg["azimuth_flip_rate"].asDouble();  // flip azimuth with this probability
     azi_uniform_mix_   = filter_cfg["azimuth_uniform_mix"].asDouble();
-    initial_std_       = io::GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
-    proposal_std_      = io::GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
+    initial_std_       = GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
+    proposal_std_      = GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
     azimuth_prob_.setZero(360);
     LOG(INFO) << "max num of particles=" << max_num_particles_;
     LOG(INFO) << "initial std=" << initial_std_.transpose();
@@ -159,7 +158,7 @@ void Tracker::Initialize(const std::string &config_file, const folly::dynamic &m
 
     // setup shapes
     // FIXME: for now just us integers as shape ids
-    auto cad_list = io::LoadMeshDatabase(config_["CAD_database_root"].asString(), config_["CAD_category_json"].asString());
+    auto cad_list = LoadMeshDatabase(config_["CAD_database_root"].asString(), config_["CAD_category_json"].asString());
     for (int i = 0; i < cad_list.size(); ++i) {
         shape_ids_.push_back(i);
         shapes_[i].name_ = cad_list[i];
@@ -167,7 +166,7 @@ void Tracker::Initialize(const std::string &config_file, const folly::dynamic &m
         try {
             std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + ".obj";
             std::cout << "loading mesh @ " << mesh_file << "\n";
-            std::tie(shapes_[i].vertices_, shapes_[i].faces_) = io::LoadMeshFromObjFile(mesh_file);
+            std::tie(shapes_[i].vertices_, shapes_[i].faces_) = LoadMeshFromObjFile(mesh_file);
         } catch (std::exception &e) {
             std::cout << TermColor::red << e.what() << TermColor::endl;
         }
@@ -176,7 +175,7 @@ void Tracker::Initialize(const std::string &config_file, const folly::dynamic &m
             try {
                 std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + "_part.obj";
                 std::cout << "loading partial mesh @ " << mesh_file << "\n";
-                std::tie(shapes_[i].part_vertices_, shapes_[i].part_faces_) = io::LoadMeshFromObjFile(mesh_file);
+                std::tie(shapes_[i].part_vertices_, shapes_[i].part_faces_) = LoadMeshFromObjFile(mesh_file);
             } catch (std::exception &e){
                 std::cout << TermColor::red << e.what() << TermColor::endl;
             }
@@ -321,7 +320,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 // ESTABLISH CONVERGENCE CRITERION HERE
                 if (StationaryEnough()  &&  CloseEnough(0.85, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
-                    proposal_std_ = io::GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
+                    proposal_std_ = GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
                      azi_uniform_mix_ = 0;
                     initial_std_ *= 10;
                     keep_id_prob_ = 1-1e-4;
@@ -363,8 +362,8 @@ int Tracker::Update(const cv::Mat &in_evidence,
                         status_ = TrackerStatus::INITIALIZING;
                         auto filter_cfg = config_["filter"];
                         keep_id_prob_ = filter_cfg["keep_shape_id_probability"].asDouble();
-                        initial_std_ = io::GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
-                        proposal_std_ = io::GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
+                        initial_std_ = GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
+                        proposal_std_ = GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
                         scale_level_ = filter_cfg["scale_level"].asInt();
 
                         float keep_prob = filter_cfg["keep_shape_id_probability"].asDouble();
@@ -611,10 +610,10 @@ bool Tracker::IsOutOfView() {
     int level = scale_level_-1;
     auto renderer = renderers_[level];
     Vec2f center = ProjectMean(level);
-    if (center(0) < renderer->cols() * 0.05
+    if ((center(0) < renderer->cols() * 0.05
             || center(1) < renderer->rows() * 0.05
             || center(0) > renderer->cols() * 0.95
-            || center(1) > renderer->rows() * 0.95
+            || center(1) > renderer->rows() * 0.95)
         && convergence_counter_ > 0) {
         return true;
     }

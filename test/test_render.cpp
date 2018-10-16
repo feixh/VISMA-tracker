@@ -5,7 +5,7 @@
 
 #include "io_utils.h"
 #include "tracker_utils.h"
-#include "common/utils.h"
+#include "utils.h"
 
 static const int kRows = 480;
 static const int kCols = 640;

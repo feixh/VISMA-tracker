@@ -2,7 +2,7 @@
 // Created by feixh on 10/31/17.
 //
 #pragma once
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 
 // stl
 #include <vector>
@@ -15,7 +15,7 @@
 #include "opencv2/core.hpp"
 
 // own
-#include "common/utils.h"
+#include "utils.h"
 #include "tracker.h"
 #include "vlslam.pb.h"
 

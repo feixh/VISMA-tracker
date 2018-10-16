@@ -10,8 +10,8 @@
 
 // own
 #include "vlslam.pb.h"
-#include "common/eigen_alias.h"
-#include "dataset_loaders.h"
+#include "eigen_alias.h"
+#include "dataloaders.h"
 
 using namespace feh;
 

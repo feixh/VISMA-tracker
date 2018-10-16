@@ -7,12 +7,11 @@
 #include "folly/FileUtil.h"
 
 // feh
-#include "io_utils.h"
 #include "tracker.h"
 #include "tracker_utils.h"
 #include "scene.h"
-#include "dataset_loaders.h"
-#include "common/utils.h"
+#include "dataloaders.h"
+#include "utils.h"
 
 using TermColor = feh::TermColor;
 

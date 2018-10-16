@@ -3,7 +3,6 @@
 //
 #include "tracker.h"
 #include "tracker_utils.h"
-#include "io_utils.h"
 
 namespace feh {
 namespace tracker {

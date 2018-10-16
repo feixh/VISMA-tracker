@@ -2,7 +2,7 @@
 // Created by feixh on 10/18/17.
 //
 #pragma once
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 
 // stl
 #include <chrono>
@@ -14,7 +14,7 @@
 #include "sophus/se3.hpp"
 
 // own
-#include "common/utils.h"
+#include "utils.h"
 #include "vlslam.pb.h"
 #include "oned_search.h"
 

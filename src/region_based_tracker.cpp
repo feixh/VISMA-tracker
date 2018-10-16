@@ -6,7 +6,7 @@
 
 // stl
 #include <fstream>
-#include <common/matdiff.h>
+#include <matdiff.h>
 
 // 3rd party
 #include "igl/writeOFF.h"
@@ -14,7 +14,6 @@
 #include "folly/json.h"
 
 // own
-#include "io_utils.h"
 #include "parallel_kernels.h"
 #include "tracker_utils.h"
 
@@ -107,7 +106,7 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
 
     if (vertices.empty() || faces.empty()) {
         // load mesh and setup
-        io::LoadMeshFromObjFile(config_["model"]["path"].asString(), vertices_, faces_);
+        LoadMeshFromObjFile(config_["model"]["path"].asString(), vertices_, faces_);
         NormalizeVertices(vertices_);
         if (config_["model"]["scanned"].getBool()) {
             RotateVertices(vertices_, -M_PI / 2.0f);
@@ -164,8 +163,8 @@ void RegionBasedTracker::Update(const cv::Mat &image) {
 
 Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
                                           const cv::Rect &bbox) {
-    Vec3f W = io::GetVectorFromDynamic<float, 3>(config_, "W0");
-    Vec3f T = io::GetVectorFromDynamic<float, 3>(config_, "T0");
+    Vec3f W = GetVectorFromDynamic<float, 3>(config_, "W0");
+    Vec3f T = GetVectorFromDynamic<float, 3>(config_, "T0");
     Sophus::SE3f gm(Sophus::SO3f::exp(W), T);
     return Optimize(image, bbox, gm);
 }
@@ -630,26 +629,26 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
 
         std::vector<cv::Mat> hdh(2);
         cv::split(heaviside, hdh);
-        io::SaveMatToFile<float>("h", hdh[0]);
-        io::SaveMatToFile<float>("dh", hdh[1]);
+        SaveMatToFile<float>("h", hdh[0]);
+        SaveMatToFile<float>("dh", hdh[1]);
 
         std::vector<cv::Mat> pfpb(2);
-        io::SaveMatToFile<float>("pf", P[0]);
-        io::SaveMatToFile<float>("pb", P[1]);
+        SaveMatToFile<float>("pf", P[0]);
+        SaveMatToFile<float>("pb", P[1]);
 
         std::vector<cv::Mat> dsdf_dxy(2);
         cv::split(dsdf_dxp, dsdf_dxy);
-        io::SaveMatToFile<float>("dsdfx", dsdf_dxy[0]);
-        io::SaveMatToFile<float>("dsdfy", dsdf_dxy[1]);
+        SaveMatToFile<float>("dsdfx", dsdf_dxy[0]);
+        SaveMatToFile<float>("dsdfy", dsdf_dxy[1]);
 
-//        io::SaveMatToFile<uint8_t>("active", active_pixels);
+//        SaveMatToFile<uint8_t>("active", active_pixels);
 
-        io::SaveMatToFile<float>("Jwx", J_debug[0]);
-        io::SaveMatToFile<float>("Jwy", J_debug[1]);
-        io::SaveMatToFile<float>("Jwz", J_debug[2]);
-        io::SaveMatToFile<float>("Jtx", J_debug[3]);
-        io::SaveMatToFile<float>("Jty", J_debug[4]);
-        io::SaveMatToFile<float>("Jtz", J_debug[5]);
+        SaveMatToFile<float>("Jwx", J_debug[0]);
+        SaveMatToFile<float>("Jwy", J_debug[1]);
+        SaveMatToFile<float>("Jwz", J_debug[2]);
+        SaveMatToFile<float>("Jtx", J_debug[3]);
+        SaveMatToFile<float>("Jty", J_debug[4]);
+        SaveMatToFile<float>("Jtz", J_debug[5]);
 
         // check signed distance field
         for (int i = 0; i < dt.rows; ++i) {
@@ -661,7 +660,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
                 }
             }
         }
-        io::SaveMatToFile<float>("sdf", signed_distance);
+        SaveMatToFile<float>("sdf", signed_distance);
 
         if (config_["visualize"].getBool()) {
             cv::imshow("depth", depth);

@@ -1,7 +1,7 @@
 //
 // Created by visionlab on 1/18/18.
 //
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 #include "renderer.h"
 #include "particle.h"
 

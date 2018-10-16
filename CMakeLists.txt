@@ -5,7 +5,7 @@ project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
 #set(CMAKE_CUDACXX_COMPILER /usr/local/cuda/bin/nvcc)
@@ -121,12 +121,11 @@ add_library(feh SHARED
         src/tracker_sir.cpp
         src/tracker_init.cpp
         src/tracker_utils.cpp
-        src/dataset_loaders.cpp
-        src/io_utils.cpp
+        src/dataloaders.cpp
         src/oned_search.cpp
         src/bresenham.cpp
-        src/common/utils.cpp
-        src/common/matdiff.cpp
+        src/utils.cpp
+        src/matdiff.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
@@ -268,8 +267,8 @@ endif(build_viewer)
 #################################################
 # differentiable likelihood for 3D tracking
 #################################################
-add_executable(pix3d src/pix3d/pix3d.cpp)
-target_link_libraries(pix3d feh)
+add_executable(pix3dloader src/pix3d/test_loader.cpp)
+target_link_libraries(pix3dloader feh)
 
 
 

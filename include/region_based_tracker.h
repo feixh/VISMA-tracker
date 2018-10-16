@@ -2,8 +2,8 @@
 // Created by visionlab on 11/2/17.
 //
 
-#include "common/eigen_alias.h"
-#include "common/utils.h"
+#include "eigen_alias.h"
+#include "utils.h"
 
 // stl
 #include <string>

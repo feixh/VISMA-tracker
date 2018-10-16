@@ -3,8 +3,7 @@
 //
 #include "viewer.h"
 // Frame Inspector
-#include <io_utils.h>
-#include "dataset_loaders.h"
+#include "dataloaders.h"
 #include "tracker_utils.h"
 #include "renderer.h"
 
@@ -69,7 +68,7 @@ void DrawOneFrame(const cv::Mat &img,
         cv::Mat input_with_contour = img.clone();
 
         for (const auto &obj : result) {
-            auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
+            auto pose = feh::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
 //            std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
 //                                       obj["id"].asInt(),
 //                                       obj["status"].asInt(),
@@ -83,7 +82,7 @@ void DrawOneFrame(const cv::Mat &img,
             std::string model_name = obj["model_name"].asString();
             std::vector<float> v;
             std::vector<int> f;
-            feh::io::LoadMeshFromObjFile(
+            feh::LoadMeshFromObjFile(
                 folly::sformat("{}/{}.obj", database_dir, model_name),
                 v, f);
             render_engine->SetMesh(v, f);

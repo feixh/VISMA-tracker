@@ -7,7 +7,6 @@
 // stl
 #include <iostream>
 #include <fstream>
-#include <io_utils.h>
 
 // 3rd party
 #include "glog/logging.h"
@@ -293,7 +292,7 @@ void Scene::UpdateLog() {
         tracker_obj["id"] = tracker->id();
         tracker_obj["model_name"] = tracker->shape_name();
         tracker_obj["status"] = as_integer(tracker->status());
-        io::WriteMatrixToDynamic(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
+        WriteMatrixToDynamic(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
         obj_array.push_back(tracker_obj);
     }
     folly::dynamic data = folly::dynamic::object(std::to_string(frame_counter_), obj_array);

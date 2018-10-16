@@ -2,7 +2,7 @@
 // Created by visionlab on 10/26/17.
 //
 #include "particle.h"
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 
 int main() {
     mpfr::mpreal::set_default_prec(mpfr::digits2bits(20));

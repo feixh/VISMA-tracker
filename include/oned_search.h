@@ -11,7 +11,7 @@
 #include "tbb/blocked_range.h"
 
 // own
-#include "common/utils.h"
+#include "utils.h"
 
 
 namespace feh {

@@ -2,7 +2,7 @@
 // Created by visionlab on 10/17/17.
 //
 #pragma once
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 
 // stl
 #include <string>

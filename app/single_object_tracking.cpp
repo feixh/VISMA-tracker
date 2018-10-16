@@ -9,10 +9,9 @@
 #include "folly/FileUtil.h"
 
 // feh
-#include "io_utils.h"
 #include "tracker.h"
 #include "tracker_utils.h"
-#include "dataset_loaders.h"
+#include "dataloaders.h"
 #include "region_based_tracker.h"
 
 int main(int argc, char **argv) {

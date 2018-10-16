@@ -16,7 +16,7 @@
 
 #include "shader.h"
 #include "renderer_utils.h"
-#include "common/eigen_alias.h"
+#include "eigen_alias.h"
 #include "oned_search.h"
 
 namespace feh {
