@@ -3,7 +3,6 @@
 #include <fstream>
 #include "opencv2/opencv.hpp"
 
-#include "io_utils.h"
 #include "tracker_utils.h"
 #include "utils.h"
 
@@ -52,7 +51,7 @@ int main(int argc, char **argv) {
 
     std::vector<float> v;
     std::vector<int> f;
-    feh::io::LoadMeshFromObjFile(obj_file_path, v, f);
+    feh::LoadMeshFromObjFile(obj_file_path, v, f);
     feh::tracker::NormalizeVertices(v);
 //    feh::tracker::FlipVertices(v);
 

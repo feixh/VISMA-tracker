@@ -20,6 +20,7 @@ add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 
 # MACROS eigen
 add_definitions(-DEIGEN_INITIALIZE_MATRICES_BY_ZERO)
+add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
 
 # MACROS feh
 add_definitions(-DFEH_RENDER_USE_SEPARATE_ATTRIB_FORMAT)
@@ -217,8 +218,8 @@ endif(build_viewer)
 #add_executable(rigidpose app/rigidpose.cpp)
 #target_link_libraries(rigidpose feh)
 
-#add_executable(test_render test/test_render.cpp)
-#target_link_libraries(test_render feh)
+# add_executable(test_render test/test_render.cpp)
+# target_link_libraries(test_render feh)
 
 #add_executable(test_onedsearch test/test_onedsearch.cpp)
 #target_link_libraries(test_onedsearch feh)
