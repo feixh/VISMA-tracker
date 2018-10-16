@@ -22,6 +22,7 @@ class MeshIO : public std::exception {
         return "Mesh IO Exception";
     }
 };
+
 /// \brief: Load vertices and faces from an .obj file.
 /// \param obj_file: The .obj file.
 /// \param vertices: Vertices of the mesh.

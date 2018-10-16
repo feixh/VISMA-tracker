@@ -264,6 +264,15 @@ endif(build_viewer)
 #target_link_libraries(test_ukf_mackey_glass)
 
 
+
+#################################################
+# differentiable likelihood for 3D tracking
+#################################################
+add_executable(pix3d src/pix3d/pix3d.cpp)
+target_link_libraries(pix3d feh)
+
+
+
 #################################################
 # installation command
 #################################################
