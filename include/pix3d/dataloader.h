@@ -41,7 +41,7 @@ struct Pix3dPacket {
         _inplane_rotation  = record["inplane_rotation"].asDouble();
         Vec3 dir = Vec3::Zero() - _cam_position;
         dir /= dir.norm();
-        _gc = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(-_inplane_rotation * dir), _cam_position);
+        _gc = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(_inplane_rotation * dir), _cam_position);
 
         // load CAD model
         bool success = igl::readOBJ(dataroot + record["model"].asString(), _V, _F);

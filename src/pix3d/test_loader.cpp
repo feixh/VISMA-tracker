@@ -50,7 +50,7 @@ int main() {
     cv::Mat mask(packet._shape[0], packet._shape[1], CV_8UC1);
     mask.setTo(0);
     Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
-    pose.block<3, 4>(0, 0) = packet._gc.matrix3x4();
+    pose.block<3, 4>(0, 0) = packet._gc.inverse().matrix3x4();
     // pose(2, 3) = 5.0;
     engine->RenderMask(pose, mask);
     cv::imshow("rendered mask", mask);
