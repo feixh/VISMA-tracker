@@ -3,6 +3,7 @@
 #include "glog/logging.h"
 #include "renderer.h"
 #include "pix3d/dataloader.h"
+#include "folly/Format.h"
 
 constexpr float znear = 0.1;
 constexpr float zfar = 10;
@@ -61,6 +62,19 @@ int main(int argc, char **argv) {
     engine->RenderDepth(pose, depth);
     cv::imshow("rendered mask", mask);
     cv::imshow("rendered depth", depth);
-    cv::waitKey(0);
     engine.reset();
+
+    // now let's compare the rendered mask against the provided mask
+    cv::Mat mask_diff(packet._shape[0], packet._shape[1], CV_8UC1);
+    mask_diff.setTo(0);
+    for (int i = 0; i < packet._shape[0]; ++i) {
+        for (int j = 0; j < packet._shape[1]; ++j) {
+            if ( ((int)packet._mask.at<uint8_t>(i, j)+ (int)mask.at<uint8_t>(i, j)) != 255) {
+                std::cout << folly::sformat("({}, {}) not consistent", i, j) << std::endl;
+                mask_diff.at<uint8_t>(i, j) = 255;
+            }
+        }
+    }
+    cv::imshow("mask difference", mask_diff);
+    cv::waitKey();
 }

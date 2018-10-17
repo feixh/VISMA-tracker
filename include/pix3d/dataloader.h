@@ -22,7 +22,7 @@ struct Pix3dPacket {
     Pix3dPacket(const std::string &dataroot, const folly::dynamic &record) {
         // load image & mask
         _img = cv::imread(dataroot + record["img"].asString());
-        _mask = cv::imread(dataroot + record["mask"].asString());
+        _mask = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
         _bbox = GetVectorFromDynamic<int, 4>(record, "bbox");
 
         // load object pose
