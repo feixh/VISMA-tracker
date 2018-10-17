@@ -55,7 +55,7 @@ int main() {
     mask.setTo(0);
     Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
     // pose(2, 3) = -2.0;
-    engine->RenderEdge(pose, mask);
+    engine->RenderMask(pose, mask);
     engine->RenderDepth(pose, depth);
     cv::imshow("rendered mask", mask);
     cv::imshow("rendered depth", depth);
