@@ -46,17 +46,75 @@ public:
     }
 
     cv::Mat Minimize() {
-        Mat3 Rp = _R + _R * hat(_dW);
-        Vec3 Tp = _T + _dT;
+        ftype stepsize = eps;
+        cv::namedWindow("iter", CV_WINDOW_NORMAL);
+        for (int iter = 0; iter < 100; ++iter) {
+            std::cout << "==========\n";
+            std::cout << "iter=" << iter << std::endl;
+            Vec3 dC_dW, dC_dT;
+            ftype C = ComputeLoss(dC_dW, dC_dT);
+            _R -= hat(Vec3{stepsize * dC_dW});
+            _T -= stepsize * dC_dT;
+            std::cout << "Cost=" << C << std::endl;
+
+            cv::Mat depth = RenderCurrentEstimate();
+            cv::imshow("iter", depth);
+            cv::waitKey(10);
+
+        }
+        return RenderCurrentEstimate();
+    }
+
+    ftype ComputeLoss(Vec3 &dC_dW, Vec3 &dC_dT) {
+        ftype C0 = ForwardPass(Vec3{Vec3::Zero()}, Vec3{Vec3::Zero()});
+        // Vec3 dC_dW = Vec3::Zero();
+        // Vec3 dC_dT = Vec3::Zero();
+        dC_dW.setZero();
+        dC_dT.setZero();
+        for (int i = 0; i < 3; ++i) {
+            Vec3 dW = Vec3::Zero();
+            dW(i) = eps;
+            dC_dW(i) = (ForwardPass(dW, Vec3{Vec3::Zero()}) - C0) / eps;
+
+            Vec3 dT = Vec3::Zero();
+            dT(i) = eps;
+            dC_dT(i) = (ForwardPass(Vec3{Vec3::Zero()}, dT) - C0) / eps;
+        }
+        std::cout << "dC_dW=" << dC_dW.transpose() << std::endl;
+        std::cout << "dC_dT=" << dC_dT.transpose() << std::endl;
+        return C0;
+    }
+
+    /// \brief: Compute the loss at the current pose with given perturbation
+    ftype ForwardPass(const Vec3 &dW, const Vec3 &dT) {
+        Mat3 Rp = _R + _R * hat(dW);
+        Vec3 Tp = _T + dT;
         auto V = TransformShape(Rp, Tp);
         // std::cout << V << std::endl;
         _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
-        cv::Mat out(_shape[0], _shape[1], CV_32FC1);
-        out.setTo(0);
         Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
         identity.setIdentity();
-        _engine->RenderDepth(identity, out);
-        return out;
+        std::vector<EdgePixel> edgelist;
+        _engine->ComputeEdgePixels(identity, edgelist);
+        ftype cost = 0;
+        for (const auto &e : edgelist) {
+            int row = std::max(0, std::min((int)e.y, _shape[0]-1));
+            int col = std::max(0, std::min((int)e.x, _shape[1]-1));
+            cost += _DF.at<float>(row, col);
+        }
+        cost /= edgelist.size();
+        return cost;
+    }
+
+    /// \brief: Render at current pose estimate.
+    cv::Mat RenderCurrentEstimate() {
+        auto V = TransformShape(_R, _T);
+        _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
+        Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
+        identity.setIdentity();
+        cv::Mat depth(_shape[0], _shape[1], CV_32FC1); 
+        _engine->RenderDepth(identity, depth);
+        return depth;
     }
 
     MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
