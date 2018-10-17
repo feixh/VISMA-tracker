@@ -12,6 +12,8 @@
 #include "igl/AABB.h"
 #include "folly/dynamic.h"
 
+#include "utils.h"
+
 namespace feh {
 
 /// \brief: Find the normal vector of a (hyper)plane given as a set of points.
@@ -25,39 +27,6 @@ Eigen::Matrix<T, DIM, 1> FindPlaneNormal(const Eigen::Matrix<T, Eigen::Dynamic, 
     return n;
 }
 
-/// \brief: Convert from std vector of Eigen vectors to Eigen matrix.
-template <typename T, int DIM=3>
-Eigen::Matrix<T, Eigen::Dynamic, DIM>
-StdVectorOfEigenVectorToEigenMatrix(const std::vector<Eigen::Matrix<T, DIM, 1> > &v) {
-    Eigen::Matrix<T, Eigen::Dynamic, DIM> out;
-    out.resize(v.size(), DIM);
-    for (int i = 0; i < v.size(); ++i) {
-        out.row(i) = v[i];
-    }
-    return out;
-}
-
-
-/// \brief: Convert from an Eigen matrix type to a std vector of Eigen vectors.
-template <typename T, int DIM=3>
-std::vector<Eigen::Matrix<T, DIM, 1>>
-EigenMatrixToStdVectorOfEigenVector(const Eigen::Matrix<T, Eigen::Dynamic, DIM> &m) {
-    std::vector<Eigen::Matrix<T, DIM, 1>> out(m.rows());
-    for (int i = 0; i < m.rows(); ++i) out[i] = m.row(i);
-    return out;
-};
-
-/// \brief: Convert from a std vector of Eigen vectors to an Eigen matrix.
-template <typename T, int DIM=3>
-Eigen::Matrix<T, DIM, 1> StdVectorOfEigenVectorMean(const std::vector<Eigen::Matrix<T, DIM, 1>> &v) {
-    return StdVectorOfEigenVectorToEigenMatrix(v).colwise().mean();
-};
-
-/// \brief: Compute the rotation matrix to align two vectors.
-template <typename T>
-Eigen::Matrix<T, 3, 3> RotationBetweenVectors(Eigen::Matrix<T, 3, 1> u, Eigen::Matrix<T, 3, 1> v) {
-    return Eigen::Quaternion<T>::FromTwoVectors(u, v).toRotationMatrix();
-};
 
 /// \brief: Sample point cloud from surface uniformly.
 template <typename T>

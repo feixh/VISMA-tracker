@@ -196,6 +196,41 @@ typename std::underlying_type<Enumeration>::type as_integer(Enumeration const va
 }
 
 
+/// \brief: Convert from std vector of Eigen vectors to Eigen matrix.
+template <typename T, int DIM=3>
+Eigen::Matrix<T, Eigen::Dynamic, DIM>
+StdVectorOfEigenVectorToEigenMatrix(const std::vector<Eigen::Matrix<T, DIM, 1> > &v) {
+    Eigen::Matrix<T, Eigen::Dynamic, DIM> out;
+    out.resize(v.size(), DIM);
+    for (int i = 0; i < v.size(); ++i) {
+        out.row(i) = v[i];
+    }
+    return out;
+}
+
+
+/// \brief: Convert from an Eigen matrix type to a std vector of Eigen vectors.
+template <typename T, int DIM=3>
+std::vector<Eigen::Matrix<T, DIM, 1>>
+EigenMatrixToStdVectorOfEigenVector(const Eigen::Matrix<T, Eigen::Dynamic, DIM> &m) {
+    std::vector<Eigen::Matrix<T, DIM, 1>> out(m.rows());
+    for (int i = 0; i < m.rows(); ++i) out[i] = m.row(i);
+    return out;
+};
+
+/// \brief: Convert from a std vector of Eigen vectors to an Eigen matrix.
+template <typename T, int DIM=3>
+Eigen::Matrix<T, DIM, 1> StdVectorOfEigenVectorMean(const std::vector<Eigen::Matrix<T, DIM, 1>> &v) {
+    return StdVectorOfEigenVectorToEigenMatrix(v).colwise().mean();
+};
+
+/// \brief: Compute the rotation matrix to align two vectors.
+template <typename T>
+Eigen::Matrix<T, 3, 3> RotationBetweenVectors(Eigen::Matrix<T, 3, 1> u, Eigen::Matrix<T, 3, 1> v) {
+    return Eigen::Quaternion<T>::FromTwoVectors(u, v).toRotationMatrix();
+};
+
+
 
 inline constexpr int cube(int x) { return x * x * x; }
 inline constexpr int square(int x) { return x * x; }

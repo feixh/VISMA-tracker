@@ -41,7 +41,7 @@ struct Pix3dPacket {
         _inplane_rotation  = record["inplane_rotation"].asDouble();
         Vec3 dir = Vec3::Zero() - _cam_position;
         dir /= dir.norm();
-        _gc = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(_inplane_rotation * dir), _cam_position);
+        _gc = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(-_inplane_rotation * dir), _cam_position);
 
         // load CAD model
         bool success = igl::readOBJ(dataroot + record["model"].asString(), _V, _F);
@@ -80,7 +80,7 @@ public:
     /// \brief: Grab datum by filename of the datum.
     Pix3dPacket GrabPacket(const std::string &path) {
         for (int i = 0; i < _json.size(); ++i) {
-            if (_json["img"] == path) {
+            if (_json[i]["img"] == path) {
                 return {_dataroot, _json[i]};
             }
         }
