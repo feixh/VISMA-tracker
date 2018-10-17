@@ -1,13 +1,15 @@
 #include <iostream>
 
+#include "glog/logging.h"
 #include "renderer.h"
 #include "pix3d/dataloader.h"
 
 constexpr float znear = 0.1;
 constexpr float zfar = 10;
 
-int main() {
-    feh::Pix3dLoader loader("/home/feixh/Data/pix3d");
+int main(int argc, char **argv) {
+    CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";
+    feh::Pix3dLoader loader(argv[1]);
     auto packet = loader.GrabPacket("img/bed/0010.png");
     cv::imshow("image", packet._img);
     cv::imshow("mask", packet._mask);
