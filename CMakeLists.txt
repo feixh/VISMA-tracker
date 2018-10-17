@@ -116,7 +116,7 @@ add_library(feh SHARED
         src/scene.cpp
         src/renderer.cpp
         src/renderer_utils.cpp
-        src/region_based_tracker.cpp
+        # src/region_based_tracker.cpp
         src/tracker.cpp
         src/tracker_sir.cpp
         src/tracker_init.cpp
@@ -151,8 +151,8 @@ target_link_libraries(mot feh)
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 target_link_libraries(preprocess_mesh feh)
 
-add_executable(linemod app/linemod.cpp)
-target_link_libraries(linemod feh)
+# add_executable(linemod app/linemod.cpp)
+# target_link_libraries(linemod feh)
 
 #add_executable(test_surface_error test/test_surface_error.cpp)
 #target_link_libraries(test_surface_error feh)

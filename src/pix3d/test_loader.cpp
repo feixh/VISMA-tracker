@@ -7,7 +7,7 @@ constexpr float znear = 0.1;
 constexpr float zfar = 10;
 
 int main() {
-    feh::Pix3dLoader loader("/home/visionlab/Data/pix3d");
+    feh::Pix3dLoader loader("/home/feixh/Data/pix3d");
     auto packet = loader.GrabPacket("img/bed/0010.png");
     cv::imshow("image", packet._img);
     cv::imshow("mask", packet._mask);
@@ -23,10 +23,8 @@ int main() {
     std::cout << packet._V.colwise().mean() << std::endl;
     Eigen::MatrixXf V(packet._V.rows(), packet._V.cols());
     for (int i = 0; i < V.rows(); ++i) {
-        // V.row(i) = packet._go * packet._V.row(i);
-        feh::Vec3 X(packet._V(i, 0), packet._V(i, 1), packet._V(i, 2));
-        X = packet._go * X;
-        V.row(i) = X.transpose();
+        auto X = packet._go * packet._V.row(i);
+        V.row(i) << -X(0), -X(1), X(2);
     }
 
     // std::cout << V << std::endl;
@@ -53,12 +51,14 @@ int main() {
     engine->SetMesh(VV, FF);
     // render mask
     cv::Mat mask(packet._shape[0], packet._shape[1], CV_8UC1);
+    cv::Mat depth(packet._shape[0], packet._shape[1], CV_32FC1);
     mask.setTo(0);
     Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
-    pose.block<3, 4>(0, 0) = packet._gc.inverse().matrix3x4();
     // pose(2, 3) = -2.0;
-    engine->RenderMask(pose, mask);
+    engine->RenderEdge(pose, mask);
+    engine->RenderDepth(pose, depth);
     cv::imshow("rendered mask", mask);
+    cv::imshow("rendered depth", depth);
     cv::waitKey(0);
     engine.reset();
 }

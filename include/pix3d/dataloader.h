@@ -27,6 +27,7 @@ struct Pix3dPacket {
 
         // load object pose
         _go = Sophus::SE3<ftype>{
+            // GetMatrixFromDynamic<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
             GetMatrixFromDynamic<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
             GetVectorFromDynamic<ftype, 3>(record, "trans_mat")};
 
