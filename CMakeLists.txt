@@ -20,6 +20,7 @@ add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 
 # MACROS eigen
 add_definitions(-DEIGEN_INITIALIZE_MATRICES_BY_ZERO)
+add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
 
 # MACROS feh
 add_definitions(-DFEH_RENDER_USE_SEPARATE_ATTRIB_FORMAT)
@@ -125,7 +126,6 @@ add_library(feh SHARED
         src/oned_search.cpp
         src/bresenham.cpp
         src/utils.cpp
-        src/matdiff.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
@@ -269,6 +269,9 @@ target_link_libraries(test_dt feh)
 #################################################
 add_executable(pix3dloader src/pix3d/test_loader.cpp)
 target_link_libraries(pix3dloader feh)
+
+add_executable(pix3dtracker src/pix3d/test_tracker.cpp)
+target_link_libraries(pix3dtracker feh)
 
 
 

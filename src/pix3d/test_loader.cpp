@@ -10,6 +10,7 @@
 constexpr float znear = 0.1;
 constexpr float zfar = 10;
 
+
 int main(int argc, char **argv) {
     CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";
     feh::Pix3dLoader loader(argv[1]);

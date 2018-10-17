@@ -4,16 +4,17 @@
 
 namespace feh {
 
-using FloatType = float;
-using ftype = FloatType;
+using ftype = float;
 
-using Mat3 = Eigen::Matrix<FloatType, 3, 3>;
-using Vec3 = Eigen::Matrix<FloatType, 3, 1>;
-using Vec9 = Eigen::Matrix<FloatType, 9, 1>;
-using Mat93 = Eigen::Matrix<FloatType, 9, 3>;
-using Mat39 = Eigen::Matrix<FloatType, 3, 9>;
-using MatX = Eigen::Matrix<FloatType, Eigen::Dynamic, Eigen::Dynamic>;
-using VecX = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
+using Mat3 = Eigen::Matrix<ftype, 3, 3>;
+using Vec3 = Eigen::Matrix<ftype, 3, 1>;
+using Mat4 = Eigen::Matrix<ftype, 4, 4>;
+using Vec4 = Eigen::Matrix<ftype, 4, 1>;
+using Vec9 = Eigen::Matrix<ftype, 9, 1>;
+using Mat93 = Eigen::Matrix<ftype, 9, 3>;
+using Mat39 = Eigen::Matrix<ftype, 3, 9>;
+using MatX = Eigen::Matrix<ftype, Eigen::Dynamic, Eigen::Dynamic>;
+using VecX = Eigen::Matrix<ftype, Eigen::Dynamic, 1>;
 
 using Mat3f = Eigen::Matrix<float, 3, 3>;
 using Mat4f = Eigen::Matrix<float, 4, 4>;

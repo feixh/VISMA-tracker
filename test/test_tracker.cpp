@@ -26,4 +26,3 @@ int main() {
     cv::imshow("edge", edge);
     cv::waitKey();
 }
-

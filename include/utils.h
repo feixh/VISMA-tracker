@@ -128,15 +128,15 @@ public:
 
 /// \brief generate a random matrix of dimension N x M
 template<int N, int M = N>
-Eigen::Matrix<FloatType, N, M> RandomMatrix(
-    FloatType meanVal = 0.0,
-    FloatType stdVal = 1.0,
+Eigen::Matrix<ftype, N, M> RandomMatrix(
+    ftype meanVal = 0.0,
+    ftype stdVal = 1.0,
     std::shared_ptr<std::knuth_b> p_engine = nullptr) {
 
-    using FloatType = FloatType;
+    using ftype = ftype;
 
-    std::normal_distribution<FloatType> dist(meanVal, stdVal);
-    Eigen::Matrix<FloatType, N, M> v;
+    std::normal_distribution<ftype> dist(meanVal, stdVal);
+    Eigen::Matrix<ftype, N, M> v;
     if (p_engine == nullptr) {
         std::default_random_engine engine;
         for (int i = 0; i < N; ++i)
@@ -155,15 +155,15 @@ Eigen::Matrix<FloatType, N, M> RandomMatrix(
 
 /// \brief generate a random vecotr of dimension N
 template<int N>
-Eigen::Matrix<FloatType, N, 1> RandomVector(
-    FloatType meanVal = 0.0,
-    FloatType stdVal = 1.0,
+Eigen::Matrix<ftype, N, 1> RandomVector(
+    ftype meanVal = 0.0,
+    ftype stdVal = 1.0,
     std::shared_ptr<std::knuth_b> p_engine = nullptr) {
 
-    using FloatType = FloatType;
+    using ftype = ftype;
 
-    std::normal_distribution<FloatType> dist(meanVal, stdVal);
-    Eigen::Matrix<FloatType, N, 1> v;
+    std::normal_distribution<ftype> dist(meanVal, stdVal);
+    Eigen::Matrix<ftype, N, 1> v;
     if (p_engine == nullptr) {
         std::default_random_engine engine;
         for (int i = 0; i < N; ++i) {
@@ -180,7 +180,7 @@ Eigen::Matrix<FloatType, N, 1> RandomVector(
 
 /// \brief detect if any compoennt of a matrix is nan
 template<int N, int M = 1>
-bool anynan(const Eigen::Matrix<FloatType, N, M> &m) {
+bool anynan(const Eigen::Matrix<ftype, N, M> &m) {
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < M; ++j)
             if (std::isnan(m(i, j)))
@@ -303,7 +303,7 @@ enum class JsonMatLayout {
 /// \param v: json record
 /// \param key: the key
 /// \param layout: Whether the matrix is arranged as an one-dim array or two-dim matrix.
-template<typename T=FloatType, int N=3, int M = N>
+template<typename T=ftype, int N=3, int M = N>
 Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
     const folly::dynamic &v,
     const std::string &key,
@@ -323,7 +323,7 @@ Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
 }
 
 /// \brief load N-dim double vector from json file
-template<typename T=FloatType, int N>
+template<typename T=ftype, int N>
 Eigen::Matrix<T, N, 1> GetVectorFromDynamic(
     const folly::dynamic &v,
     const std::string &key) {
