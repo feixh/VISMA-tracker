@@ -64,7 +64,9 @@ public:
     Pix3dLoader(const std::string &dataroot): _dataroot(dataroot+"/") {
         // load json file
 
-        std::string json_path{dataroot + "/pix3d.json"};
+        // std::string json_path{dataroot + "/pix3d.json"};
+        // FIXME: use the real json file
+        std::string json_path{dataroot + "/test.json"};
         std::string content;
         folly::readFile(json_path.c_str(), content);
         std::cout << TermColor::cyan << "parsing json file ..." << TermColor::endl;

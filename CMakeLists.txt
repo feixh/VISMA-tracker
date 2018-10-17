@@ -20,7 +20,6 @@ add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 
 # MACROS eigen
 add_definitions(-DEIGEN_INITIALIZE_MATRICES_BY_ZERO)
-add_definitions(-DEIGEN_DEFAULT_TO_ROW_MAJOR)
 
 # MACROS feh
 add_definitions(-DFEH_RENDER_USE_SEPARATE_ATTRIB_FORMAT)
