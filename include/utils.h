@@ -260,6 +260,17 @@ bool Glob(const std::string &path,
           const std::string &prefix,
           std::vector<std::string> &filenames);
 
+template <typename T>
+T BilinearSample(const cv::Mat &img, const Eigen::Matrix<float, 2, 1> &xy) {
+    int col{xy(0)};
+    int row{xy(1)};
+    T v1 = (row+1-xy(1)) * (col+1-xy(0)) * img.at<T>(row, col);
+    T v2 = (xy(1)-row) * (col+1-xy(0)) * img.at<T>(row+1, col);
+    T v3 = (xy(1)-row) * (xy(0)-col) * img.at<T>(row+1, col+1);
+    T v4 = (row+1-xy(1)) * (xy(0)-col) * img.at<T>(row, col+1);
+    return v1 + v2 + v3 + v4;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

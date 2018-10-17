@@ -1,4 +1,5 @@
 #include <iostream>
+#include <tuple>
 
 #include "glog/logging.h"
 #include "folly/Format.h"
@@ -28,6 +29,7 @@ public:
         _K << fx, 0, cx,
             0, fy, cy,
             0, 0, 1;
+        _Kinv = _K.inverse();
         Mat3 flip = Mat3::Zero();
         flip << -1, 0, 0,
              0, -1, 0,
@@ -51,11 +53,18 @@ public:
         for (int iter = 0; iter < 100; ++iter) {
             std::cout << "==========\n";
             std::cout << "iter=" << iter << std::endl;
-            Vec3 dC_dW, dC_dT;
-            ftype C = ComputeLoss(dC_dW, dC_dT);
-            _R -= hat(Vec3{stepsize * dC_dW});
-            _T -= stepsize * dC_dT;
-            std::cout << "Cost=" << C << std::endl;
+            Eigen::Matrix<ftype, Eigen::Dynamic, 3> dr_dW, dr_dT;
+            auto r = ComputeLoss(dr_dW, dr_dT);
+
+            // TODO: Gauss-Newton update
+            Eigen::Matrix<ftype, Eigen::Dynamic, 6> F(dr_dW.rows(), 6);
+            F << dr_dW, dr_dT;
+            MatX FtF = F.transpose() * F;
+            Eigen::Matrix<ftype, 6, 1> grad = stepsize * FtF.ldlt().solve(F.transpose() * r);
+            _R = _R - hat<ftype>(grad.head<3>());
+            _T = _T - grad.tail<3>();
+
+            std::cout << "Cost=" << r.sum() << std::endl;
 
             cv::Mat depth = RenderCurrentEstimate();
             cv::imshow("iter", depth);
@@ -65,45 +74,93 @@ public:
         return RenderCurrentEstimate();
     }
 
-    ftype ComputeLoss(Vec3 &dC_dW, Vec3 &dC_dT) {
-        ftype C0 = ForwardPass(Vec3{Vec3::Zero()}, Vec3{Vec3::Zero()});
-        // Vec3 dC_dW = Vec3::Zero();
-        // Vec3 dC_dT = Vec3::Zero();
-        dC_dW.setZero();
-        dC_dT.setZero();
+    VecX ComputeLoss(Eigen::Matrix<ftype, Eigen::Dynamic, 3> &dr_dW, 
+            Eigen::Matrix<ftype, Eigen::Dynamic, 3> &dr_dT) {
+        Eigen::Matrix<ftype, Eigen::Dynamic, 3> X;
+
+        VecX r, v;
+        VecX rp, vp;
+
+        std::tie(r, v) = ForwardPass(Vec3{Vec3::Zero()}, Vec3{Vec3::Zero()}, X);
+
+        dr_dW.resize(X.rows(), 3);
+        dr_dW.setZero();
+        dr_dT.resize(X.rows(), 3);
+        dr_dT.setZero();
+
         for (int i = 0; i < 3; ++i) {
             Vec3 dW = Vec3::Zero();
             dW(i) = eps;
-            dC_dW(i) = (ForwardPass(dW, Vec3{Vec3::Zero()}) - C0) / eps;
+            std::tie(rp, vp) = ForwardPass(dW, Vec3{Vec3::Zero()}, X);
+            dr_dW.col(i) = vp.cwiseProduct(v.cwiseProduct(rp - r)) / eps;
 
             Vec3 dT = Vec3::Zero();
             dT(i) = eps;
-            dC_dT(i) = (ForwardPass(Vec3{Vec3::Zero()}, dT) - C0) / eps;
+            std::tie(rp, vp) = ForwardPass(Vec3{Vec3::Zero()}, dT, X);
+            dr_dT.col(i) = vp.cwiseProduct(v.cwiseProduct(rp - r)) / eps;
         }
-        std::cout << "dC_dW=" << dC_dW.transpose() << std::endl;
-        std::cout << "dC_dT=" << dC_dT.transpose() << std::endl;
-        return C0;
+        return r;
     }
 
     /// \brief: Compute the loss at the current pose with given perturbation
-    ftype ForwardPass(const Vec3 &dW, const Vec3 &dT) {
+    std::tuple<VecX, VecX> ForwardPass(const Vec3 &dW, const Vec3 &dT, 
+            Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) {
+
+        // perturbated pose
         Mat3 Rp = _R + _R * hat(dW);
         Vec3 Tp = _T + dT;
-        auto V = TransformShape(Rp, Tp);
-        // std::cout << V << std::endl;
-        _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
-        Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
-        identity.setIdentity();
-        std::vector<EdgePixel> edgelist;
-        _engine->ComputeEdgePixels(identity, edgelist);
-        ftype cost = 0;
-        for (const auto &e : edgelist) {
-            int row = std::max(0, std::min((int)e.y, _shape[0]-1));
-            int col = std::max(0, std::min((int)e.x, _shape[1]-1));
-            cost += _DF.at<float>(row, col);
+
+        VecX r, v;  // residual and valid bit
+
+        if (X.size() == 0) {
+            // no 3D points yet
+            auto V = TransformShape(Rp, Tp);
+            _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
+            Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
+            identity.setIdentity();
+            std::vector<EdgePixel> edgelist;
+            _engine->ComputeEdgePixels(identity, edgelist);
+
+            r.resize(edgelist.size());
+            X.resize(edgelist.size(), 3);
+            v.resize(edgelist.size());
+            v.setOnes();
+
+            ftype cost = 0;
+            for (int i = 0; i < edgelist.size(); ++i) {
+                const auto& e = edgelist[i];
+                if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
+                    r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+                    v(i) = 1.0;
+                    X.row(i) = Rp.transpose() * _Kinv * Vec3{e.x, e.y, 1.0} * e.depth - Rp.transpose() * Tp;
+                } else {
+                    v(i) = 0.0;
+                }
+            }
+            return std::make_tuple(r, v);
+        } else {
+            r.resize(X.rows());
+            r.setZero();
+
+            v.resize(X.rows());
+            v.setZero();
+
+            for (int i = 0; i < X.rows(); ++i) {
+                Vec3 Xc = _K * (Rp * Vec3{X.row(i)} + Tp);
+                Vec2 x = Xc.head<2>() / Xc(2);
+                if (anynan(x)) {
+                    v(i) = 0.0;
+                } else {
+                    if (x(0) >= 0 && x(0) < _shape[1] && x(1) >= 0 && x(1) < _shape[0]) {
+                        r(i) = BilinearSample<float>(_DF, x) / X.rows();
+                        v(i) = 1.0;
+                    } else {
+                        v(i) = 0.0;
+                    }
+                }
+            }
+            return std::make_tuple(r, v);
         }
-        cost /= edgelist.size();
-        return cost;
     }
 
     /// \brief: Render at current pose estimate.
@@ -131,7 +188,7 @@ private:
     RendererPtr _engine;
     cv::Mat _img, _edge, _DF;   // RGB, edge map, distance field
     Vec2i _shape;
-    Mat3 _K;
+    Mat3 _K, _Kinv;
     Vec3 _dW, _dT;  // rotation and translation vector
     Mat3 _R;
     Vec3 _T;
@@ -161,8 +218,8 @@ int main(int argc, char **argv) {
     // noise generators
     auto generator = std::make_shared<std::knuth_b>();
     std::normal_distribution<float> normal_dist;
-    float Tnoise = 0.5;
-    float Rnoise = 0.1;
+    float Tnoise = 0.1;
+    float Rnoise = 0.2;
 
     feh::Vec3 Tn = packet._go.translation() 
         + Tnoise * feh::RandomVector<3>(0, Tnoise, generator);
