@@ -8,7 +8,7 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "io_utils.h"
+#include "utils.h"
 #include "tracker_utils.h"
 #include "oned_search.h"
 #include "distance_transform.h"
@@ -25,7 +25,7 @@ static const float kZFar = 5.0;
 
 int main(int argc, char **argv) {
 
-    std::string obj_file_path("../resources/swivel_chair.obj");
+    std::string obj_file_path(argv[1]);
 //    std::string obj_file_path("/mnt/external/Dropbox/CVPR18/data/CAD_database/swivel_chair.obj");
     if (argc == 2) {
         obj_file_path = std::string(argv[1]);
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     std::vector<float> v;
     std::vector<int> f;
-    feh::io::LoadMeshFromObjFile(obj_file_path, v, f);
+    feh::LoadMeshFromObjFile(obj_file_path, v, f);
     feh::tracker::NormalizeVertices(v);
     feh::tracker::FlipVertices(v);
     // Initialize OffScreen Renderer

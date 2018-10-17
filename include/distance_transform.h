@@ -76,16 +76,6 @@ public:
         tbb::parallel_for(tbb::blocked_range<int>(0, cols),
                           col_kernel,
                           tbb::auto_partitioner());
-
-//        for (int i = 0; i < cols; ++i) {
-//            std::vector<float> tmp, out_tmp;
-//            tmp.reserve(rows);
-//            for (int j = 0; j < rows; ++j)
-//                tmp.push_back(out.at<float>(j, i));
-//            operator()(tmp, out_tmp);
-//            for (int j = 0; j < rows; ++j)
-//                out.at<float>(j, i) = out_tmp[j];
-//        }
     }
 
     void operator()(const cv::Mat &in, cv::Mat &out, cv::Mat &index) const {

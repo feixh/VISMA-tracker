@@ -5,6 +5,8 @@
 #include "pix3d/dataloader.h"
 #include "folly/Format.h"
 
+#include "distance_transform.h"
+
 constexpr float znear = 0.1;
 constexpr float zfar = 10;
 
@@ -23,6 +25,14 @@ int main(int argc, char **argv) {
 
     cv::namedWindow("edge", CV_WINDOW_NORMAL);
     cv::imshow("edge", packet._edge);
+
+    cv::Mat dt;
+    cv::Mat normalized_edge;
+    normalized_edge = cv::Scalar::all(255) - packet._edge;
+    cv::distanceTransform(normalized_edge / 255.0, dt, CV_DIST_L2, CV_DIST_MASK_PRECISE);
+    cv::namedWindow("dt", CV_WINDOW_NORMAL);
+    cv::Mat dt_to_show = feh::DistanceTransform::BuildView(dt);
+    cv::imshow("dt", dt_to_show);
 
     std::cout << "object pose=\n" << packet._go.matrix3x4() << std::endl;
     std::cout << "object pose inverse=\n" << packet._go.inverse().matrix3x4() << std::endl;

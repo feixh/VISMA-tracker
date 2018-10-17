@@ -235,8 +235,8 @@ endif(build_viewer)
 #add_executable(test_tracker test/test_tracker.cpp)
 #target_link_libraries(test_tracker feh)
 #
-#add_executable(test_dt test/test_distance_transform.cpp)
-#target_link_libraries(test_dt feh)
+add_executable(test_dt test/test_distance_transform.cpp)
+target_link_libraries(test_dt feh)
 #
 #add_executable(test_mydt test/test_mydt.cpp)
 #target_link_libraries(test_mydt feh)
