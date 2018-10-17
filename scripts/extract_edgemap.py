@@ -35,9 +35,9 @@ if __name__ == '__main__':
 
     if os.path.isfile(args.path):
         filenames = [args.path]
-        save_path = os.path.join(args.path, '..')
+        save_path = '/' + '/'.join(args.path.split('/')[:-1])
     elif os.path.isdir(args.path):
-        filenames = glob.glob(args.path + '/*.png')
+        filenames = glob.glob(args.path + '/*.png') + glob.glob(args.path + '/*.jpg')
         try:
             filenames.sort(key=lambda x: float(os.path.basename(x)[:-4]))
         except ValueError:

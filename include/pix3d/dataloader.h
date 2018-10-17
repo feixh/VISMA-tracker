@@ -25,6 +25,10 @@ struct Pix3dPacket {
         _mask = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
         _bbox = GetVectorFromDynamic<int, 4>(record, "bbox");
 
+        // load pre-computed edge map
+        std::string tmp = record["img"].asString();
+        LoadEdgeMap(dataroot + std::string{tmp.begin(), tmp.end()-4} + ".edge", _edge);
+
         // load object pose
         _go = Sophus::SE3<ftype>{
             GetMatrixFromDynamic<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
@@ -47,7 +51,7 @@ struct Pix3dPacket {
         bool success = igl::readOBJ(dataroot + record["model"].asString(), _V, _F);
         assert(success);
     }
-    cv::Mat _img, _mask;
+    cv::Mat _img, _mask, _edge;
     Sophus::SE3<ftype> _go;  // object pose, applied to object directly
     Sophus::SE3<ftype> _gc;  // camera pose FIXME: add more details later
     Vec3 _cam_position; // make the names consistent with pix3d json file

@@ -11,9 +11,18 @@ constexpr float zfar = 10;
 int main(int argc, char **argv) {
     CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";
     feh::Pix3dLoader loader(argv[1]);
-    auto packet = loader.GrabPacket("img/bed/0010.png");
+    // auto packet = loader.GrabPacket("img/bed/0010.png"); // index by path
+    // OR index by id
+    auto packet = loader.GrabPacket(0); // index by path
+
+    cv::namedWindow("image", CV_WINDOW_NORMAL);
     cv::imshow("image", packet._img);
+
+    cv::namedWindow("mask", CV_WINDOW_NORMAL);
     cv::imshow("mask", packet._mask);
+
+    cv::namedWindow("edge", CV_WINDOW_NORMAL);
+    cv::imshow("edge", packet._edge);
 
     std::cout << "object pose=\n" << packet._go.matrix3x4() << std::endl;
     std::cout << "object pose inverse=\n" << packet._go.inverse().matrix3x4() << std::endl;
@@ -60,7 +69,11 @@ int main(int argc, char **argv) {
     // pose(2, 3) = -2.0;
     engine->RenderMask(pose, mask);
     engine->RenderDepth(pose, depth);
+
+    cv::namedWindow("rendered mask", CV_WINDOW_NORMAL);
     cv::imshow("rendered mask", mask);
+
+    cv::namedWindow("rendered depth", CV_WINDOW_NORMAL);
     cv::imshow("rendered depth", depth);
     engine.reset();
 
@@ -75,6 +88,7 @@ int main(int argc, char **argv) {
             }
         }
     }
+    cv::namedWindow("mask difference", CV_WINDOW_NORMAL);
     cv::imshow("mask difference", mask_diff);
     cv::waitKey();
 }
