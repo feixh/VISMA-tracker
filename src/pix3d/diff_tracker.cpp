@@ -67,6 +67,7 @@ ftype DiffTracker::Minimize(int steps=1) {
     VecX r;
     MatX J;
     for (int iter = 0; iter < steps; ++iter) {
+        // std::tie(r, J) = ComputeLoss();
         std::tie(r, J) = ComputeLoss2();
         // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
 
@@ -74,10 +75,10 @@ ftype DiffTracker::Minimize(int steps=1) {
         MatX JtJ = J.transpose() * J;
         MatX damping(JtJ.rows(), JtJ.cols());
         damping.setIdentity();
-        damping *= 1e-3;
+        damping *= 0;
         Eigen::Matrix<ftype, 6, 1> delta = -(JtJ + damping).ldlt().solve(J.transpose() * r);
-        // _R = _R + _R * hat<ftype>(delta.head<3>());
-        _R = _R * rodrigues(Vec3{delta.head<3>()});
+        _R = _R + _R * hat<ftype>(delta.head<3>());
+        // _R = _R * rodrigues(Vec3{delta.head<3>()});
         _T = _T + delta.tail<3>();
 
         Eigen::JacobiSVD<MatX> svd(JtJ);
@@ -183,7 +184,7 @@ std::tuple<VecX, VecX> DiffTracker::ForwardPass(
         Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) const {
 
     // perturbated pose
-    Mat3 Rp = _R * rodrigues(dW);
+    Mat3 Rp = _R + _R * hat(dW);
     Vec3 Tp = _T + dT;
 
     VecX r, v;  // residual and valid bit
