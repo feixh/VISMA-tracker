@@ -1,4 +1,5 @@
 // Dataset loader for Pix3d dataset.
+#pragma once
 // stl
 #include <vector>
 #include <array>
