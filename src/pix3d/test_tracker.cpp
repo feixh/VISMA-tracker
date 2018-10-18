@@ -47,7 +47,7 @@ public:
         _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
         DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
         _DF /= 255.0;
-        // cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
+        cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
 
         cv::Sobel(_DF, _dDFx, CV_32FC1, 1, 0, 3, 1, 0, cv::BORDER_CONSTANT);
         cv::Sobel(_DF, _dDFy, CV_32FC1, 0, 1, 3, 1, 0, cv::BORDER_CONSTANT);
@@ -59,16 +59,20 @@ public:
         MatX J;
         for (int iter = 0; iter < steps; ++iter) {
             std::tie(r, J) = ComputeLoss2();
+            // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
 
             // Gauss-Newton update
             MatX JtJ = J.transpose() * J;
             MatX damping(JtJ.rows(), JtJ.cols());
             damping.setIdentity();
-            damping *= 1e-2;
+            damping *= 0;
             Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
             // _R = _R + hat<ftype>(delta.head<3>());
             _R = _R * rodrigues(Vec3{delta.head<3>()});
             _T = _T + delta.tail<3>();
+
+            Eigen::JacobiSVD<MatX> svd(JtJ);
+            std::cout << "SingularValues=" << svd.singularValues().transpose() << std::endl;
         }
         return r.sum();
     }
@@ -124,7 +128,9 @@ public:
         for (int i = 0; i < edgelist.size(); ++i) {
             const auto& e = edgelist[i];
             if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
-                r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+                // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
+                // r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+                r(i) = BilinearSample<float>(_DF, {e.x, e.y});
                 v(i) = 1.0;
                 // back-project to object frame
                 Vec3 Xc = _Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
@@ -134,14 +140,23 @@ public:
                 dXc_dwt << dAB_dA(Mat3{}, Xo) * dhat(Vec3{}), Mat3::Identity();
 
                 Eigen::Matrix<ftype, 2, 3> dx_dXc;
-                dx_dXc << _K(0, 0) / Xc(2), 0, -_K(0, 0) / (Xc(2) * Xc(2)),
-                      0, _K(1, 1) / Xc(2), -_K(1, 1) / (Xc(2) * Xc(2));
+                dx_dXc << _K(0, 0) / Xc(2), 0, -_K(0, 0) * Xc(0)  / (Xc(2) * Xc(2)),
+                      0, _K(1, 1) / Xc(2), -_K(1, 1) * Xc(1)  / (Xc(2) * Xc(2));
 
                 Eigen::Matrix<ftype, 2, 6> dx_dwt{dx_dXc * dXc_dwt};
 
-                J.row(i) = Vec2{_dDFx.at<float>((int)e.y, (int)e.x),
-                                _dDFy.at<float>((int)e.y, (int)e.x)}.transpose() * dx_dwt;
-                J.row(i) /= edgelist.size();
+                Eigen::Matrix<ftype, 1, 2> dDF_dx{
+                    _dDFx.at<float>((int)e.y, (int)e.x),
+                    _dDFy.at<float>((int)e.y, (int)e.x)};
+#ifdef PIX3D_VERBOSE
+                std::cout << "r=" << r(i) << std::endl;
+                std::cout << "dXc_dwt=\n" << dXc_dwt << std::endl;
+                std::cout << "dx_dXc=\n" << dx_dXc << std::endl;
+                std::cout << "dDF_dx=\n" << dDF_dx << std::endl;
+#endif
+
+                J.row(i) = dDF_dx * dx_dwt;
+                // J.row(i) /= edgelist.size();
 
             } else {
                 v(i) = 0.0;
@@ -304,7 +319,7 @@ int main(int argc, char **argv) {
          0, -1, 0,
          0, 0, 1;
 
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 100; ++i) {
         std::cout << "==========\n";
         auto cost = tracker.Minimize(1);
         std::cout << "Iter=" << i << std::endl;
@@ -324,7 +339,7 @@ int main(int argc, char **argv) {
 
         auto depth = tracker.RenderEstimate();
         cv::imshow("depth", depth);
-        cv::waitKey(10);
+        cv::waitKey();
     }
 
 }

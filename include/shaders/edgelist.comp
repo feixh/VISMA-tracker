@@ -47,17 +47,18 @@ void compute_edge_info(ivec2 pos) {
 //        float dy = value[5] - value[3];
 //        float dx = value[7] - value[1];
         edgelist[current_index*4 + 2] = atan(dy, dx);
-        float min_depth = z_far;
-        for (int i = 0; i < 9; ++i) {
-//            float tmp = actual_depth(value[i]);
-            float tmp = value[i];
-            if (tmp < min_depth) {
-                min_depth = tmp;
-            }
-        }
-        if (min_depth < z_far) {
-            edgelist[current_index*4 + 3] = min_depth; //linearize_depth(min_depth);
-        }
+        edgelist[current_index*4 + 3] = value[4];
+
+        // float min_depth = z_far;
+        // for (int i = 0; i < 9; ++i) {
+        //     float tmp = value[i];
+        //     if (tmp < min_depth) {
+        //         min_depth = tmp;
+        //     }
+        // }
+        // if (min_depth < z_far) {
+        //     edgelist[current_index*4 + 3] = min_depth; //linearize_depth(min_depth);
+        // }
     }
 }
 
