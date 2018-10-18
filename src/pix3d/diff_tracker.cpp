@@ -30,11 +30,10 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
 
     cv::Mat tmp, normalized_edge;
     _edge.convertTo(tmp, CV_32FC1);
-    tmp = (255.0 - tmp) * 100;
-    cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
-    // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
+    tmp = (255.0 - tmp) / 255.0;
+    // cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
+    // // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
     DistanceTransform{}(tmp, _DF);
-    DistanceTransform::BuildView(_DF).convertTo(_DF, CV_32FC1);
 
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
     cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
@@ -132,7 +131,7 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
         if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
             // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
             // r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
-            r(i) = BilinearSample<float>(_DF, {e.x, e.y});
+            r(i) = _DF.at<float>((int)e.y, (int)e.x);
             v(i) = 1.0;
             // back-project to object frame
             Vec3 Xc = _Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
