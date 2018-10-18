@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
             Rn, Tn,
             packet._V, packet._F);
     cv::namedWindow("depth", CV_WINDOW_NORMAL);
+    cv::namedWindow("edgepixels", CV_WINDOW_NORMAL);
     cv::namedWindow("DF", CV_WINDOW_NORMAL);
 
     cv::imshow("DF", tracker.GetDistanceField());
@@ -82,6 +83,9 @@ int main(int argc, char **argv) {
 
         auto depth = tracker.RenderEstimate();
         cv::imshow("depth", depth);
+
+        auto edgepixels = tracker.RenderEdgepixels();
+        cv::imshow("edgepixels", edgepixels);
         char ckey = cv::waitKey();
         if (ckey == 'q') break;
     }

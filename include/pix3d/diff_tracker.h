@@ -26,32 +26,24 @@ public:
 
     ftype Minimize(int steps);
 
-    std::tuple<VecX, MatX> ComputeLoss();
     /// \brief: Compute the loss at the current pose with given perturbation
-    std::tuple<VecX, VecX> ForwardPass(const Vec3 &dW, const Vec3 &dT, 
-            Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X);
-
-    std::tuple<VecX, MatX> ComputeLoss2();
+    /// returns: residual vector and Jacobian matrix.
+    std::tuple<VecX, MatX> ComputeLoss() const;
+    std::tuple<VecX, VecX> ForwardPass(
+            const Vec3 &dW, const Vec3 &dT, 
+            Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) const;
+    /// \brief: Similar to ComputeLoss above, but with analytical Jacobians.
+    std::tuple<VecX, MatX> ComputeLoss2() const;
 
     /// \brief: Render at current pose estimate.
-    cv::Mat RenderEstimate() {
-        auto V = TransformShape(_R, _T);
-        _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
-        Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
-        identity.setIdentity();
-        cv::Mat depth(_shape[0], _shape[1], CV_32FC1); 
-        _engine->RenderDepth(identity, depth);
-        return depth;
-    }
+    cv::Mat RenderEstimate() const;
+    /// \brief: Render edge pixels at current estimate.
+    cv::Mat RenderEdgepixels() const ;
+    std::tuple<Mat3, Vec3> GetEstimate() const { return std::make_tuple(_R, _T); }
+    cv::Mat GetDistanceField() const { return _DF; }
 
-    std::tuple<Mat3, Vec3> GetEstimate() {
-        return std::make_tuple(_R, _T);
-    }
 
-    cv::Mat GetDistanceField() {
-        return _DF;
-    }
-
+    /// \brief: Transform the mesh according to the given pose.
     MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
         MatX V(_V.rows(), _V.cols());
         V.setZero();
