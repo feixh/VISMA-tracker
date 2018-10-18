@@ -42,22 +42,22 @@ public:
         cv::Mat normalized_edge, tmp;
         normalized_edge = cv::Scalar::all(255) - _edge;
         cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
-        _DF = DistanceTransform::BuildView(tmp) / 255.0;
+        _DF = DistanceTransform::BuildView(tmp) / 255.0 * 10;    // DF value range [0, 1]
     }
 
     ftype Minimize(int steps=1) {
-        ftype stepsize = 1e0;
+        ftype stepsize = 2.0;
         VecX r;
         MatX J;
         for (int iter = 0; iter < steps; ++iter) {
             std::tie(r, J) = ComputeLoss();
 
-            // TODO: Gauss-Newton update
+            // Gauss-Newton update
             MatX JtJ = J.transpose() * J;
             MatX damping(JtJ.rows(), JtJ.cols());
             damping.setIdentity();
-            damping *= 0.1;
-            Eigen::Matrix<ftype, 6, 1> delta = -(JtJ + damping).ldlt().solve(J.transpose() * r);
+            damping *= 0;
+            Eigen::Matrix<ftype, 6, 1> delta = (JtJ + damping).ldlt().solve(J.transpose() * r);
             // _R = _R + hat<ftype>(delta.head<3>());
             _R = _R * rodrigues(Vec3{delta.head<3>()});
             _T = _T + delta.tail<3>();
@@ -95,7 +95,7 @@ public:
             Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) {
 
         // perturbated pose
-        Mat3 Rp = _R + _R * hat(dW);
+        Mat3 Rp = _R * rodrigues(dW);
         Vec3 Tp = _T + dT;
 
         VecX r, v;  // residual and valid bit
@@ -118,7 +118,7 @@ public:
             for (int i = 0; i < edgelist.size(); ++i) {
                 const auto& e = edgelist[i];
                 if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
-                    r(i) = std::sqrt(BilinearSample<float>(_DF, {e.x, e.y})) / edgelist.size();
+                    r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
                     v(i) = 1.0;
                     X.row(i) = Rp.transpose() * _Kinv * Vec3{e.x, e.y, 1.0} * e.depth 
                         - Rp.transpose() * Tp;
@@ -141,7 +141,7 @@ public:
                     v(i) = 0.0;
                 } else {
                     if (x(0) >= 0 && x(0) < _shape[1] && x(1) >= 0 && x(1) < _shape[0]) {
-                        r(i) = std::sqrt(BilinearSample<float>(_DF, x)) / X.rows();
+                        r(i) = BilinearSample<float>(_DF, x) / X.rows();
                         v(i) = 1.0;
                     } else {
                         v(i) = 0.0;
