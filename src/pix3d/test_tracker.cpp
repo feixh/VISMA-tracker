@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
     cv::imshow("mask", packet._mask);
 
     cv::namedWindow("edge", CV_WINDOW_NORMAL);
+    
     cv::imshow("edge", packet._edge);
 
     // noise generators

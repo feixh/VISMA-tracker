@@ -31,18 +31,32 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
     cv::Mat tmp, normalized_edge;
     _edge.convertTo(tmp, CV_32FC1);
     tmp = (255.0 - tmp) / 255.0;
-    cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
-    DistanceTransform{}(tmp, _DF);
+    cv::GaussianBlur(tmp, _DF, cv::Size(3, 3), 0, 0);
+    // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
+    // DistanceTransform{}(tmp, _DF, index);
     // DistanceTransform::BuildView(_DF).convertTo(_DF, CV_32FC1);
 
-    // cv::Sobel(_DF, _dDF_dx, CV_32FC1, 1, 0, 3, 1, 0, cv::BORDER_CONSTANT);
-    // cv::Sobel(_DF, _dDF_dy, CV_32FC1, 0, 1, 3, 1, 0, cv::BORDER_CONSTANT);
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
     cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
+    
+   
+    // _dDF_dx = cv::Mat(_shape[0], _shape[1], CV_32FC1);
+    // _dDF_dy = cv::Mat(_shape[0], _shape[1], CV_32FC1);
+    // for (int i = 0; i < _shape[0]; ++i) {
+    //     for (int j = 0; j < _shape[1]; ++j) {
+    //         auto target = index.at<cv::Vec2i>(i, j);
+    //         Vec2 grad{target(0)-i, target(1)-j};
+    //         if (grad.norm() > 1e-8) {
+    //             grad /= grad.norm();
+    //         }
+    //         _dDF_dx.at<float>(i, j) = grad(1);
+    //         _dDF_dy.at<float>(i, j) = grad(0);
+    //     }
+    // }
 }
 
 ftype DiffTracker::Minimize(int steps=1) {
-    ftype stepsize = 1e0;
+    ftype stepsize = 1e1;
     VecX r;
     MatX J;
     for (int iter = 0; iter < steps; ++iter) {
