@@ -4,6 +4,7 @@
 
 #include "glog/logging.h"
 #include "folly/Format.h"
+#include "opencv2/imgproc.hpp"
 
 #include "eigen_alias.h"
 #include "utils.h"
@@ -46,21 +47,24 @@ public:
         _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
         DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
         _DF /= 255.0;
-        cv::GaussianBlur(_DF, _DF, cv::Size(7, 7), 0, 0);
+        // cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
+
+        cv::Sobel(_DF, _dDFx, CV_32FC1, 1, 0, 3, 1, 0, cv::BORDER_CONSTANT);
+        cv::Sobel(_DF, _dDFy, CV_32FC1, 0, 1, 3, 1, 0, cv::BORDER_CONSTANT);
     }
 
     ftype Minimize(int steps=1) {
-        ftype stepsize = 1e-1;
+        ftype stepsize = 1;
         VecX r;
         MatX J;
         for (int iter = 0; iter < steps; ++iter) {
-            std::tie(r, J) = ComputeLoss();
+            std::tie(r, J) = ComputeLoss2();
 
             // Gauss-Newton update
             MatX JtJ = J.transpose() * J;
             MatX damping(JtJ.rows(), JtJ.cols());
             damping.setIdentity();
-            damping *= r.sum();
+            damping *= 1e-2;
             Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
             // _R = _R + hat<ftype>(delta.head<3>());
             _R = _R * rodrigues(Vec3{delta.head<3>()});
@@ -94,6 +98,58 @@ public:
         return std::make_tuple(r, J);
     }
 
+
+    std::tuple<VecX, MatX> ComputeLoss2() {
+        VecX r, v;  // residual and valid bit
+        MatX J;
+
+        // no 3D points yet
+        auto V = TransformShape(_R, _T);
+        _engine->SetMesh((float*)V.data(), V.rows(), (int*)_F.data(), _F.rows());
+        Eigen::Matrix<ftype, 4, 4, Eigen::ColMajor> identity;
+        identity.setIdentity();
+        std::vector<EdgePixel> edgelist;
+        _engine->ComputeEdgePixels(identity, edgelist);
+
+        r.resize(edgelist.size());
+        r.setZero();
+
+        J.resize(edgelist.size(), 6);
+        J.setZero();
+
+        v.resize(edgelist.size());
+        v.setZero();
+
+        ftype cost = 0;
+        for (int i = 0; i < edgelist.size(); ++i) {
+            const auto& e = edgelist[i];
+            if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
+                r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+                v(i) = 1.0;
+                // back-project to object frame
+                Vec3 Xc = _Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
+                Vec3 Xo = _R.transpose() * (Xc - _T);
+                // measurement equation: DF(x) = DF(\pi( R Xo + T))
+                Eigen::Matrix<ftype, 3, 6> dXc_dwt;
+                dXc_dwt << dAB_dA(Mat3{}, Xo) * dhat(Vec3{}), Mat3::Identity();
+
+                Eigen::Matrix<ftype, 2, 3> dx_dXc;
+                dx_dXc << _K(0, 0) / Xc(2), 0, -_K(0, 0) / (Xc(2) * Xc(2)),
+                      0, _K(1, 1) / Xc(2), -_K(1, 1) / (Xc(2) * Xc(2));
+
+                Eigen::Matrix<ftype, 2, 6> dx_dwt{dx_dXc * dXc_dwt};
+
+                J.row(i) = Vec2{_dDFx.at<float>((int)e.y, (int)e.x),
+                                _dDFy.at<float>((int)e.y, (int)e.x)}.transpose() * dx_dwt;
+                J.row(i) /= edgelist.size();
+
+            } else {
+                v(i) = 0.0;
+            }
+        }
+        return std::make_tuple(r, J);
+    }
+
     /// \brief: Compute the loss at the current pose with given perturbation
     std::tuple<VecX, VecX> ForwardPass(const Vec3 &dW, const Vec3 &dT, 
             Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) {
@@ -122,10 +178,9 @@ public:
             for (int i = 0; i < edgelist.size(); ++i) {
                 const auto& e = edgelist[i];
                 if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
-                    r(i) = std::sqrt(BilinearSample<float>(_DF, {e.x, e.y})) / edgelist.size();
+                    r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
                     v(i) = 1.0;
-                    X.row(i) = Rp.transpose() * _Kinv * Vec3{e.x, e.y, 1.0} * e.depth 
-                        - Rp.transpose() * Tp;
+                    X.row(i) = Rp.transpose() * (_Kinv * Vec3{e.x, e.y, 1.0} * e.depth - Tp);
                 } else {
                     v(i) = 0.0;
                 }
@@ -145,7 +200,8 @@ public:
                     v(i) = 0.0;
                 } else {
                     if (x(0) >= 0 && x(0) < _shape[1] && x(1) >= 0 && x(1) < _shape[0]) {
-                        r(i) = std::sqrt(BilinearSample<float>(_DF, x)) / X.rows();
+                        // r(i) = std::sqrt(BilinearSample<float>(_DF, x)) / X.rows();
+                        r(i) = BilinearSample<float>(_DF, x) / X.rows();
                         v(i) = 1.0;
                     } else {
                         v(i) = 0.0;
@@ -188,6 +244,7 @@ public:
 private:
     RendererPtr _engine;
     cv::Mat _img, _edge, _DF;   // RGB, edge map, distance field
+    cv::Mat _dDFx, _dDFy;
     Vec2i _shape;
     Mat3 _K, _Kinv;
     Mat3 _R;
