@@ -28,12 +28,20 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
     _engine->SetCamera(znear, zfar, fx, fy, cx, cy);
 
 
-    cv::Mat tmp, normalized_edge;
-    _edge.convertTo(tmp, CV_32FC1);
-    tmp = (255.0 - tmp) / 255.0;
-    // cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
-    // // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
-    DistanceTransform{}(tmp, _DF);
+    // cv::Mat tmp, normalized_edge;
+    // _edge.convertTo(tmp, CV_32FC1);
+    // tmp = (255.0 - tmp) / 255.0;
+    // // cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
+    // // // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
+    // DistanceTransform{}(tmp, _DF);
+
+    cv::Mat normalized_edge, tmp;
+    normalized_edge = cv::Scalar::all(255) - _edge;
+    cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
+    _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
+    DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
+    _DF /= 255.0;
+    cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
 
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
     cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
@@ -66,9 +74,9 @@ ftype DiffTracker::Minimize(int steps=1) {
         MatX JtJ = J.transpose() * J;
         MatX damping(JtJ.rows(), JtJ.cols());
         damping.setIdentity();
-        damping *= 0;
-        Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
-        // _R = _R + hat<ftype>(delta.head<3>());
+        damping *= 1e-3;
+        Eigen::Matrix<ftype, 6, 1> delta = -(JtJ + damping).ldlt().solve(J.transpose() * r);
+        // _R = _R + _R * hat<ftype>(delta.head<3>());
         _R = _R * rodrigues(Vec3{delta.head<3>()});
         _T = _T + delta.tail<3>();
 
@@ -130,15 +138,15 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
         const auto& e = edgelist[i];
         if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
             // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
-            // r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
-            r(i) = _DF.at<float>((int)e.y, (int)e.x);
+            r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+            // r(i) = _DF.at<float>((int)e.y, (int)e.x);
             v(i) = 1.0;
             // back-project to object frame
             Vec3 Xc = _Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
             Vec3 Xo = _R.transpose() * (Xc - _T);
             // measurement equation: DF(x) = DF(\pi( R Xo + T))
             Eigen::Matrix<ftype, 3, 6> dXc_dwt;
-            dXc_dwt << dAB_dA(Mat3{}, Xo) * dhat(Vec3{}), Mat3::Identity();
+            dXc_dwt << dAB_dA(Mat3{}, Xo) * dAB_dB(_R, Mat3{}) * dhat(Vec3{}), Mat3::Identity();
 
             Eigen::Matrix<ftype, 2, 3> dx_dXc;
             dx_dXc << _K(0, 0) / Xc(2), 0, -_K(0, 0) * Xc(0)  / (Xc(2) * Xc(2)),
@@ -160,7 +168,7 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
 #ifdef PIX3D_VERBOSE
             std::cout << J.row(i) << std::endl;
 #endif
-            // J.row(i) /= edgelist.size();
+            J.row(i) /= edgelist.size();
 
         } else {
             v(i) = 0.0;
