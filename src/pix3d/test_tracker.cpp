@@ -55,6 +55,8 @@ int main(int argc, char **argv) {
     cv::namedWindow("depth", CV_WINDOW_NORMAL);
     cv::namedWindow("edgepixels", CV_WINDOW_NORMAL);
     cv::namedWindow("DF", CV_WINDOW_NORMAL);
+    cv::namedWindow("dDF_dx", CV_WINDOW_NORMAL);
+    cv::namedWindow("dDF_dy", CV_WINDOW_NORMAL);
 
     cv::imshow("DF", tracker.GetDistanceField());
 
@@ -81,11 +83,12 @@ int main(int argc, char **argv) {
         std::cout << "R Error=" << err.head<3>().norm() / 3.14 * 180 << std::endl;
         std::cout << "T Error=" << 100 * err.tail<3>().norm() / (packet._V.maxCoeff() - packet._V.minCoeff())<< std::endl;
 
-        auto depth = tracker.RenderEstimate();
-        cv::imshow("depth", depth);
+        cv::imshow("depth", tracker.RenderEstimate());
+        cv::imshow("edgepixels", tracker.RenderEdgepixels());
+        cv::imshow("dDF_dx", std::get<0>(tracker.GetDFGradient()));
+        cv::imshow("dDF_dy", std::get<1>(tracker.GetDFGradient()));
 
-        auto edgepixels = tracker.RenderEdgepixels();
-        cv::imshow("edgepixels", edgepixels);
+
         char ckey = cv::waitKey();
         if (ckey == 'q') break;
     }

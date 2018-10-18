@@ -182,7 +182,7 @@ public:
 //        std::cout << "min @ (" << min_location << ")=" << min_value << "\n";
 //        std::cout << "max @ (" << max_location << ")=" << max_value << "\n";
 
-        cv::Mat display;
+        cv::Mat display(img.rows, img.cols, CV_8UC1);
         cv::convertScaleAbs(img, display, 255.0 / (max_value - min_value), min_value);
         return display;
     }

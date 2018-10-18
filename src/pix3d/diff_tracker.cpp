@@ -27,22 +27,22 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
     _engine = std::make_shared<Renderer>(_shape[0], _shape[1]);
     _engine->SetCamera(znear, zfar, fx, fy, cx, cy);
 
-    cv::Mat normalized_edge, tmp;
-    normalized_edge = cv::Scalar::all(255) - _edge;
-    cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
-    _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
-    DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
-    _DF /= 255.0;
-    cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
 
-    // cv::Sobel(_DF, _dDFx, CV_32FC1, 1, 0, 3, 1, 0, cv::BORDER_CONSTANT);
-    // cv::Sobel(_DF, _dDFy, CV_32FC1, 0, 1, 3, 1, 0, cv::BORDER_CONSTANT);
-    cv::Scharr(_DF, _dDFx, CV_32FC1, 1, 0, 3);
-    cv::Scharr(_DF, _dDFy, CV_32FC1, 0, 1, 3);
+    cv::Mat tmp, normalized_edge;
+    _edge.convertTo(tmp, CV_32FC1);
+    tmp = (255.0 - tmp) / 255.0;
+    cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
+    DistanceTransform{}(tmp, _DF);
+    // DistanceTransform::BuildView(_DF).convertTo(_DF, CV_32FC1);
+
+    // cv::Sobel(_DF, _dDF_dx, CV_32FC1, 1, 0, 3, 1, 0, cv::BORDER_CONSTANT);
+    // cv::Sobel(_DF, _dDF_dy, CV_32FC1, 0, 1, 3, 1, 0, cv::BORDER_CONSTANT);
+    cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
+    cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
 }
 
 ftype DiffTracker::Minimize(int steps=1) {
-    ftype stepsize = 1e-1;
+    ftype stepsize = 1e0;
     VecX r;
     MatX J;
     for (int iter = 0; iter < steps; ++iter) {
@@ -134,8 +134,8 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
             Eigen::Matrix<ftype, 2, 6> dx_dwt{dx_dXc * dXc_dwt};
 
             Eigen::Matrix<ftype, 1, 2> dDF_dx{
-                _dDFx.at<float>((int)e.y, (int)e.x),
-                _dDFy.at<float>((int)e.y, (int)e.x)};
+                _dDF_dx.at<float>((int)e.y, (int)e.x),
+                _dDF_dy.at<float>((int)e.y, (int)e.x)};
 #ifdef PIX3D_VERBOSE
             std::cout << "r=" << r(i) << std::endl;
             std::cout << "dXc_dwt=\n" << dXc_dwt << std::endl;

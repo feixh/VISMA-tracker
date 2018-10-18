@@ -40,7 +40,8 @@ public:
     /// \brief: Render edge pixels at current estimate.
     cv::Mat RenderEdgepixels() const ;
     std::tuple<Mat3, Vec3> GetEstimate() const { return std::make_tuple(_R, _T); }
-    cv::Mat GetDistanceField() const { return _DF; }
+    cv::Mat GetDistanceField() const { return DistanceTransform::BuildView(_DF); }
+    std::tuple<cv::Mat, cv::Mat> GetDFGradient() const { return std::make_tuple(_dDF_dx, _dDF_dy); }
 
 
     /// \brief: Transform the mesh according to the given pose.
@@ -57,7 +58,7 @@ public:
 private:
     RendererPtr _engine;
     cv::Mat _img, _edge, _DF;   // RGB, edge map, distance field
-    cv::Mat _dDFx, _dDFy;
+    cv::Mat _dDF_dx, _dDF_dy;
     Vec2i _shape;
     Mat3 _K, _Kinv;
     Mat3 _R;
