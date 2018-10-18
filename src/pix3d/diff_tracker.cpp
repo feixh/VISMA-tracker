@@ -30,11 +30,11 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
 
     cv::Mat tmp, normalized_edge;
     _edge.convertTo(tmp, CV_32FC1);
-    tmp = (255.0 - tmp) / 255.0;
-    cv::GaussianBlur(tmp, _DF, cv::Size(3, 3), 0, 0);
+    tmp = (255.0 - tmp) * 100;
+    cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
     // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
-    // DistanceTransform{}(tmp, _DF, index);
-    // DistanceTransform::BuildView(_DF).convertTo(_DF, CV_32FC1);
+    DistanceTransform{}(tmp, _DF);
+    DistanceTransform::BuildView(_DF).convertTo(_DF, CV_32FC1);
 
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
     cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
@@ -56,7 +56,7 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
 }
 
 ftype DiffTracker::Minimize(int steps=1) {
-    ftype stepsize = 1e1;
+    ftype stepsize = 1e-1;
     VecX r;
     MatX J;
     for (int iter = 0; iter < steps; ++iter) {
