@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <chrono>
 
 #include "glog/logging.h"
 #include "folly/Format.h"
@@ -42,11 +43,14 @@ public:
         cv::Mat normalized_edge, tmp;
         normalized_edge = cv::Scalar::all(255) - _edge;
         cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
-        _DF = DistanceTransform::BuildView(tmp) / 255.0 * 10;    // DF value range [0, 1]
+        _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
+        DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
+        _DF /= 255.0;
+        cv::GaussianBlur(_DF, _DF, cv::Size(7, 7), 0, 0);
     }
 
     ftype Minimize(int steps=1) {
-        ftype stepsize = 2.0;
+        ftype stepsize = 1e-1;
         VecX r;
         MatX J;
         for (int iter = 0; iter < steps; ++iter) {
@@ -56,8 +60,8 @@ public:
             MatX JtJ = J.transpose() * J;
             MatX damping(JtJ.rows(), JtJ.cols());
             damping.setIdentity();
-            damping *= 0;
-            Eigen::Matrix<ftype, 6, 1> delta = (JtJ + damping).ldlt().solve(J.transpose() * r);
+            damping *= r.sum();
+            Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
             // _R = _R + hat<ftype>(delta.head<3>());
             _R = _R * rodrigues(Vec3{delta.head<3>()});
             _T = _T + delta.tail<3>();
@@ -118,7 +122,7 @@ public:
             for (int i = 0; i < edgelist.size(); ++i) {
                 const auto& e = edgelist[i];
                 if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
-                    r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+                    r(i) = std::sqrt(BilinearSample<float>(_DF, {e.x, e.y})) / edgelist.size();
                     v(i) = 1.0;
                     X.row(i) = Rp.transpose() * _Kinv * Vec3{e.x, e.y, 1.0} * e.depth 
                         - Rp.transpose() * Tp;
@@ -141,7 +145,7 @@ public:
                     v(i) = 0.0;
                 } else {
                     if (x(0) >= 0 && x(0) < _shape[1] && x(1) >= 0 && x(1) < _shape[0]) {
-                        r(i) = BilinearSample<float>(_DF, x) / X.rows();
+                        r(i) = std::sqrt(BilinearSample<float>(_DF, x)) / X.rows();
                         v(i) = 1.0;
                     } else {
                         v(i) = 0.0;
@@ -165,6 +169,10 @@ public:
 
     std::tuple<Mat3, Vec3> GetEstimate() {
         return std::make_tuple(_R, _T);
+    }
+
+    cv::Mat GetDistanceField() {
+        return _DF;
     }
 
     MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
@@ -208,10 +216,11 @@ int main(int argc, char **argv) {
     cv::imshow("edge", packet._edge);
 
     // noise generators
-    auto generator = std::make_shared<std::knuth_b>();
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    auto generator = std::make_shared<std::knuth_b>(seed);
     std::normal_distribution<float> normal_dist;
-    float Tnoise = 0.2;
-    float Rnoise = 0.5;
+    float Tnoise = 0.1;
+    float Rnoise = 3.14 / 12;
 
     feh::Vec3 Tn = packet._go.translation() 
         + Tnoise * feh::RandomVector<3>(0, Tnoise, generator);
@@ -229,6 +238,9 @@ int main(int argc, char **argv) {
             Rn, Tn,
             packet._V, packet._F);
     cv::namedWindow("depth", CV_WINDOW_NORMAL);
+    cv::namedWindow("DF", CV_WINDOW_NORMAL);
+
+    cv::imshow("DF", tracker.GetDistanceField());
 
     feh::Mat3 flip;
     flip << -1, 0, 0,
