@@ -73,10 +73,9 @@ ftype DiffTracker::Minimize(int steps=1) {
 
         // Gauss-Newton update
         MatX JtJ = J.transpose() * J;
-        MatX damping(JtJ.rows(), JtJ.cols());
-        damping.setIdentity();
-        damping *= 0;
-        Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
+        ftype damping = 1e-3;
+        JtJ.diagonal() *= (1+damping);
+        Eigen::Matrix<ftype, 6, 1> delta = -JtJ.ldlt().solve(J.transpose() * r);
         // _R = _R + _R * hat<ftype>(delta.head<3>());
         _R = _R * rodrigues(Vec3{delta.head<3>()});
         _T = _T + delta.tail<3>();

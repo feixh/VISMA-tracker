@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
          0, -1, 0,
          0, 0, 1;
 
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 100; ++i) {
         std::cout << "==========\n";
         auto cost = tracker.Minimize(1);
         std::cout << "Iter=" << i << std::endl;
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         cv::imshow("depth", depth);
         cv::Mat overlaid_view = tracker.RenderEdgepixels();
         cv::imshow("edgepixels", overlaid_view);
-        // cv::imwrite(folly::sformat("{:04d}.jpg", i), overlaid_view);
+        cv::imwrite(folly::sformat("{:04d}.jpg", i), overlaid_view);
         cv::imshow("dDF_dx", std::get<0>(tracker.GetDFGradient()));
         cv::imshow("dDF_dy", std::get<1>(tracker.GetDFGradient()));
 
