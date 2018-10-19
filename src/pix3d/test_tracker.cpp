@@ -67,9 +67,12 @@ int main(int argc, char **argv) {
          0, -1, 0,
          0, 0, 1;
 
+    feh::Timer timer;
     for (int i = 0; i < 100; ++i) {
         std::cout << "==========\n";
+        timer.Tick("update");
         auto cost = tracker.Minimize(1);
+        timer.Tock("update");
         std::cout << "Iter=" << i << std::endl;
         std::cout << "Cost=" << cost << std::endl;
 
@@ -97,6 +100,7 @@ int main(int argc, char **argv) {
         char ckey = cv::waitKey(10);
         if (ckey == 'q') break;
     }
+    std::cout << timer;
 
 }
 
