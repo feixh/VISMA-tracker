@@ -11,6 +11,7 @@
 #include "rodrigues.h"
 #include "distance_transform.h"
 #include "renderer.h"
+#include "tracker_utils.h"
 #include "pix3d/dataloader.h"
 #include "pix3d/diff_tracker.h"
 
@@ -84,13 +85,16 @@ int main(int argc, char **argv) {
         std::cout << "R Error=" << err.head<3>().norm() / 3.14 * 180 << std::endl;
         std::cout << "T Error=" << 100 * err.tail<3>().norm() / (packet._V.maxCoeff() - packet._V.minCoeff())<< std::endl;
 
-        cv::imshow("depth", tracker.RenderEstimate());
-        cv::imshow("edgepixels", tracker.RenderEdgepixels());
+        cv::Mat depth = tracker.RenderEstimate();
+        cv::imshow("depth", depth);
+        cv::Mat overlaid_view = tracker.RenderEdgepixels();
+        cv::imshow("edgepixels", overlaid_view);
+        // cv::imwrite(folly::sformat("{:04d}.jpg", i), overlaid_view);
         cv::imshow("dDF_dx", std::get<0>(tracker.GetDFGradient()));
         cv::imshow("dDF_dy", std::get<1>(tracker.GetDFGradient()));
 
 
-        char ckey = cv::waitKey();
+        char ckey = cv::waitKey(10);
         if (ckey == 'q') break;
     }
 

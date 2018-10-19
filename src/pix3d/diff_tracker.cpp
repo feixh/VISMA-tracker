@@ -63,7 +63,7 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
 }
 
 ftype DiffTracker::Minimize(int steps=1) {
-    ftype stepsize = 1e-1;
+    ftype stepsize = 1;
     VecX r;
     MatX J;
     for (int iter = 0; iter < steps; ++iter) {
@@ -76,9 +76,9 @@ ftype DiffTracker::Minimize(int steps=1) {
         MatX damping(JtJ.rows(), JtJ.cols());
         damping.setIdentity();
         damping *= 0;
-        Eigen::Matrix<ftype, 6, 1> delta = -(JtJ + damping).ldlt().solve(J.transpose() * r);
-        _R = _R + _R * hat<ftype>(delta.head<3>());
-        // _R = _R * rodrigues(Vec3{delta.head<3>()});
+        Eigen::Matrix<ftype, 6, 1> delta = -stepsize * (JtJ + damping).ldlt().solve(J.transpose() * r);
+        // _R = _R + _R * hat<ftype>(delta.head<3>());
+        _R = _R * rodrigues(Vec3{delta.head<3>()});
         _T = _T + delta.tail<3>();
 
         Eigen::JacobiSVD<MatX> svd(JtJ);
@@ -139,7 +139,7 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
         const auto& e = edgelist[i];
         if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
             // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
-            r(i) = BilinearSample<float>(_DF, {e.x, e.y}) / edgelist.size();
+            r(i) = std::sqrt(BilinearSample<float>(_DF, {e.x, e.y})); // / edgelist.size();
             // r(i) = _DF.at<float>((int)e.y, (int)e.x);
             v(i) = 1.0;
             // back-project to object frame
@@ -169,7 +169,7 @@ std::tuple<VecX, MatX> DiffTracker::ComputeLoss2() const {
 #ifdef PIX3D_VERBOSE
             std::cout << J.row(i) << std::endl;
 #endif
-            J.row(i) /= edgelist.size();
+            // J.row(i) /= edgelist.size();
 
         } else {
             v(i) = 0.0;
