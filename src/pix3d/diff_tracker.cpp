@@ -93,7 +93,7 @@ ftype DiffTracker::Minimize(int steps=1) {
 #endif
     }
     std::cout << _timer;
-    return r.sum();
+    return r.squaredNorm();
 }
 
 
