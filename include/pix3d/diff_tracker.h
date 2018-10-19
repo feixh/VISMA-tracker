@@ -28,12 +28,7 @@ public:
 
     /// \brief: Compute the loss at the current pose with given perturbation
     /// returns: residual vector and Jacobian matrix.
-    std::tuple<VecX, MatX> ComputeLoss() const;
-    std::tuple<VecX, VecX> ForwardPass(
-            const Vec3 &dW, const Vec3 &dT, 
-            Eigen::Matrix<ftype, Eigen::Dynamic, 3> &X) const;
-    /// \brief: Similar to ComputeLoss above, but with analytical Jacobians.
-    std::tuple<VecX, MatX> ComputeLoss2() const;
+    std::tuple<VecX, MatX> ComputeResidualAndJacobian();
 
     /// \brief: Render at current pose estimate.
     cv::Mat RenderEstimate() const;
@@ -65,6 +60,7 @@ private:
     Vec3 _T;
     MatX _V;
     MatXi _F;
+    Timer _timer;
 };
 
 }
