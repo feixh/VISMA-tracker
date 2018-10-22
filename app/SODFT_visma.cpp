@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
     std::shared_ptr<DiffTracker> tracker{nullptr};
 
 
+
+    Timer timer;
     for (int i = start_index; i < loader.size(); ++i) {
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
@@ -84,14 +86,24 @@ int main(int argc, char **argv) {
         }
 
 
-        for (int k = 0; k < 20; ++k) {
-            float cost = tracker->Minimize(1);
-            std::cout << "cost=" << cost << std::endl;
-            cv::imshow("tracker view", tracker->RenderEdgepixels());
-            cv::imshow("DF", tracker->GetDistanceField());
-            char ckey = cv::waitKey(wait_time);
-            if (ckey == 'q') break;
-        }
+        timer.Tick("tracking");
+        float cost = tracker->Minimize(20);
+        timer.Tock("tracking");
+        std::cout << timer;
+        // std::cout << "cost=" << cost << std::endl;
+        cv::imshow("tracker view", tracker->RenderEdgepixels());
+        cv::imshow("DF", tracker->GetDistanceField());
+        char ckey = cv::waitKey(wait_time);
+        if (ckey == 'q') break;
+
+//        for (int k = 0; k < 20; ++k) {
+//            float cost = tracker->Minimize(1);
+//            std::cout << "cost=" << cost << std::endl;
+//            cv::imshow("tracker view", tracker->RenderEdgepixels());
+//            cv::imshow("DF", tracker->GetDistanceField());
+//            char ckey = cv::waitKey(wait_time);
+//            if (ckey == 'q') break;
+//        }
 
 
 //        // FIXME: CAN ONLY HANDLE CHAIR
