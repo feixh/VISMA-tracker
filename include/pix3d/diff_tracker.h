@@ -24,6 +24,22 @@ public:
             const Mat3 &R, const Vec3 &T,
             const MatX &V, const MatXi &F);
 
+    /// \brief: Upload image and edge evidence.
+    void Upload(const cv::Mat &img, const cv::Mat &edge) {
+        img_ = img.clone();
+        edge_ = edge.clone();
+        BuildDistanceField();
+    }
+
+    void BuildDistanceField();
+
+    /// brief: Apply a rigid pose transformation to the state
+    /// when the FOV changes.
+    void ChangeReference(const Eigen::Matrix<ftype, 3, 4> &g_new_old) {
+        R_ = g_new_old.leftCols(3) * R_;
+        T_ = g_new_old.leftCols(3) * T_ + g_new_old.rightCols(1);
+    }
+
     ftype Minimize(int steps);
 
     /// \brief: Compute the loss at the current pose with given perturbation

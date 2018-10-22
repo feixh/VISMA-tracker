@@ -13,37 +13,41 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
             ftype fx, ftype fy, ftype cx, ftype cy,
             const Mat3 &R, const Vec3 &T,
             const MatX &V, const MatXi &F):
-    img_(img.clone()), edge_(edge.clone()),
-    shape_(shape),
-    R_(R), T_(T), V_(V), F_(F),
-    timer_("diff_tracker")
+    shape_(shape), V_(V), F_(F), timer_("diff_tracker"),
+    img_(img.clone()), edge_(edge.clone()), R_(R), T_(T)
 {
     K_ << fx, 0, cx,
-        0, fy, cy,
-        0, 0, 1;
+    0, fy, cy,
+    0, 0, 1;
     Kinv_ = K_.inverse();
-    Mat3 flip = Mat3::Zero();
-    flip << -1, 0, 0,
-         0, -1, 0,
-         0, 0, 1;
-    R_ = flip * R_;
-    T_ = flip * T_;
+
     engine_ = std::make_shared<Renderer>(shape_[0], shape_[1]);
     engine_->SetCamera(znear, zfar, fx, fy, cx, cy);
+    Mat3 flip;
+    flip << -1, 0, 0,
+        0, -1, 0,
+        0, 0, 1;
+    R_ = flip * R_;
+    T_ = flip * T_;
+
+    BuildDistanceField();
+}
 
 
-    cv::Mat normalizededge_, tmp;
-    normalizededge_ = cv::Scalar::all(255) - edge_;
-    cv::distanceTransform(normalizededge_ / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
+void DiffTracker::BuildDistanceField() {
+    cv::Mat normalized_edge, tmp;
+    normalized_edge = cv::Scalar::all(255) - edge_;
+    cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
     DF_ = cv::Mat(shape_[0], shape_[1], CV_32FC1);
     DistanceTransform::BuildView(tmp).convertTo(DF_, CV_32FC1);    // DF value range [0, 1]
     // DF_ /= 255.0;
-    cv::exp(DF_ / 255.0 - 5.0, DF_);
+    cv::exp(DF_ / 255.0 - 2.0, DF_);
     cv::GaussianBlur(DF_, DF_, cv::Size(3, 3), 0, 0);
 
     cv::Scharr(DF_, dDF_dx_, CV_32FC1, 1, 0, 3);
     cv::Scharr(DF_, dDF_dy_, CV_32FC1, 0, 1, 3);
 }
+
 
 ftype DiffTracker::Minimize(int steps=1) {
     VecX r, rp;     // current and predicted residual
@@ -94,7 +98,7 @@ ftype DiffTracker::Minimize(int steps=1) {
 #endif
         timer_.Tock("GNupdate");
     }
-    std::cout << timer_;
+//    std::cout << timer_;
 
     return cost;
 }
