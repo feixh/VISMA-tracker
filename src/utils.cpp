@@ -137,57 +137,80 @@ bool Glob(const std::string &directory,
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-bool LoadMeshFromObjFile(const std::string &obj_file,
-                         std::vector<float> &vertices,
-                         std::vector<int> &faces) {
-    Eigen::MatrixXf V;
-    Eigen::MatrixXi F;
-    bool success = igl::readOBJ(obj_file, V, F);
-    if (success) {
-        vertices.reserve(V.rows() * 3);
-        for (int i = 0; i < V.rows(); ++i) {
-            vertices.insert(vertices.end(), {V(i, 0), V(i, 1), V(i, 2)});
-        }
-        faces.reserve(F.rows() * 3);
-        for (int i = 0; i < F.rows(); ++i) {
-            faces.insert(faces.end(), {F(i, 0), F(i, 1), F(i, 2)});
-        }
+// bool LoadMeshFromObjFile(const std::string &obj_file,
+//                          std::vector<float> &vertices,
+//                          std::vector<int> &faces) {
+//     Eigen::MatrixXf V;
+//     Eigen::MatrixXi F;
+//     bool success = igl::readOBJ(obj_file, V, F);
+//     if (success) {
+//         vertices.reserve(V.rows() * 3);
+//         for (int i = 0; i < V.rows(); ++i) {
+//             vertices.insert(vertices.end(), {V(i, 0), V(i, 1), V(i, 2)});
+//         }
+//         faces.reserve(F.rows() * 3);
+//         for (int i = 0; i < F.rows(); ++i) {
+//             faces.insert(faces.end(), {F(i, 0), F(i, 1), F(i, 2)});
+//         }
+//     }
+//     return success;
+// }
+// 
+// std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromObjFile(const std::string &obj_file) {
+//     std::vector<float> vertices;
+//     std::vector<int> faces;
+//     if (LoadMeshFromObjFile(obj_file, vertices, faces)) {
+//         return std::make_tuple(vertices, faces);
+//     } else throw MeshIO();
+// };
+// 
+// bool LoadMeshFromPlyFile(const std::string &ply_file,
+//                          std::vector<float> &vertices,
+//                          std::vector<int> &faces) {
+//     Eigen::MatrixXf V;
+//     Eigen::MatrixXi F;
+//     bool success = igl::readPLY(ply_file, V, F);
+//     vertices.reserve(V.rows() * 3);
+//     for (int i = 0; i < V.rows(); ++i) {
+//         vertices.insert(vertices.end(), {V(i, 0), V(i, 1), V(i, 2)});
+//     }
+//     faces.reserve(F.rows() * 3);
+//     for (int i = 0; i < F.rows(); ++i) {
+//         faces.insert(faces.end(), {F(i, 0), F(i, 1), F(i, 2)});
+//     }
+//     return success;
+// }
+// 
+// std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromPlyFile(const std::string &ply_file) {
+//     std::vector<float> vertices;
+//     std::vector<int> faces;
+//     if (LoadMeshFromPlyFile(ply_file, vertices, faces)) {
+//         return std::make_tuple(vertices, faces);
+//     } else throw MeshIO();
+// };
+//
+std::tuple<MatXf, MatXi> LoadMesh(const std::string &file) {
+    MatXf V;
+    MatXi F;
+    if (!LoadMesh(file, V, F)) {
+        throw MeshIO();
+    } else {
+        return std::make_tuple(V, F);
+    }
+}
+
+
+bool LoadMesh(const std::string &file, MatXf &V, MatXi &F) {
+    bool success = false;
+    if (file.find(".obj") != std::string::npos) {
+        success = igl::readOBJ(file, V, F);
+    } else if (file.find(".ply") != std::string::npos) {
+        success = igl::readPLY(file, V, F);
     }
     return success;
 }
 
-std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromObjFile(const std::string &obj_file) {
-    std::vector<float> vertices;
-    std::vector<int> faces;
-    if (LoadMeshFromObjFile(obj_file, vertices, faces)) {
-        return std::make_tuple(vertices, faces);
-    } else throw MeshIO();
-};
 
-bool LoadMeshFromPlyFile(const std::string &ply_file,
-                         std::vector<float> &vertices,
-                         std::vector<int> &faces) {
-    Eigen::MatrixXf V;
-    Eigen::MatrixXi F;
-    bool success = igl::readPLY(ply_file, V, F);
-    vertices.reserve(V.rows() * 3);
-    for (int i = 0; i < V.rows(); ++i) {
-        vertices.insert(vertices.end(), {V(i, 0), V(i, 1), V(i, 2)});
-    }
-    faces.reserve(F.rows() * 3);
-    for (int i = 0; i < F.rows(); ++i) {
-        faces.insert(faces.end(), {F(i, 0), F(i, 1), F(i, 2)});
-    }
-    return success;
-}
-
-std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromPlyFile(const std::string &ply_file) {
-    std::vector<float> vertices;
-    std::vector<int> faces;
-    if (LoadMeshFromPlyFile(ply_file, vertices, faces)) {
-        return std::make_tuple(vertices, faces);
-    } else throw MeshIO();
-};
 
 
 

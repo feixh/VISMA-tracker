@@ -12,4 +12,7 @@
     "root": "../dump/",
     "tag": "swivel_chair_online_identification"
   }
+
+  "camera_config": "../cfg/camera.json",
+  "CAD_model": "/local/feixh/Dropbox/Data/VISMA/CAD/hermanmiller_aeron.obj"
 }

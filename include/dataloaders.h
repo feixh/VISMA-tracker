@@ -32,12 +32,12 @@ public:
     bool Grab(int i, cv::Mat &image, Sophus::SE3f &gm);
 
     int size() const { return size_; }
-    std::vector<float> vertices() const { return vertices_; }
-    std::vector<int> faces() const { return faces_; }
+    MatXf vertices() const { return vertices_; }
+    MatXi faces() const { return faces_; }
 
 private:
-    std::vector<float> vertices_;
-    std::vector<int> faces_;
+    MatXf vertices_;
+    MatXi faces_;
     std::vector<std::string> jpg_files_, trans_files_, rot_files_;
     std::string dataroot_;
     Sophus::SE3f transform_;
@@ -172,14 +172,14 @@ public:
     bool Grab(cv::Mat &image, Sophus::SE3f &pose);
     Sophus::SE3f GetPose(int i) const;
 
-    std::vector<float> vertices() const { return vertices_; }
-    std::vector<int> faces() const { return faces_; }
+    MatXf vertices() const { return vertices_; }
+    MatXi faces() const { return faces_; }
 
 private:
     std::string dataroot_, dataset_;
     cv::VideoCapture capture_;
-    std::vector<float> vertices_;
-    std::vector<int> faces_;
+    MatXf vertices_;
+    MatXi faces_;
     std::vector<Eigen::Matrix<float, 6, 1>> g_;
     int index_;
 

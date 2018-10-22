@@ -28,13 +28,13 @@ Vec4f StateFromLocalParam(const Vec4f &local_param, Mat4f *jac=nullptr);
 /// \brief: Convert from state to homogeneous pose matrix.
 Mat4f Mat4FromState(const Vec4f &state);
 /// \brief: Make the vertices centered at origin.
-void NormalizeVertices(std::vector<float> &vertices);
-void ScaleVertices(std::vector<float> &vertices, float scale_factor);
+void NormalizeVertices(MatXf &V);
+void ScaleVertices(MatXf &V, float scale_factor);
 /// \brief: Rotate the vertices such that positive x of canonical object frame is consistent with positive x of identity camera frame.
 /// This is needed for the pre-scanned models.
-void RotateVertices(std::vector<float> &vertices, float angle);
+void RotateVertices(MatXf &V, float angle);
 /// \brief: Flip y-axis of vertices, needed by ShapeNet models.
-void FlipVertices(std::vector<float> &vertices);
+void FlipVertices(MatXf &V);
 /// \brief: Overlay the predicted single-channel edge map onto RGB image.
 /// \param mask: the mask, 0 means background, > 0 means foreground
 /// \param image: to which render the overlayed image

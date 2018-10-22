@@ -25,9 +25,9 @@ class RegionBasedTracker {
 public:
     RegionBasedTracker();
     void Initialize(const std::string &config_file,
-                    const std::vector<float> &camera_params = std::vector<float>{},
-                    const std::vector<float> &vertices = std::vector<float>{},
-                    const std::vector<int> &faces = std::vector<int>{});
+                    const std::vector<float> &camera_params,
+                    const MatXf &vertices,
+                    const MatXi &faces);
     /// \brief: Optimize object pose given the image, a rough bounding box
     /// and an initial guess.
     /// \param image: Image to work with.
@@ -79,8 +79,8 @@ public:
 private:
     folly::dynamic config_;
     Timer timer_;
-    std::vector<float> vertices_;
-    std::vector<int> faces_;
+    MatXf vertices_;
+    MatXi faces_;
     std::vector<RendererPtr> renderers_;
     DistanceTransform distance_transformer_;
     std::vector<cv::Mat> image_pyr_;    // image pyramid

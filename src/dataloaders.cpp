@@ -16,7 +16,7 @@ namespace feh {
 
 LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
     dataroot_(dataroot) {
-    LoadMeshFromPlyFile(dataroot + "/mesh.ply", vertices_, faces_);
+    std::tie(vertices_, faces_) = LoadMesh(dataroot + "/mesh.ply");
     tracker::ScaleVertices(vertices_, 1e-3);
 
     // transformation to register oldmesh
@@ -137,14 +137,10 @@ RigidPoseDatasetLoader::RigidPoseDatasetLoader(
 
     // load model
     std::string model_path(dataroot_ + "/models/" + dataset_ + "/" + dataset_ + ".obj");
-    LoadMeshFromObjFile(model_path, vertices_, faces_);
+    LoadMesh(model_path, vertices_, faces_);
     tracker::ScaleVertices(vertices_, 1e-3);   // mm -> meters
     // flip z
-    for (int i = 0; i < vertices_.size() / 3; ++i) {
-//        vertices_[i * 3 + 0] = -vertices_[i * 3 + 0];
-//        vertices_[i * 3 + 1] = -vertices_[i * 3 + 1];
-        vertices_[i * 3 + 2] = -vertices_[i * 3 + 2];
-    }
+    vertices_.col(2) *= -1;
     LOG(INFO) << vertices_.size() / 3 << " vertices loaded";
     LOG(INFO) << faces_.size() / 3 << " faces loaded";
 

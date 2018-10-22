@@ -53,48 +53,25 @@ Vec4f StateFromLocalParam(const Vec4f &local_param, Mat4f *jac) {
     return out;
 }
 
-void NormalizeVertices(std::vector<float> &vertices) {
-    int n(vertices.size() / 3);
-    float sum[3] = {0, 0, 0};
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            sum[j] += vertices[i * 3 + j];
-        }
-    }
-    for (int i = 0; i < 3; ++i) sum[i] /= n;
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            vertices[i * 3 + j] -= sum[j];
-        }
-    }
+void NormalizeVertices(MatXf &V) {
+    V -= V.colwise().mean();
 }
 
-void ScaleVertices(std::vector<float> &vertices, float scale_factor) {
-    for (int i = 0; i < vertices.size(); ++i) {
-        vertices[i] *= scale_factor;
-    }
+void ScaleVertices(MatXf &V, float scale_factor) {
+    V *= scale_factor;
 }
 
-void RotateVertices(std::vector<float> &vertices, float angle) {
+void RotateVertices(MatXf &V, float angle) {
     Eigen::AngleAxisf aa(angle, Eigen::Vector3f::UnitY());
-    int n(vertices.size() / 3);
-    for (int i = 0; i < n; ++i) {
-        Eigen::Vector3f out = aa * Eigen::Map<Eigen::Vector3f>(&vertices[i * 3]);
-        for (int j = 0; j < 3; ++j) {
-            vertices[i * 3 + j] = out(j);
-        }
-    }
+    V *= aa.toRotationMatrix().transpose();
 }
 
-void FlipVertices(std::vector<float> &vertices) {
-    int n(vertices.size() / 3);
-    for (int i = 0; i < n; ++i) {
-        // in CG coordinate system, y is pointing upwards and z is pointing toward us
-        // while in CV coordinate system, y is pointing downwards and z is pointing forwards
-        // Thus flip y and z axis.
-        vertices[i * 3 + 1] = -vertices[i * 3 + 1];
-        vertices[i * 3 + 2] = -vertices[i * 3 + 2];
-    }
+void FlipVertices(MatXf &V) {
+    V.col(1) *= -1;
+    V.col(2) *= -1;
+    // in CG coordinate system, y is pointing upwards and z is pointing toward us
+    // while in CV coordinate system, y is pointing downwards and z is pointing forwards
+    // Thus flip y and z axis.
 }
 
 void OverlayMaskOnImage(const cv::Mat &mask_in,

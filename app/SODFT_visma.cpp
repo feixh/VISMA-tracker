@@ -12,36 +12,33 @@
 #include "tracker.h"
 #include "tracker_utils.h"
 #include "dataloaders.h"
-#include "region_based_tracker.h"
+#include "pix3d/diff_tracker.h"
+
+using namespace feh;
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/single_object_tracking.json");
-
-    std::ifstream in_config(config_file);
-    if (!in_config.is_open()) {
-        LOG(FATAL) << "FATAL::failed to open config file @ " << config_file;
+    if (argc > 1) {
+        config_file = argv[1];
     }
-//    Json::Value config;
-//    in_config >> config;
-//    in_config.close();
+
     std::string content;
     folly::readFile(config_file.c_str(), content);
-    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+    auto config = folly::parseJson(folly::json::stripComments(content));
 
+    folly::readFile(config["camera_config"].asString().c_str(), content);
+    auto cam_cfg = folly::parseJson(folly::json::stripComments(content));
+
+    MatXf V;
+    MatXi F;
+    LoadMesh(config["CAD_model"].asString(), V, F);
 
     std::string dataset_root(config["dataset_root"].asString());
 
-    if (argc == 1) {
-        dataset_root += config["dataset"].asString();
-    } else {
-        dataset_root += std::string(argv[1]);
-    }
     int wait_time(0);
     wait_time = config["wait_time"].asInt();
 
-    feh::VlslamDatasetLoader loader(dataset_root);
-
-//    tracker.Initialize(config["tracker_config"].asString());
+    VlslamDatasetLoader loader(dataset_root);
 
     int start_index = config.getDefault("start_index", 0).asInt();
 
@@ -57,6 +54,16 @@ int main(int argc, char **argv) {
         std::string imagepath;
         loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
 
+            
+        Mat3 Rinit;
+        Vec3 Tinit;
+        DiffTracker tracker(img, edgemap,
+                Vec2i{cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()},
+                cam_cfg["fx"].asDouble(), cam_cfg["fy"].asDouble(), 
+                cam_cfg["cx"].asDouble(), cam_cfg["cy"].asDouble(),
+                Rinit, Tinit,
+                V, F);
+
         // FIXME: CAN ONLY HANDLE CHAIR
         for (int j = 0; j < bboxlist.bounding_boxes_size(); ) {
             if (bboxlist.bounding_boxes(j).class_name() != "chair"
@@ -64,14 +71,6 @@ int main(int argc, char **argv) {
                 bboxlist.mutable_bounding_boxes()->DeleteSubrange(j, 1);
             } else ++j;
         }
-
-//        cv::Mat gray;
-//        cv::cvtColor(img, gray, CV_RGB2GRAY);
-//        cv::blur(gray, edgemap, cv::Size(3, 3));
-//        cv::Canny(edgemap, edgemap, 100, 200);
-//        cv::Mat dst(cv::Scalar::all(0));
-//        gray.copyTo(dst, edgemap);
-//        edgemap = dst;
 
         if (i == 0) {
             // tracker.SetInitCameraToWorld(gwc);

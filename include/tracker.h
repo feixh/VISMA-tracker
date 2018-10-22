@@ -46,8 +46,8 @@ struct Shape {
     // Some objects are deformable, we only use the dominant rigid part for inference.
     // For instance, the upper part of a swivel chair can rotate which is usually the visible part of a chair,
     // we only use the upper part of the chair for inference.
-    std::vector<float> vertices_, part_vertices_;
-    std::vector<int> faces_, part_faces_;
+    MatXf vertices_, part_vertices_;
+    MatXi faces_, part_faces_;
     std::vector<RendererPtr> render_engines_;
 };
 using ShapeId = int;
@@ -173,8 +173,8 @@ public:
     float visible_ratio() const { return visible_ratio_; }
     int matched_bbox() const { return best_bbox_index_; }
     float max_iou() const { return max_iou_; }
-    const std::vector<float> &vertices(int i=-1) const { return shapes_.at(i == -1 ? best_shape_match_ : i).vertices_; }
-    const std::vector<int> &faces(int i=-1) const { return shapes_.at(i < 0 ? best_shape_match_ : i).faces_; }
+    const MatXf &vertices(int i=-1) const { return shapes_.at(i == -1 ? best_shape_match_ : i).vertices_; }
+    const MatXi &faces(int i=-1) const { return shapes_.at(i < 0 ? best_shape_match_ : i).faces_; }
     float fx(int lvl=0) const { return fx_[lvl]; }
     float fy(int lvl=0) const { return fy_[lvl]; }
     float cx(int lvl=0) const { return cx_[lvl]; }

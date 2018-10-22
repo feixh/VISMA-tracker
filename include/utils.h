@@ -288,11 +288,13 @@ class MeshIO : public std::exception {
 /// \param obj_file: The .obj file.
 /// \param vertices: Vertices of the mesh.
 /// \param faces: Faces of the mesh.
-bool LoadMeshFromObjFile(const std::string &obj_file, std::vector<float> &vertices, std::vector<int> &faces);
-std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromObjFile(const std::string &obj_file);
+std::tuple<MatXf, MatXi> LoadMesh(const std::string &file);
+bool LoadMesh(const std::string &file, MatXf &V, MatXi &F);
 
-bool LoadMeshFromPlyFile(const std::string &obj_file, std::vector<float> &vertices, std::vector<int> &faces);
-std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromPlyFile(const std::string &obj_file);
+// bool LoadMeshFromObjFile(const std::string &obj_file, std::vector<float> &vertices, std::vector<int> &faces);
+// std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromObjFile(const std::string &obj_file);
+// bool LoadMeshFromPlyFile(const std::string &obj_file, std::vector<float> &vertices, std::vector<int> &faces);
+// std::tuple<std::vector<float>, std::vector<int>> LoadMeshFromPlyFile(const std::string &obj_file);
 
 /// \brief: Load edgemap from protobuf file.
 bool LoadEdgeMap(const std::string &filename, cv::Mat &edge);

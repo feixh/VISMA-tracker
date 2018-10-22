@@ -167,7 +167,7 @@ void Tracker::Initialize(const std::string &config_file,
         try {
             std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + ".obj";
             std::cout << "loading mesh @ " << mesh_file << "\n";
-            std::tie(shapes_[i].vertices_, shapes_[i].faces_) = LoadMeshFromObjFile(mesh_file);
+            std::tie(shapes_[i].vertices_, shapes_[i].faces_) = LoadMesh(mesh_file);
         } catch (std::exception &e) {
             std::cout << TermColor::red << e.what() << TermColor::endl;
         }
@@ -176,7 +176,7 @@ void Tracker::Initialize(const std::string &config_file,
             try {
                 std::string mesh_file = config_["CAD_database_root"].asString() + "/" + cad_list[i] + "_part.obj";
                 std::cout << "loading partial mesh @ " << mesh_file << "\n";
-                std::tie(shapes_[i].part_vertices_, shapes_[i].part_faces_) = LoadMeshFromObjFile(mesh_file);
+                std::tie(shapes_[i].part_vertices_, shapes_[i].part_faces_) = LoadMesh(mesh_file);
             } catch (std::exception &e){
                 std::cout << TermColor::red << e.what() << TermColor::endl;
             }
@@ -201,7 +201,7 @@ void Tracker::Initialize(const std::string &config_file,
             new_renderer->SetOneDimSearch(search_line_len,
                                           oned_cfg["intensity_thresh"].asInt(),
                                           oned_cfg["direction_thresh"].asDouble());
-            if (!shapes_.at(sid).part_vertices_.empty()) {
+            if (shapes_.at(sid).part_vertices_.size() > 0) {
                 new_renderer->SetMesh(shapes_.at(sid).part_vertices_, shapes_.at(sid).part_faces_);
             } else {
                 new_renderer->SetMesh(shapes_.at(sid).vertices_, shapes_.at(sid).faces_);
@@ -905,7 +905,7 @@ void Tracker::SwitchMeshForInference() {
         for (auto &kv : shapes_) {
             Shape &s = kv.second;
             for (int i = 0; i < s.render_engines_.size(); ++i)
-                if (!s.part_vertices_.empty()) s.render_engines_[i]->SetMesh(s.part_vertices_, s.part_faces_);
+                if (s.part_vertices_.size() > 0) s.render_engines_[i]->SetMesh(s.part_vertices_, s.part_faces_);
         }
     }   // no need to switch otherwise
 }
@@ -915,7 +915,7 @@ void Tracker::SwitchMeshForVisualization() {
         for (auto &kv : shapes_) {
             Shape &s = kv.second;
             for (int i = 0; i < s.render_engines_.size(); ++i)
-                if (!s.vertices_.empty()) s.render_engines_[i]->SetMesh(s.vertices_, s.faces_);
+                if (s.vertices_.size() > 0) s.render_engines_[i]->SetMesh(s.vertices_, s.faces_);
         }
     } // no need to switch otherwise
 }

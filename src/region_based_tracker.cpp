@@ -33,8 +33,8 @@ RegionBasedTracker::RegionBasedTracker():
 
 void RegionBasedTracker::Initialize(const std::string &config_file,
                                     const std::vector<float> &camera_params,
-                                    const std::vector<float> &vertices,
-                                    const std::vector<int> &faces) {
+                                    const MatXf &vertices,
+                                    const MatXi &faces) {
     std::string content;
     folly::readFile(config_file.c_str(), content);
     config_ = folly::parseJson(folly::json::stripComments(content));
@@ -103,9 +103,9 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
         P_.push_back(tmp);
     }
 
-    if (vertices.empty() || faces.empty()) {
+    if (vertices.size() == 0 || faces.size() == 0) {
         // load mesh and setup
-        LoadMeshFromObjFile(config_["model"]["path"].asString(), vertices_, faces_);
+        std::tie(vertices_, faces_) = LoadMesh(config_["model"]["path"].asString());
         NormalizeVertices(vertices_);
         if (config_["model"]["scanned"].getBool()) {
             RotateVertices(vertices_, -M_PI / 2.0f);
@@ -507,9 +507,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
                       V, F, C);
 
         // apply gcm to model vertices
-        Eigen::MatrixXf model_vertices =
-            Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-                (&vertices_[0], vertices_.size() / 3, 3) * g.rotationMatrix().transpose();
+        Eigen::MatrixXf model_vertices = vertices_ * g.rotationMatrix().transpose();
         model_vertices.rowwise() += g.translation().transpose();
         // write out
         igl::writeOFF("model_pointcloud.off", model_vertices, F);
