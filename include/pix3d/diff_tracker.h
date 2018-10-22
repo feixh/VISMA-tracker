@@ -35,7 +35,8 @@ public:
     /// \brief: Render edge pixels at current estimate.
     cv::Mat RenderEdgepixels() const ;
     std::tuple<Mat3, Vec3> GetEstimate() const { return std::make_tuple(_R, _T); }
-    cv::Mat GetDistanceField() const { return _DF; }
+    cv::Mat GetDistanceField() const { 
+        return DistanceTransform::BuildView(_DF) ; }
     std::tuple<cv::Mat, cv::Mat> GetDFGradient() const { return std::make_tuple(_dDF_dx, _dDF_dy); }
 
 

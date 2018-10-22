@@ -37,8 +37,8 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
     cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
     _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
     DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
-    _DF /= 255.0;
-    cv::exp(_DF / 255.0, _DF);
+    // _DF /= 255.0;
+    cv::exp(_DF / 255.0 - 0.5, _DF);
     cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
 
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
