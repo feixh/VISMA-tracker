@@ -80,11 +80,12 @@ int main(int argc, char **argv) {
         } else {
             tracker->Upload(img, edgemap);
             tracker->ChangeReference((gwc.inverse() * camera_pose_t0).matrix3x4());
+            camera_pose_t0 = gwc;
         }
 
 
         for (int k = 0; k < 20; ++k) {
-            float cost = tracker->Minimize(10);
+            float cost = tracker->Minimize(1);
             std::cout << "cost=" << cost << std::endl;
             cv::imshow("tracker view", tracker->RenderEdgepixels());
             cv::imshow("DF", tracker->GetDistanceField());
