@@ -34,34 +34,34 @@ public:
     cv::Mat RenderEstimate() const;
     /// \brief: Render edge pixels at current estimate.
     cv::Mat RenderEdgepixels() const ;
-    std::tuple<Mat3, Vec3> GetEstimate() const { return std::make_tuple(_R, _T); }
+    std::tuple<Mat3, Vec3> GetEstimate() const { return std::make_tuple(R_, T_); }
     cv::Mat GetDistanceField() const { 
-        return DistanceTransform::BuildView(_DF) ; }
-    std::tuple<cv::Mat, cv::Mat> GetDFGradient() const { return std::make_tuple(_dDF_dx, _dDF_dy); }
+        return DistanceTransform::BuildView(DF_) ; }
+    std::tuple<cv::Mat, cv::Mat> GetDFGradient() const { return std::make_tuple(dDF_dx_, dDF_dy_); }
 
 
     /// \brief: Transform the mesh according to the given pose.
     MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
-        MatX V(_V.rows(), _V.cols());
+        MatX V(V_.rows(), V_.cols());
         V.setZero();
-        for (int i = 0; i < _V.rows(); ++i) {
-            V.row(i) = R * _V.row(i).transpose() + T;
+        for (int i = 0; i < V_.rows(); ++i) {
+            V.row(i) = R * V_.row(i).transpose() + T;
         }
         return V;
     }
 
 
 private:
-    RendererPtr _engine;
-    cv::Mat _img, _edge, _DF;   // RGB, edge map, distance field
-    cv::Mat _dDF_dx, _dDF_dy;
-    Vec2i _shape;
-    Mat3 _K, _Kinv;
-    Mat3 _R;
-    Vec3 _T;
-    MatX _V;
-    MatXi _F;
-    Timer _timer;
+    RendererPtr engine_;
+    cv::Mat img_, edge_, DF_;   // RGB, edge map, distance field
+    cv::Mat dDF_dx_, dDF_dy_;
+    Vec2i shape_;
+    Mat3 K_, Kinv_;
+    Mat3 R_;
+    Vec3 T_;
+    MatX V_;
+    MatXi F_;
+    Timer timer_;
 };
 
 }

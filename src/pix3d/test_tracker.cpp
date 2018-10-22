@@ -23,13 +23,13 @@ int main(int argc, char **argv) {
     auto packet = loader.GrabPacket(0); // index by path
 
     cv::namedWindow("image", CV_WINDOW_NORMAL);
-    cv::imshow("image", packet._img);
+    cv::imshow("image", packet.img_);
 
     // cv::namedWindow("mask", CV_WINDOW_NORMAL);
     // cv::imshow("mask", packet._mask);
 
     cv::namedWindow("edge", CV_WINDOW_NORMAL);
-    cv::imshow("edge", packet._edge);
+    cv::imshow("edge", packet.edge_);
 
     // noise generators
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -38,21 +38,21 @@ int main(int argc, char **argv) {
     float Tnoise = std::stof(argv[2]);
     float Rnoise = std::stof(argv[3]);
 
-    feh::Vec3 Tn = packet._go.translation() 
+    feh::Vec3 Tn = packet.go_.translation()
         + Tnoise * feh::RandomVector<3>(0, Tnoise, generator);
 
-    feh::Vec3 Wn = packet._go.so3().log() 
+    feh::Vec3 Wn = packet.go_.so3().log()
         + Rnoise * feh::RandomVector<3>(0, Rnoise, generator);
 
     feh::Mat3 Rn = rodrigues(Wn);
 
 
-    feh::DiffTracker tracker(packet._img, packet._edge,
-            packet._shape, 
-            packet._focal_length, packet._focal_length,
-            packet._shape[1] >> 1, packet._shape[0] >> 1,
+    feh::DiffTracker tracker(packet.img_, packet.edge_,
+            packet.shape_,
+            packet.focal_length_, packet.focal_length_,
+            packet.shape_[1] >> 1, packet.shape_[0] >> 1,
             Rn, Tn,
-            packet._V, packet._F);
+            packet.V_, packet.F_);
     cv::namedWindow("edgepixels", CV_WINDOW_NORMAL);
     // cv::namedWindow("depth", CV_WINDOW_NORMAL);
     // cv::namedWindow("dDF_dx", CV_WINDOW_NORMAL);
@@ -81,11 +81,11 @@ int main(int argc, char **argv) {
         Re = flip * Re;
         Te = flip * Te; // flip back
         Eigen::Matrix<float, 6, 1> err;
-        err << invrodrigues(feh::Mat3{Re.transpose() * packet._go.so3().matrix()}),
-            Te - packet._go.translation();
+        err << invrodrigues(feh::Mat3{Re.transpose() * packet.go_.so3().matrix()}),
+            Te - packet.go_.translation();
         std::cout << "Error vector=" << err.transpose() << std::endl;
         std::cout << "R Error=" << err.head<3>().norm() / 3.14 * 180 << std::endl;
-        std::cout << "T Error=" << 100 * err.tail<3>().norm() / (packet._V.maxCoeff() - packet._V.minCoeff())<< std::endl;
+        std::cout << "T Error=" << 100 * err.tail<3>().norm() / (packet.V_.maxCoeff() - packet.V_.minCoeff())<< std::endl;
 
         // cv::Mat depth = tracker.RenderEstimate();
         // cv::imshow("depth", depth);
