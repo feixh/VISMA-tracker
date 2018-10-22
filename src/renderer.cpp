@@ -276,7 +276,7 @@ void Renderer::SetCamera(float zNear, float zFar, const float *intrinsics) {
 
     // In OpenGL's view (camera) coordinate system, z is pointing toward us and y is pointing upward
     // In the conventional computer vision camera coordinate system, z is pointing forward and y is pointing to the floor.
-    Mat4f vision_to_graphics;
+    Eigen::Matrix<float, 4, 4, Eigen::ColMajor> vision_to_graphics;
     vision_to_graphics << 1, 0, 0, 0,
         0, -1, 0, 0,
         0, 0, -1, 0,
@@ -301,9 +301,11 @@ void Renderer::SetCamera(float zNear, float zFar, const float *intrinsics) {
 
     if (depth_shader_) {
         depth_shader_->Use();
-        glUniformMatrix4fv(glGetUniformLocation(depth_shader_->Program, "view"), 1, GL_FALSE,
+        glUniformMatrix4fv(glGetUniformLocation(depth_shader_->Program, "view"),
+                           1, GL_FALSE,
                            vision_to_graphics.data());
-        glUniformMatrix4fv(glGetUniformLocation(depth_shader_->Program, "projection"), 1, GL_FALSE,
+        glUniformMatrix4fv(glGetUniformLocation(depth_shader_->Program, "projection"),
+                           1, GL_FALSE,
                            glm::value_ptr(projection));
     }
 
@@ -318,16 +320,16 @@ void Renderer::SetCamera(float zNear, float zFar, const float *intrinsics) {
     }
 }
 
-void Renderer::SetCamera(const Mat4f &pose) {
+void Renderer::SetCamera(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &pose) {
     glfwMakeContextCurrent(window_);
     // In OpenGL's view (camera) coordinate system, z is pointing toward us and y is pointing upward
     // In the conventional computer vision camera coordinate system, z is pointing forward and y is pointing to the floor.
-    Mat4f vision_to_graphics;
+    Eigen::Matrix<float, 4, 4, Eigen::ColMajor> vision_to_graphics;
     vision_to_graphics << 1, 0, 0, 0,
                         0, -1, 0, 0,
                         0, 0, -1, 0,
                         0, 0, 0, 1;
-    Mat4f view = vision_to_graphics * pose;
+    Eigen::Matrix<float, 4, 4, Eigen::ColMajor> view = vision_to_graphics * pose;
 
     if (depth_shader_) {
         depth_shader_->Use();
@@ -381,7 +383,7 @@ void Renderer::SetMesh(float *vertices, int num_vertices, int *faces, int num_fa
     glBindVertexArray(0);
 }
 
-void Renderer::RenderDepth(const Mat4f &model_in, float *out) {
+void Renderer::RenderDepth(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in, float *out) {
     glfwMakeContextCurrent(window_);
     // Render a depth map.
     glm::vec4 color(1.0, 1.0, 1.0, 1.0);
@@ -413,7 +415,7 @@ void Renderer::RenderDepth(const Mat4f &model_in, float *out) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Renderer::RenderEdge(const Mat4f &model_in, uint8_t *out) {
+void Renderer::RenderEdge(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in, uint8_t *out) {
 //    model_ = glm::make_mat4(model_in.data());
     glfwMakeContextCurrent(window_);
     // Render a depth map.
@@ -463,7 +465,7 @@ void Renderer::RenderEdge(const Mat4f &model_in, uint8_t *out) {
 }
 
 
-void Renderer::RenderWireframe(const Mat4f &model_in, uint8_t *out) {
+void Renderer::RenderWireframe(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in, uint8_t *out) {
 //    model_ = glm::make_mat4(model_in.data());
         glfwMakeContextCurrent(window_);
         // Render a depth map.
@@ -502,7 +504,7 @@ void Renderer::RenderWireframe(const Mat4f &model_in, uint8_t *out) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Renderer::RenderMask(const Mat4f &model_in, uint8_t *out) {
+void Renderer::RenderMask(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in, uint8_t *out) {
     glfwMakeContextCurrent(window_);
     // Render a depth map.
     glm::vec4 color(1.0, 1.0, 1.0, 1.0);
@@ -606,7 +608,7 @@ void Renderer::InitializeForLikelihood() {
 /// ////////////////////////////////////////////////////////
 /// ////////////////////////////////////////////////////////
 /// ////////////////////////////////////////////////////////
-void Renderer::ComputeEdgePixels(const Mat4f &model_in, std::vector<EdgePixel> &edgelist) {
+void Renderer::ComputeEdgePixels(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in, std::vector<EdgePixel> &edgelist) {
     glfwMakeContextCurrent(window_);
     // Render a depth map.
     glDisable(GL_STENCIL_TEST);
@@ -670,9 +672,6 @@ void Renderer::ComputeEdgePixels(const Mat4f &model_in, std::vector<EdgePixel> &
 }
 
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -680,7 +679,7 @@ void Renderer::ComputeEdgePixels(const Mat4f &model_in, std::vector<EdgePixel> &
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-void Renderer::OneDimSearch(const Mat4f &model_in,
+void Renderer::OneDimSearch(const Eigen::Matrix<float, 4, 4, Eigen::ColMajor> &model_in,
                             std::vector<EdgePixel> &edgelist) {
     glfwMakeContextCurrent(window_);
     glDisable(GL_STENCIL_TEST);
@@ -809,25 +808,6 @@ void CheckCurrentFramebufferId() {
     LOG(INFO) << "before: draw fb id=" << drawFboId << " " << "read fb id=" << readFboId;
 }
 
-//void CreateGaussianKernel(std::vector<float> &kernel, int kernel_size, float sigma) {
-//    float sum(0);
-//    kernel.resize(kernel_size * kernel_size);
-//    float center = kernel_size / 2.f;
-//    for (int i = 0; i < kernel_size; ++i) {
-//        for (int j = 0; j < kernel_size; ++j) {
-//            kernel[i * kernel_size + j] =
-//                exp(-0.5f * (pow((i - center) / sigma, 2.0f) + pow((j - center) / sigma, 2.0f)))
-//                    / (2 * M_PI * sigma * sigma);
-//            sum += kernel[i * kernel_size + j];
-//        }
-//    }
-//
-//    for (int i = 0; i < kernel_size; ++i) {
-//        for (int j = 0; j < kernel_size; ++j) {
-//            kernel[i * kernel_size + j] /= sum;
-//        }
-//    }
-//}
 
 }   // namespace feh
 
