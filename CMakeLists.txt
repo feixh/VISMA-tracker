@@ -134,11 +134,12 @@ add_library(feh SHARED
 # Once feh is built, link applications to it.
 link_libraries(feh)
 
-add_executable(sot app/SOT_visma.cpp)
-add_executable(mot app/MOT_visma.cpp)
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
-#add_executable(sorbt_linemod app/SORBT_linemod.cpp)
-#add_executable(sorbt_rigidpose app/SORBT_rigidpose.cpp)
+add_executable(mot app/MOT_visma.cpp)
+add_executable(sot app/SOT_visma.cpp)
+add_executable(sorbt_linemod app/SORBT_linemod.cpp)
+add_executable(sorbt_rigidpose app/SORBT_rigidpose.cpp)
+add_executable(sodft_visma app/SODFT_visma.cpp)
 
 
 #################################################

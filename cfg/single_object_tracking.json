@@ -1,11 +1,6 @@
 {
-  "dataset_root": "/local/feixh/tmp/",
-//    "dataset_root": "/local/feixh/tmp/",
-//  "dataset_root": "/mnt/external/tmp/",
-  "dataset": "swivel_chair_lateral",
-//    "dataset": "swivel_chair",
-//  "dataset": "double_swivel_chairs_whiteboard",
-//   "dataset": "multiple_swivel_chairs",
+  "dataset_root": "/local/feixh/VISMA_experiments/",
+  "dataset": "swivel_chair",
   "tracker_config": "../cfg/chair_tracker.json",
   "wait_time": 5,
   "start_index": 0,

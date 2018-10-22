@@ -83,7 +83,8 @@ Tracker::~Tracker() {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void Tracker::Initialize(const std::string &config_file, const folly::dynamic &more_config) {
+void Tracker::Initialize(const std::string &config_file,
+                         const folly::dynamic &more_config) {
     if (status_ == TrackerStatus::VALID) {
         LOG(FATAL) << "FATAL::each tracker can only be initialized ONCE!!!";
     }

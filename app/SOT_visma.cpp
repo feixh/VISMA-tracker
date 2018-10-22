@@ -16,18 +16,9 @@
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/single_object_tracking.json");
-
-    std::ifstream in_config(config_file);
-    if (!in_config.is_open()) {
-        LOG(FATAL) << "FATAL::failed to open config file @ " << config_file;
-    }
-//    Json::Value config;
-//    in_config >> config;
-//    in_config.close();
     std::string content;
     folly::readFile(config_file.c_str(), content);
     folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
-
 
     std::string dataset_root(config["dataset_root"].asString());
 
