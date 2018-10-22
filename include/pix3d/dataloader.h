@@ -49,7 +49,8 @@ struct Pix3dPacket {
         _gc = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(_inplane_rotation * dir), _cam_position);
 
         // load CAD model
-        bool success = igl::readOBJ(dataroot + record["model"].asString(), _V, _F);
+        LoadMesh(dataroot + record["model"].asString(), _V, _F);
+
         assert(success);
     }
     cv::Mat _img, _mask, _edge;

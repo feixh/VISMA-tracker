@@ -54,7 +54,7 @@ Vec4f StateFromLocalParam(const Vec4f &local_param, Mat4f *jac) {
 }
 
 void NormalizeVertices(MatXf &V) {
-    V -= V.colwise().mean();
+    V.rowwise() -= V.colwise().mean();
 }
 
 void ScaleVertices(MatXf &V, float scale_factor) {
@@ -63,15 +63,15 @@ void ScaleVertices(MatXf &V, float scale_factor) {
 
 void RotateVertices(MatXf &V, float angle) {
     Eigen::AngleAxisf aa(angle, Eigen::Vector3f::UnitY());
-    V *= aa.toRotationMatrix().transpose();
+    V = V * aa.toRotationMatrix().transpose();
 }
 
 void FlipVertices(MatXf &V) {
-    V.col(1) *= -1;
-    V.col(2) *= -1;
-    // in CG coordinate system, y is pointing upwards and z is pointing toward us
+    // In CG coordinate system, y is pointing upwards and z is pointing toward us
     // while in CV coordinate system, y is pointing downwards and z is pointing forwards
     // Thus flip y and z axis.
+    V.col(1) *= -1;
+    V.col(2) *= -1;
 }
 
 void OverlayMaskOnImage(const cv::Mat &mask_in,

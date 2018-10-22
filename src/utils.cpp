@@ -207,6 +207,8 @@ bool LoadMesh(const std::string &file, MatXf &V, MatXi &F) {
     } else if (file.find(".ply") != std::string::npos) {
         success = igl::readPLY(file, V, F);
     }
+    V = V.leftCols(3);
+    F = F.leftCols(3);
     return success;
 }
 
