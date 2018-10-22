@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
 
-#project(simplerender LANGUAGES CXX CUDA)
 project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
@@ -8,9 +7,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
-#set(CMAKE_CUDACXX_COMPILER /usr/local/cuda/bin/nvcc)
-set(CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES  /usr/local/cuda)
-set(CMAKE_CUDA_STANDARD 11)
 
 # MACROS glm
 add_definitions(-DGLM_SWIZZLE)
@@ -34,7 +30,6 @@ find_package(OpenGL REQUIRED)
 # glfw
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
-#find_package(GLEW REQUIRED) # NOT required for the core library, but for annotation tools
 # OpenCV
 find_package(OpenCV REQUIRED)
 # Glog
@@ -130,18 +125,15 @@ add_library(feh SHARED
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
+## generate string files for including shader code
+#add_custom_command(
+#        TARGET feh
+#        COMMAND python installation_scripts/generate_shader_strings.py
+#        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-# generate string files for including shader code
-add_custom_command(OUTPUT shader_strings
-        COMMAND python installation_scripts/generate_shader_strings.py
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-add_custom_target(shader_strings_autogen
-        DEPENDS shader_strings)
-
+# Once feh is built, link applications to it.
 link_libraries(feh)
 
-
-add_dependencies(feh shader_strings_autogen)
 add_executable(sot app/SOT_visma.cpp)
 add_executable(mot app/MOT_visma.cpp)
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
