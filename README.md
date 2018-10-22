@@ -1,3 +1,13 @@
+## Applications
+
+- SOT: Single Object Tracking
+- RT: Region-based Tracker
+- DFT: Distance Field based Tracker
+- linemod and rigidpose are two datasets on model-based tracking
+
+
+
+## Launch faster-rcnn for object likelihood
 To run the following likelihood evaluation process before launching the tracker in detectron root directory with `edge` branch:
 
 ```

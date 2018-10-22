@@ -15,21 +15,41 @@
 
 
 #include "shader.h"
-#include "renderer_utils.h"
 #include "eigen_alias.h"
 #include "oned_search.h"
 
 namespace feh {
 
-enum class LikelihoodType {
-    IntersectionKernel = 0,
-    CrossEntropy = 1
-};
-
 // FIXME: need a map class which maps to multiple types such that
 // we can hold different numeric types in one map instance.
 using Options = std::unordered_map<std::string, float>;
 
+////////////////////////////////////////////////////////////////////////////////
+// UTILITY FUNCTIONS FOR THE RENDERER
+////////////////////////////////////////////////////////////////////////////////
+
+/// \brief: Check the id of current framebuffer under use
+void CheckCurrentFramebufferId();
+/// \brief: Print OpenGL and GLSL version information.
+void PrintGLVersionInfo();
+/// \brief: Create a gaussian kernel
+/// \param kernel: Returned kernel values, always use 1 dim vector, but actual kernel can be 2-dim
+/// \param kernel_size: Size of the kernel.
+/// \param sigma: Standard deviation of gaussian distribution.
+void CreateGaussianKernel(std::vector<float> &kernel, int kernel_size, float sigma);
+/// \brief: Convert buffered z value in depth buffer to actual depth.
+/// \param zb: z in depth buffer
+/// \param z_near: near plane distance
+/// \param z_far: far plane distance
+template <typename T>
+T LinearizeDepth(T zb, T z_near, T z_far) {
+    return 2 * z_near * z_far /
+        (z_far + z_near - (2 * zb - 1) * (z_far - z_near));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// THE RENDERER
+////////////////////////////////////////////////////////////////////////////////
 class Renderer {
 public:
     Renderer(int maxHeight, int maxWidth); //, const std::string &name);

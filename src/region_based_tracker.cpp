@@ -6,7 +6,6 @@
 
 // stl
 #include <fstream>
-#include <matdiff.h>
 
 // 3rd party
 #include "igl/writeOFF.h"

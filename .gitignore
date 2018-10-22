@@ -26,4 +26,6 @@ thirdparty/tinyobjloader/share
 thirdparty/googletest/include
 thirdparty/matplotlib-cpp/examples
 !resources/leather_chair.png
+.catkin
+.rosinstall
 

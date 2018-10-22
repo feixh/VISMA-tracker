@@ -1,6 +1,6 @@
 {
 //  "dataroot": "/mnt/external/Data/RigidPose",
-  "dataroot": "/local/Data/RigidPose",
+  "dataroot": "/home/visionlab/Data/RigidPose",
 //  "dataset": "BakingSoda_800",
   "dataset": "KoalaCandy_800",
 //  "dataset": "Clown_800",
