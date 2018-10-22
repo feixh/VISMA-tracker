@@ -271,7 +271,7 @@ add_executable(pix3dloader src/pix3d/test_loader.cpp)
 target_link_libraries(pix3dloader feh)
 
 add_executable(pix3dtracker src/pix3d/test_tracker.cpp src/pix3d/diff_tracker.cpp)
-target_link_libraries(pix3dtracker feh)
+target_link_libraries(pix3dtracker feh tbb)
 
 
 

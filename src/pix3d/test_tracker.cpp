@@ -25,11 +25,10 @@ int main(int argc, char **argv) {
     cv::namedWindow("image", CV_WINDOW_NORMAL);
     cv::imshow("image", packet._img);
 
-    cv::namedWindow("mask", CV_WINDOW_NORMAL);
-    cv::imshow("mask", packet._mask);
+    // cv::namedWindow("mask", CV_WINDOW_NORMAL);
+    // cv::imshow("mask", packet._mask);
 
     cv::namedWindow("edge", CV_WINDOW_NORMAL);
-    
     cv::imshow("edge", packet._edge);
 
     // noise generators
@@ -54,12 +53,12 @@ int main(int argc, char **argv) {
             packet._shape[1] >> 1, packet._shape[0] >> 1,
             Rn, Tn,
             packet._V, packet._F);
-    cv::namedWindow("depth", CV_WINDOW_NORMAL);
     cv::namedWindow("edgepixels", CV_WINDOW_NORMAL);
-    cv::namedWindow("DF", CV_WINDOW_NORMAL);
-    cv::namedWindow("dDF_dx", CV_WINDOW_NORMAL);
-    cv::namedWindow("dDF_dy", CV_WINDOW_NORMAL);
+    // cv::namedWindow("depth", CV_WINDOW_NORMAL);
+    // cv::namedWindow("dDF_dx", CV_WINDOW_NORMAL);
+    // cv::namedWindow("dDF_dy", CV_WINDOW_NORMAL);
 
+    cv::namedWindow("DF", CV_WINDOW_NORMAL);
     cv::imshow("DF", tracker.GetDistanceField());
 
     feh::Mat3 flip;
@@ -88,13 +87,13 @@ int main(int argc, char **argv) {
         std::cout << "R Error=" << err.head<3>().norm() / 3.14 * 180 << std::endl;
         std::cout << "T Error=" << 100 * err.tail<3>().norm() / (packet._V.maxCoeff() - packet._V.minCoeff())<< std::endl;
 
-        cv::Mat depth = tracker.RenderEstimate();
-        cv::imshow("depth", depth);
+        // cv::Mat depth = tracker.RenderEstimate();
+        // cv::imshow("depth", depth);
         cv::Mat overlaid_view = tracker.RenderEdgepixels();
         cv::imshow("edgepixels", overlaid_view);
-        cv::imwrite(folly::sformat("{:04d}.jpg", i), overlaid_view);
-        cv::imshow("dDF_dx", std::get<0>(tracker.GetDFGradient()));
-        cv::imshow("dDF_dy", std::get<1>(tracker.GetDFGradient()));
+        // cv::imwrite(folly::sformat("{:04d}.jpg", i), overlaid_view);
+        // cv::imshow("dDF_dx", std::get<0>(tracker.GetDFGradient()));
+        // cv::imshow("dDF_dy", std::get<1>(tracker.GetDFGradient()));
 
 
         char ckey = cv::waitKey(10);

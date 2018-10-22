@@ -32,78 +32,82 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
     _engine->SetCamera(znear, zfar, fx, fy, cx, cy);
 
 
-    // cv::Mat tmp, normalized_edge;
-    // _edge.convertTo(tmp, CV_32FC1);
-    // tmp = (255.0 - tmp) / 255.0;
-    // // cv::GaussianBlur(tmp, tmp, cv::Size(3, 3), 0, 0);
-    // // // cv::Mat index(_shape[0], _shape[1], CV_32SC2);
-    // DistanceTransform{}(tmp, _DF);
-
     cv::Mat normalized_edge, tmp;
     normalized_edge = cv::Scalar::all(255) - _edge;
     cv::distanceTransform(normalized_edge / 255.0, tmp, CV_DIST_L2, CV_DIST_MASK_PRECISE);
     _DF = cv::Mat(_shape[0], _shape[1], CV_32FC1);
     DistanceTransform::BuildView(tmp).convertTo(_DF, CV_32FC1);    // DF value range [0, 1]
     _DF /= 255.0;
+    // cv::exp(_DF / 255.0, _DF);
     cv::GaussianBlur(_DF, _DF, cv::Size(3, 3), 0, 0);
 
     cv::Scharr(_DF, _dDF_dx, CV_32FC1, 1, 0, 3);
     cv::Scharr(_DF, _dDF_dy, CV_32FC1, 0, 1, 3);
-    
-   
-    // _dDF_dx = cv::Mat(_shape[0], _shape[1], CV_32FC1);
-    // _dDF_dy = cv::Mat(_shape[0], _shape[1], CV_32FC1);
-    // for (int i = 0; i < _shape[0]; ++i) {
-    //     for (int j = 0; j < _shape[1]; ++j) {
-    //         auto target = index.at<cv::Vec2i>(i, j);
-    //         Vec2 grad{target(0)-i, target(1)-j};
-    //         if (grad.norm() > 1e-8) {
-    //             grad /= grad.norm();
-    //         }
-    //         _dDF_dx.at<float>(i, j) = grad(1);
-    //         _dDF_dy.at<float>(i, j) = grad(0);
-    //     }
-    // }
 }
 
 ftype DiffTracker::Minimize(int steps=1) {
-    ftype stepsize = 1;
-    VecX r;
-    MatX J;
+    VecX r, rp;     // current and predicted residual
+    MatX J, Jp;     // current and predicted Jacobian
+    ftype cost, costp;  // current cost and predicted cost
+    // predicted rotation & translation
+    Mat3 Rp; 
+    Vec3 Tp;
     for (int iter = 0; iter < steps; ++iter) {
         _timer.Tick("Jacobian");
-        std::tie(r, J) = ComputeResidualAndJacobian();
+        std::tie(r, J) = ComputeResidualAndJacobian(_R, _T);
         // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
+        cost = 0.5 * r.squaredNorm();
         _timer.Tock("Jacobian");
 
         _timer.Tick("GNupdate");
         // Gauss-Newton update
         MatX JtJ = J.transpose() * J;
-        ftype damping = 1e-3;
-        JtJ.diagonal() *= (1+damping);
+        // ftype damping = 0;
+        // JtJ.diagonal() *= (1+damping);
         Eigen::Matrix<ftype, 6, 1> delta = -JtJ.ldlt().solve(J.transpose() * r);
-        // _R = _R + _R * hat<ftype>(delta.head<3>());
+
+#ifdef PIX3D_LINE_SEARCH
+        ftype dcost = r.transpose() * J * delta;
+        std::cout << "dcost=" << dcost << std::endl;
+        ftype alpha = 0.1, beta = 0.9, stepsize = 10;
+        ftype best_stepsize = 1;
+        int linesearch_step;
+        for (linesearch_step = 0; linesearch_step < 10; ++linesearch_step) {
+            Rp = _R * rodrigues(Vec3{stepsize * delta.head<3>()});
+            Tp = _T + stepsize * delta.tail<3>();
+            VecX rp;
+            std::tie(rp, std::ignore) = ComputeResidualAndJacobian(Rp, Tp);
+            costp = 0.5 * rp.squaredNorm();
+            if (costp < cost) {
+                costp = cost;
+                best_stepsize = stepsize;
+            } else {
+                stepsize *= beta;
+            } 
+        }
+        std::cout << "linesearch_step=" << linesearch_step << ";;;stepsize=" << stepsize << std::endl;
+        _R = _R * rodrigues(Vec3{best_stepsize * delta.head<3>()});
+        _T = _T + best_stepsize * delta.tail<3>();
+#else 
         _R = _R * rodrigues(Vec3{delta.head<3>()});
         _T = _T + delta.tail<3>();
-        _timer.Tock("GNupdate");
-
-#ifdef PIX3D_VERBOSE
-        Eigen::JacobiSVD<MatX> svd(JtJ);
-        std::cout << "SingularValues=" << svd.singularValues().transpose() << std::endl;
 #endif
+        _timer.Tock("GNupdate");
     }
     std::cout << _timer;
-    return r.squaredNorm();
+
+    return cost;
 }
 
 
-std::tuple<VecX, MatX> DiffTracker::ComputeResidualAndJacobian() {
+std::tuple<VecX, MatX> DiffTracker::ComputeResidualAndJacobian(
+        const Mat3 &R, const Vec3 &T) {
     VecX r, v;  // residual and valid bit
     MatX J;
 
     // no 3D points yet
     _timer.Tick("Transform");
-    auto V = TransformShape(_R, _T);
+    auto V = TransformShape(R, T);
     _timer.Tock("Transform");
 
     _timer.Tick("SetMesh");
@@ -126,22 +130,18 @@ std::tuple<VecX, MatX> DiffTracker::ComputeResidualAndJacobian() {
     v.resize(edgelist.size());
     v.setZero();
 
-
-#ifdef PIX3D_JACOBIAN_PARALLEL_FILLIN
-    auto fill_jacobian_kernel = [&edgelist, &r, &v, &J, this](const tbb::blocked_range<int> &range) {
+    auto fill_jacobian_kernel = [&edgelist, &r, &v, &J, &R, &T, this](const tbb::blocked_range<int> &range) {
         for (int i = range.begin(); i < range.end(); ++i) {
             const auto& e = edgelist[i];
             if (e.x >= 0 && e.x < this->_shape[1] && e.y >= 0 && e.y < this->_shape[0]) {
-                // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
                 r(i) = BilinearSample<float>(this->_DF, {e.x, e.y}); // / edgelist.size();
-                // r(i) = _DF.at<float>((int)e.y, (int)e.x);
                 v(i) = 1.0;
                 // back-project to object frame
                 Vec3 Xc = this->_Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
-                Vec3 Xo = this->_R.transpose() * (Xc - this->_T);
+                Vec3 Xo = R.transpose() * (Xc - T);
                 // measurement equation: DF(x) = DF(\pi( R Xo + T))
                 Eigen::Matrix<ftype, 3, 6> dXc_dwt;
-                dXc_dwt << dAB_dA(Mat3{}, Xo) * dAB_dB(this->_R, Mat3{}) * dhat(Vec3{}), Mat3::Identity();
+                dXc_dwt << dAB_dA(Mat3{}, Xo) * dAB_dB(R, Mat3{}) * dhat(Vec3{}), Mat3::Identity();
 
                 Eigen::Matrix<ftype, 2, 3> dx_dXc;
                 ftype Zinv = 1.0 / Xc(2);
@@ -156,14 +156,6 @@ std::tuple<VecX, MatX> DiffTracker::ComputeResidualAndJacobian() {
                     this->_dDF_dy.at<float>((int)e.y, (int)e.x)};
                 J.row(i) = dDF_dx * dx_dwt;
                 // J.row(i) /= edgelist.size();
-                
-#ifdef PIX3D_VERBOSE
-                std::cout << "r=" << r(i) << std::endl;
-                std::cout << "dXc_dwt=\n" << dXc_dwt << std::endl;
-                std::cout << "dx_dXc=\n" << dx_dXc << std::endl;
-                std::cout << "dDF_dx=\n" << dDF_dx << std::endl;
-                std::cout << J.row(i) << std::endl;
-#endif
             } else {
                 v(i) = 0.0;
             }
@@ -174,49 +166,7 @@ std::tuple<VecX, MatX> DiffTracker::ComputeResidualAndJacobian() {
             fill_jacobian_kernel,
             tbb::auto_partitioner());
     _timer.Tock("FillJacobian");
-#endif
 
-    _timer.Tick("FillJacobian");
-    for (int i = 0; i < edgelist.size(); ++i) {
-        const auto& e = edgelist[i];
-        if (e.x >= 0 && e.x < _shape[1] && e.y >= 0 && e.y < _shape[0]) {
-            // std::cout << folly::sformat("{:04d}:(x,y,z)=({}, {}, {})\n", i, e.x, e.y, e.depth);
-            r(i) = BilinearSample<float>(_DF, {e.x, e.y}); // / edgelist.size();
-            // r(i) = _DF.at<float>((int)e.y, (int)e.x);
-            v(i) = 1.0;
-            // back-project to object frame
-            Vec3 Xc = _Kinv * Vec3{e.x, e.y, 1.0} * e.depth;
-            Vec3 Xo = _R.transpose() * (Xc - _T);
-            // measurement equation: DF(x) = DF(\pi( R Xo + T))
-            Eigen::Matrix<ftype, 3, 6> dXc_dwt;
-            dXc_dwt << dAB_dA(Mat3{}, Xo) * dAB_dB(_R, Mat3{}) * dhat(Vec3{}), Mat3::Identity();
-
-            Eigen::Matrix<ftype, 2, 3> dx_dXc;
-            ftype Zinv = 1.0 / Xc(2);
-            ftype Zinv2 = Zinv * Zinv;
-            dx_dXc << _K(0, 0) * Zinv, 0, -_K(0, 0) * Xc(0) * Zinv2,
-                  0, _K(1, 1) * Zinv, -_K(1, 1) * Xc(1) * Zinv2;
-
-            Eigen::Matrix<ftype, 2, 6> dx_dwt{dx_dXc * dXc_dwt};
-
-            Eigen::Matrix<ftype, 1, 2> dDF_dx{
-                _dDF_dx.at<float>((int)e.y, (int)e.x),
-                _dDF_dy.at<float>((int)e.y, (int)e.x)};
-            J.row(i) = dDF_dx * dx_dwt;
-            // J.row(i) /= edgelist.size();
-            
-#ifdef PIX3D_VERBOSE
-            std::cout << "r=" << r(i) << std::endl;
-            std::cout << "dXc_dwt=\n" << dXc_dwt << std::endl;
-            std::cout << "dx_dXc=\n" << dx_dXc << std::endl;
-            std::cout << "dDF_dx=\n" << dDF_dx << std::endl;
-            std::cout << J.row(i) << std::endl;
-#endif
-        } else {
-            v(i) = 0.0;
-        }
-    }
-    _timer.Tock("FillJacobian");
     return std::make_tuple(r, J);
 }
 
@@ -245,7 +195,6 @@ cv::Mat DiffTracker::RenderEdgepixels() const {
         }
     }
     return out;
-
 }
 
 
