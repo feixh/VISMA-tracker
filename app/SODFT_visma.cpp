@@ -12,7 +12,7 @@
 #include "tracker.h"
 #include "tracker_utils.h"
 #include "dataloaders.h"
-#include "pix3d/diff_tracker.h"
+#include "gravity_aligned_tracker.h"
 
 using namespace feh;
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     Vec3 Tinit = Vec3::Zero();
     Tinit << -0.1, -0.2, 1.2;
 
-    std::shared_ptr<DiffTracker> tracker{nullptr};
+    std::shared_ptr<GravityAlignedTracker> tracker{nullptr};
 
 
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         if (!success) break;
 
         if (tracker == nullptr) {
-            tracker = std::make_shared<DiffTracker>(
+            tracker = std::make_shared<GravityAlignedTracker>(
                 img, edgemap,
                 Vec2i{cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()},
                 cam_cfg["fx"].asDouble(), cam_cfg["fy"].asDouble(),

@@ -70,8 +70,8 @@ void FlipVertices(MatXf &V) {
     // In CG coordinate system, y is pointing upwards and z is pointing toward us
     // while in CV coordinate system, y is pointing downwards and z is pointing forwards
     // Thus flip y and z axis.
-    V.row(1) *= -1;
-    V.row(2) *= -1;
+    V.col(1) *= -1;
+    V.col(2) *= -1;
 }
 
 void OverlayMaskOnImage(const cv::Mat &mask_in,

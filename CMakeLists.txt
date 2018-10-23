@@ -121,7 +121,7 @@ add_library(feh SHARED
         src/oned_search.cpp
         src/bresenham.cpp
         src/utils.cpp
-        src/pix3d/diff_tracker.cpp
+        src/gravity_aligned_tracker.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
@@ -146,7 +146,7 @@ add_executable(sodft_visma app/SODFT_visma.cpp)
 # differentiable likelihood for 3D tracking
 #################################################
 add_executable(pix3dloader src/pix3d/test_loader.cpp)
-add_executable(pix3dtracker src/pix3d/test_tracker.cpp)
+add_executable(pix3dtracker src/pix3d/test_tracker.cpp src/pix3d/diff_tracker.cpp)
 
 
 ################################################################################
