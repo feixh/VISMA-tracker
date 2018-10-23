@@ -6,35 +6,49 @@ constexpr float zfar = 10;
 
 namespace feh {
 
-// GravityAlignedTracker::GravityAlignedTracker(const cv::Mat &img, const cv::Mat &edge,
-//             const Vec2i &shape, 
-//             ftype fx, ftype fy, ftype cx, ftype cy,
-//             const SE3 &g,
-//             const MatX &V, const MatXi &F):
-//     img_(img.clone()), edge_(edge.clone()),
-//     shape_(shape), g_(g), V_(V), F_(F), timer_("diff_tracker")
-// {
-//     K_ << fx, 0, cx,
-//     0, fy, cy,
-//     0, 0, 1;
-//     Kinv_ = K_.inverse();
-// 
-//     engine_ = std::make_shared<Renderer>(shape_[0], shape_[1]);
-//     engine_->SetCamera(znear, zfar, fx, fy, cx, cy);
-//     engine_->SetMesh(V_, F_);
-//     Mat3 flip_co;   // object -> camera
-//     flip_co << -1, 0, 0,
-//         0, -1, 0,
-//         0, 0, 1;
-//     Mat3 flip_sc;   // camera -> spatial
-//     flip_sc << 0, 0, 1,
-//                -1, 0, 0,
-//                0, -1, 0;
-//     Mat3 flip_so{flip_sc * flip_co};   // object -> spatial
-//     g_ = SE3(flip_so * g.so3().matrix(), flip_so * g.translation());
-// 
-//     BuildDistanceField();
-// }
+
+ftype GravityAlignedTracker::Minimize(int steps=1) {
+    VecX r, rp;     // current and predicted residual
+    MatX J, Jp;     // current and predicted Jacobian
+    ftype cost = -1, costp;  // current cost and predicted cost
+    ftype stepsize = 0.1;
+    // predicted rotation & translation
+    SE3 gp;
+    for (int iter = 0; iter < steps; ++iter) {
+        timer_.Tick("Jacobian");
+        std::tie(r, J) = ComputeResidualAndJacobian(g_);    // J: N x 4
+        // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
+        cost = 0.5 * r.squaredNorm();
+        timer_.Tock("Jacobian");
+
+        timer_.Tick("GNupdate");
+        // Gauss-Newton update
+        MatX JtJ = J.transpose() * J;
+        Eigen::Matrix<ftype, 4, 1> delta = -stepsize * JtJ.ldlt().solve(J.transpose() * r);
+        g_.so3() = g_.so3() * SO3::exp(delta(0) * gamma_);
+        g_.translation() += delta.tail<3>();
+        timer_.Tock("GNupdate");
+    }
+//    std::cout << timer_;
+
+    return cost;
+}
+
+std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(const SE3 &g) {
+    VecX r;
+    MatX J, Jtmp;
+    // re-use the parent's jacobian computation
+    std::tie(r, Jtmp) = DFTracker::ComputeResidualAndJacobian(g);
+    J.resize(Jtmp.rows(), 4);
+    J << Jtmp.leftCols(3) * gamma_, Jtmp.rightCols(3);
+    return std::make_tuple(r, J);
+}
+
+void GravityAlignedTracker::UpdateGravity(const SO3 &Rg) {
+    Rg_ = Rg;
+    gamma_ = Rg_ * Vec3{0, 1, 0};
+    gamma_ /= gamma_.norm();
+}
 
 
 }   // namespace feh

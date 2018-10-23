@@ -81,9 +81,11 @@ int main(int argc, char **argv) {
                 SE3{Rinit, Tinit},
                 V, F);
             tracker->UpdateCameraPose(gwc);
+            tracker->UpdateGravity(Rg);
         } else {
             tracker->UpdateImage(img, edgemap);
             tracker->UpdateCameraPose(gwc);
+            tracker->UpdateGravity(Rg);
         }
 
 

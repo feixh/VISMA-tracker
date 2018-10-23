@@ -35,10 +35,10 @@ public:
 
     /// \brief: Minimzing step.
     ftype Minimize(int steps);
-
     /// \brief: Compute the loss at the current pose with given perturbation
     /// returns: residual vector and Jacobian matrix.
     std::tuple<VecX, MatX> ComputeResidualAndJacobian(const SE3 &g);
+
     /// \brief: Render at current pose estimate.
     cv::Mat RenderEstimate() const;
     /// \brief: Render edge pixels at current estimate.
