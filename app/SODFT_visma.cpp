@@ -75,12 +75,12 @@ int main(int argc, char **argv) {
                 Vec2i{cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()},
                 cam_cfg["fx"].asDouble(), cam_cfg["fy"].asDouble(),
                 cam_cfg["cx"].asDouble(), cam_cfg["cy"].asDouble(),
-                Rinit, Tinit,
+                SE3{Rinit, Tinit},
                 V, F);
             camera_pose_t0 = gwc;
         } else {
-            tracker->Upload(img, edgemap);
-            tracker->ChangeReference((gwc.inverse() * camera_pose_t0).matrix3x4());
+            tracker->UpdateImage(img, edgemap);
+            tracker->ChangeReference(gwc.inverse() * camera_pose_t0);
             camera_pose_t0 = gwc;
         }
 

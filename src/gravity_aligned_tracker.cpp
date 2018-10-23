@@ -11,10 +11,10 @@ namespace feh {
 GravityAlignedTracker::GravityAlignedTracker(const cv::Mat &img, const cv::Mat &edge,
             const Vec2i &shape, 
             ftype fx, ftype fy, ftype cx, ftype cy,
-            const Mat3 &R, const Vec3 &T,
+            const SE3 &g,
             const MatX &V, const MatXi &F):
     img_(img.clone()), edge_(edge.clone()),
-    shape_(shape), R_(R), T_(T), V_(V), F_(F), timer_("diff_tracker")
+    shape_(shape), g_(g), V_(V), F_(F), timer_("diff_tracker")
 {
     K_ << fx, 0, cx,
     0, fy, cy,
@@ -28,8 +28,7 @@ GravityAlignedTracker::GravityAlignedTracker(const cv::Mat &img, const cv::Mat &
     flip << -1, 0, 0,
         0, -1, 0,
         0, 0, 1;
-    R_ = flip * R_;
-    T_ = flip * T_;
+    g_ = SE3(flip * g.so3().matrix(), flip * g.translation());
 
     BuildDistanceField();
 }
@@ -57,11 +56,10 @@ ftype GravityAlignedTracker::Minimize(int steps=1) {
     MatX J, Jp;     // current and predicted Jacobian
     ftype cost = -1, costp;  // current cost and predicted cost
     // predicted rotation & translation
-    Mat3 Rp; 
-    Vec3 Tp;
+    SE3 gp;
     for (int iter = 0; iter < steps; ++iter) {
         timer_.Tick("Jacobian");
-        std::tie(r, J) = ComputeResidualAndJacobian(R_, T_);
+        std::tie(r, J) = ComputeResidualAndJacobian(g_);
         // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
         cost = 0.5 * r.squaredNorm();
         timer_.Tock("Jacobian");
@@ -69,37 +67,9 @@ ftype GravityAlignedTracker::Minimize(int steps=1) {
         timer_.Tick("GNupdate");
         // Gauss-Newton update
         MatX JtJ = J.transpose() * J;
-        // ftype damping = 0;
-        // JtJ.diagonal() *= (1+damping);
         Eigen::Matrix<ftype, 6, 1> delta = -JtJ.ldlt().solve(J.transpose() * r);
-
-#ifdef PIX3D_LINE_SEARCH
-        ftype dcost = r.transpose() * J * delta;
-        std::cout << "dcost=" << dcost << std::endl;
-        ftype alpha = 0.1, beta = 0.9, stepsize = 10;
-        ftype best_stepsize = 1;
-        int linesearch_step;
-        for (linesearch_step = 0; linesearch_step < 10; ++linesearch_step) {
-            Rp = R_ * rodrigues(Vec3{stepsize * delta.head<3>()});
-            Tp = T_ + stepsize * delta.tail<3>();
-            VecX rp;
-            std::tie(rp, std::ignore) = ComputeResidualAndJacobian(Rp, Tp);
-            costp = 0.5 * rp.squaredNorm();
-            if (costp < cost) {
-                costp = cost;
-                best_stepsize = stepsize;
-            } else {
-                stepsize *= beta;
-            } 
-        }
-        std::cout << "linesearch_step=" << linesearch_step << ";;;stepsize=" << stepsize << std::endl;
-        R_ = R_ * rodrigues(Vec3{best_stepsize * delta.head<3>()});
-        T_ = T_ + best_stepsize * delta.tail<3>();
-#else 
-        R_ = R_ * rodrigues(Vec3{delta.head<3>()});
-        R_ = projectSO3(R_);
-        T_ = T_ + delta.tail<3>();
-#endif
+        g_.so3() = g_.so3() * SO3::exp(delta.head<3>());
+        g_.translation() += delta.tail<3>();
         timer_.Tock("GNupdate");
     }
 //    std::cout << timer_;
@@ -108,15 +78,14 @@ ftype GravityAlignedTracker::Minimize(int steps=1) {
 }
 
 
-std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
-        const Mat3 &R, const Vec3 &T) {
+std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(const SE3 &g) {
     VecX r, v;  // residual and valid bit
     MatX J;
 
     // no 3D points yet
     timer_.Tick("Render");
     std::vector<EdgePixel> edgelist;
-    engine_->ComputeEdgePixels(ModelPose(R, T), edgelist);
+    engine_->ComputeEdgePixels(g.matrix(), edgelist);
     timer_.Tock("Render");
 
     r.resize(edgelist.size());
@@ -127,6 +96,9 @@ std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
 
     v.resize(edgelist.size());
     v.setZero();
+
+    auto R = g.so3().matrix();
+    auto T = g.translation();
 
     auto fill_jacobian_kernel = [&edgelist, &r, &v, &J, &R, &T, this](const tbb::blocked_range<int> &range) {
         for (int i = range.begin(); i < range.end(); ++i) {
@@ -169,14 +141,14 @@ std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
 
 cv::Mat GravityAlignedTracker::RenderEstimate() const {
     cv::Mat depth(shape_[0], shape_[1], CV_32FC1);
-    engine_->RenderDepth(ModelPose(), depth);
+    engine_->RenderDepth(g_.matrix(), depth);
     return depth;
 }
 
 
 cv::Mat GravityAlignedTracker::RenderEdgepixels() const {
     std::vector<EdgePixel> edgelist;
-    engine_->ComputeEdgePixels(ModelPose(), edgelist);
+    engine_->ComputeEdgePixels(g_.matrix(), edgelist);
 
     cv::Mat out(img_.clone());
     for (const auto &e : edgelist) {

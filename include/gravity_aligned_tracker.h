@@ -22,45 +22,41 @@ public:
     GravityAlignedTracker(const cv::Mat &img, const cv::Mat &edge,
             const Vec2i &shape, 
             ftype fx, ftype fy, ftype cx, ftype cy,
-            const Mat3 &R, const Vec3 &T,
+            const SE3 &g,
             const MatX &V, const MatXi &F);
 
-    /// \brief: Upload image and edge evidence.
-    void Upload(const cv::Mat &img, const cv::Mat &edge) {
+    /// \brief: Update image and edge evidence from external source.
+    void UpdateImage(const cv::Mat &img, const cv::Mat &edge) {
         img_ = img.clone();
         edge_ = edge.clone();
         BuildDistanceField();
+    }
+    /// \brief: Update camera pose from external source (VIO). 
+    void UpdateCameraPose() {
     }
 
 
     /// \brief: Apply a rigid pose transformation to the state
     /// when the FOV changes.
-    void ChangeReference(const Eigen::Matrix<ftype, 3, 4> &g_new_old) {
-        R_ = g_new_old.leftCols(3) * R_;
-        T_ = g_new_old.leftCols(3) * T_ + g_new_old.rightCols(1);
+    void ChangeReference(const SE3 &g_new_old) {
+        g_ = g_new_old * g_;
     }
     /// \brief: Minimzing step.
     ftype Minimize(int steps);
 
     /// \brief: Compute the loss at the current pose with given perturbation
     /// returns: residual vector and Jacobian matrix.
-    std::tuple<VecX, MatX> ComputeResidualAndJacobian(const Mat3 &R, const Vec3 &T);
+    std::tuple<VecX, MatX> ComputeResidualAndJacobian(const SE3 &g);
     /// \brief: Render at current pose estimate.
     cv::Mat RenderEstimate() const;
     /// \brief: Render edge pixels at current estimate.
     cv::Mat RenderEdgepixels() const ;
     /// \brief: Get current estimate of object pose.
-    std::tuple<Mat3, Vec3> GetEstimate() const {
-        return std::make_tuple(R_, T_); }
+    SE3 GetEstimate() const { return g_; }
     /// \brief: Get current distance field.
     cv::Mat GetDistanceField() const { return DistanceTransform::BuildView(DF_) ; }
     /// \brief: Get distance field gradients.
     cv::Mat GetDFGradient() const { return dDF_dxy_; }
-    /// \brief: Get spatial to camera transformation.
-    Mat4 GetGcs() const { return Sophus::SE3f{Rsc_, Tsc_}.inverse().matrix(); }
-    Mat4 GetGsc() const { return Sophus::SE3f{Rsc_, Tsc_}.matrix(); }
-    Mat4 ModelPose() const { return ModelPose(R_, T_); }
-    Mat4 ModelPose(const Mat3 &R, const Vec3 &T) const { return Sophus::SE3f{R, T}.matrix(); }
 
 
 private:
@@ -73,12 +69,8 @@ private:
     cv::Mat dDF_dxy_;
     Vec2i shape_;
     Mat3 K_, Kinv_;
-    // object -> spatial frame
-    Mat3 R_;
-    Vec3 T_;
-    // camera -> spatial frame
-    Mat3 Rsc_;
-    Vec3 Tsc_;
+    SE3 g_; // object -> spatial frame
+    SE3 gsc_; // camera -> spatial frame
     MatX V_;
     MatXi F_;
     Timer timer_;
