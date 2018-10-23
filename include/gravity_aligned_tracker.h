@@ -26,21 +26,13 @@ public:
             const MatX &V, const MatXi &F);
 
     /// \brief: Update image and edge evidence from external source.
-    void UpdateImage(const cv::Mat &img, const cv::Mat &edge) {
-        img_ = img.clone();
-        edge_ = edge.clone();
-        BuildDistanceField();
-    }
-    /// \brief: Update camera pose from external source (VIO). 
-    void UpdateCameraPose() {
-    }
+    /// \param img: RGB image.
+    /// \param edge: Edge map extracted from the image.
+    void UpdateImage(const cv::Mat &img, const cv::Mat &edge);
+    /// \brief: Update camera pose from external source (VIO).
+    /// \param gsc: Camera to spatial frame transformation.
+    void UpdateCameraPose(const SE3 &gsc);
 
-
-    /// \brief: Apply a rigid pose transformation to the state
-    /// when the FOV changes.
-    void ChangeReference(const SE3 &g_new_old) {
-        g_ = g_new_old * g_;
-    }
     /// \brief: Minimzing step.
     ftype Minimize(int steps);
 

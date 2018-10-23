@@ -49,10 +49,10 @@ int main(int argc, char **argv) {
     Sophus::SE3f camera_pose_t0;
     cv::Mat display;
 
-    // FIXME: initialize properly
+    // initialization in camera frame
     Mat3 Rinit = Mat3::Identity();
     Vec3 Tinit = Vec3::Zero();
-    Tinit << -0.1, -0.2, 1.2;
+    Tinit = GetVectorFromDynamic<ftype, 3>(config, "Tinit");
 
     std::shared_ptr<GravityAlignedTracker> tracker{nullptr};
 
@@ -69,6 +69,9 @@ int main(int argc, char **argv) {
         bool success = loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
         if (!success) break;
 
+        std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
+        std::cout << "Rg=\n" << Rg.matrix() << std::endl;
+
         if (tracker == nullptr) {
             tracker = std::make_shared<GravityAlignedTracker>(
                 img, edgemap,
@@ -77,11 +80,10 @@ int main(int argc, char **argv) {
                 cam_cfg["cx"].asDouble(), cam_cfg["cy"].asDouble(),
                 SE3{Rinit, Tinit},
                 V, F);
-            camera_pose_t0 = gwc;
+            tracker->UpdateCameraPose(gwc);
         } else {
             tracker->UpdateImage(img, edgemap);
-            tracker->ChangeReference(gwc.inverse() * camera_pose_t0);
-            camera_pose_t0 = gwc;
+            tracker->UpdateCameraPose(gwc);
         }
 
 
@@ -94,16 +96,6 @@ int main(int argc, char **argv) {
         cv::imshow("DF", tracker->GetDistanceField());
         char ckey = cv::waitKey(wait_time);
         if (ckey == 'q') break;
-
-//        for (int k = 0; k < 20; ++k) {
-//            float cost = tracker->Minimize(1);
-//            std::cout << "cost=" << cost << std::endl;
-//            cv::imshow("tracker view", tracker->RenderEdgepixels());
-//            cv::imshow("DF", tracker->GetDistanceField());
-//            char ckey = cv::waitKey(wait_time);
-//            if (ckey == 'q') break;
-//        }
-
 
 //        // FIXME: CAN ONLY HANDLE CHAIR
 //        for (int j = 0; j < bboxlist.bounding_boxes_size(); ) {
