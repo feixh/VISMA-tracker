@@ -44,8 +44,10 @@ void GravityAlignedTracker::BuildDistanceField() {
     cv::exp(DF_ / 255.0 - 2.0, DF_);
     cv::GaussianBlur(DF_, DF_, cv::Size(3, 3), 0, 0);
 
-    cv::Scharr(DF_, dDF_dx_, CV_32FC1, 1, 0, 3);
-    cv::Scharr(DF_, dDF_dy_, CV_32FC1, 0, 1, 3);
+    cv::Mat dDF_dx, dDF_dy;
+    cv::Scharr(DF_, dDF_dx, CV_32FC1, 1, 0, 3);
+    cv::Scharr(DF_, dDF_dy, CV_32FC1, 0, 1, 3);
+    cv::merge(std::vector<cv::Mat>{dDF_dx, dDF_dy}, dDF_dxy_);
 }
 
 
@@ -153,10 +155,8 @@ std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
 
                 Eigen::Matrix<ftype, 2, 6> dx_dwt{dx_dXc * dXc_dwt};
 
-                Eigen::Matrix<ftype, 1, 2> dDF_dx{
-                    this->dDF_dx_.at<float>((int)e.y, (int)e.x),
-                    this->dDF_dy_.at<float>((int)e.y, (int)e.x)};
-                J.row(i) = dDF_dx * dx_dwt;
+                auto dDF_dx = this->dDF_dxy_.at<cv::Vec2f>((int)e.y, (int)e.x);
+                J.row(i) = Eigen::Matrix<ftype, 1, 2>{dDF_dx(0), dDF_dx(1)} * dx_dwt;
                 J.row(i) /= edgelist.size();
             } else {
                 v(i) = 0.0;
