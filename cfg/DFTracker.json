@@ -1,0 +1,8 @@
+{
+  "dataset_root": "/home/feixh/Data/VISMA/",
+  "dataset": "swivel_chair",
+  "camera_config": "../cfg/camera.json",
+  "CAD_model": "/home/feixh/Dropbox/Data/VISMA/CAD/hermanmiller_aeron.obj",
+  "wait_time": 5
+}
+

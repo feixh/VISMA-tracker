@@ -7,6 +7,7 @@
 #include "glog/logging.h"
 #include "folly/Format.h"
 #include "opencv2/imgproc.hpp"
+#include "sophus/se3.hpp"
 
 #include "eigen_alias.h"
 #include "rodrigues.h"
@@ -55,18 +56,16 @@ public:
     cv::Mat GetDistanceField() const { return DistanceTransform::BuildView(DF_) ; }
     /// \brief: Get distance field gradients.
     cv::Mat GetDFGradient() const { return dDF_dxy_; }
+    /// \brief: Get spatial to camera transformation.
+    Mat4 GetGcs() const { return Sophus::SE3f{Rsc_, Tsc_}.inverse().matrix(); }
+    Mat4 GetGsc() const { return Sophus::SE3f{Rsc_, Tsc_}.matrix(); }
+    Mat4 ModelPose() const { return ModelPose(R_, T_); }
+    Mat4 ModelPose(const Mat3 &R, const Vec3 &T) const { return Sophus::SE3f{R, T}.matrix(); }
 
 
 private:
     /// \brief: Build distance field from probabilitic edge map.
     void BuildDistanceField();
-    /// \brief: Transform the mesh according to the given pose.
-    MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
-        MatX V = V_ * R.transpose();
-        V.rowwise() += T.transpose();
-        return V;
-    }
-
 
 private:
     RendererPtr engine_;

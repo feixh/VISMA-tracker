@@ -23,6 +23,7 @@ GravityAlignedTracker::GravityAlignedTracker(const cv::Mat &img, const cv::Mat &
 
     engine_ = std::make_shared<Renderer>(shape_[0], shape_[1]);
     engine_->SetCamera(znear, zfar, fx, fy, cx, cy);
+    engine_->SetMesh(V_, F_);
     Mat3 flip;
     flip << -1, 0, 0,
         0, -1, 0,
@@ -96,6 +97,7 @@ ftype GravityAlignedTracker::Minimize(int steps=1) {
         T_ = T_ + best_stepsize * delta.tail<3>();
 #else 
         R_ = R_ * rodrigues(Vec3{delta.head<3>()});
+        R_ = projectSO3(R_);
         T_ = T_ + delta.tail<3>();
 #endif
         timer_.Tock("GNupdate");
@@ -112,17 +114,9 @@ std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
     MatX J;
 
     // no 3D points yet
-    timer_.Tick("Transform");
-    auto V = TransformShape(R, T);
-    timer_.Tock("Transform");
-
-    timer_.Tick("SetMesh");
-    engine_->SetMesh(V, F_);
-    timer_.Tock("SetMesh");
-
     timer_.Tick("Render");
     std::vector<EdgePixel> edgelist;
-    engine_->ComputeEdgePixels(Mat4f::Identity(), edgelist);
+    engine_->ComputeEdgePixels(ModelPose(R, T), edgelist);
     timer_.Tock("Render");
 
     r.resize(edgelist.size());
@@ -174,17 +168,15 @@ std::tuple<VecX, MatX> GravityAlignedTracker::ComputeResidualAndJacobian(
 
 
 cv::Mat GravityAlignedTracker::RenderEstimate() const {
-    auto V = TransformShape(R_, T_);
-    engine_->SetMesh(V, F_);
     cv::Mat depth(shape_[0], shape_[1], CV_32FC1);
-    engine_->RenderDepth(Mat4::Identity(), depth);
+    engine_->RenderDepth(ModelPose(), depth);
     return depth;
 }
 
 
 cv::Mat GravityAlignedTracker::RenderEdgepixels() const {
     std::vector<EdgePixel> edgelist;
-    engine_->ComputeEdgePixels(Mat4::Identity(), edgelist);
+    engine_->ComputeEdgePixels(ModelPose(), edgelist);
 
     cv::Mat out(img_.clone());
     for (const auto &e : edgelist) {

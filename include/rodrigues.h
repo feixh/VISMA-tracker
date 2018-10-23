@@ -180,3 +180,11 @@ Eigen::Matrix<T, 3, 1> invrodrigues(const Eigen::Matrix<T, 3, 3> &R,
     }
     return w;
 }
+
+
+template <typename T>
+Eigen::Matrix<T, 3, 3> projectSO3(const Eigen::Matrix<T, 3, 3> &R) {
+    Eigen::JacobiSVD<Eigen::Matrix<T, 3, 3>> svd(R, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    return svd.matrixU() * Eigen::Matrix<T, 3, 3>::Identity() * svd.matrixV().transpose();
+}
+

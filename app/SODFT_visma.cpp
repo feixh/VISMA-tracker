@@ -17,7 +17,7 @@
 using namespace feh;
 
 int main(int argc, char **argv) {
-    std::string config_file("../cfg/single_object_tracking.json");
+    std::string config_file("../cfg/DFTracker.json");
     if (argc > 1) {
         config_file = argv[1];
     }
@@ -43,8 +43,6 @@ int main(int argc, char **argv) {
 
     VlslamDatasetLoader loader(dataset_path);
 
-    int start_index = config.getDefault("start_index", 0).asInt();
-
     cv::namedWindow("tracker view", CV_WINDOW_NORMAL);
     cv::namedWindow("DF", CV_WINDOW_NORMAL);
 
@@ -61,7 +59,7 @@ int main(int argc, char **argv) {
 
 
     Timer timer;
-    for (int i = start_index; i < loader.size(); ++i) {
+    for (int i = 0; i < loader.size(); ++i) {
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
         Sophus::SE3f gwc;
