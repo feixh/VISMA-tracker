@@ -496,15 +496,14 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         for (int i = 0; i < pointcloud_buffer.size() / 3; ++i) {
             pointcloud_color.insert(pointcloud_color.end(), {255, 0, 0});
         }
-        // convert to color matrix
-        Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> C =
-            Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-                (&pointcloud_color[0], pointcloud_color.size()/3, 3);
+        // // convert to color matrix
+        // Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> C =
+        //     Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        //         (&pointcloud_color[0], pointcloud_color.size()/3, 3);
 
 
         // write out points on the boundary with color
-        igl::writeOFF("boundary_pointcloud.off",
-                      V, F, C);
+        igl::writeOFF("boundary_pointcloud.off", V, F);
 
         // apply gcm to model vertices
         Eigen::MatrixXf model_vertices = vertices_ * g.rotationMatrix().transpose();

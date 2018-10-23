@@ -71,16 +71,11 @@ include_directories(
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
         ${FOLLY_INCLUDE_DIR}
-
-#        /usr/local/include
 )
 
 link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
-
-#        /usr/local/lib
-#        /usr/lib/x86_64-linux-gnu
 )
 
 set(OpenCV_MINIMAL

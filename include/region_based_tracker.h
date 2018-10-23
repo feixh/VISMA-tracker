@@ -1,7 +1,6 @@
 //
 // Created by visionlab on 11/2/17.
 //
-
 #include "eigen_alias.h"
 #include "utils.h"
 
