@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 
         timer.Tick("tracking");
-        float cost = tracker->Minimize(20);
+        float cost = tracker->Minimize(config["iterations"].asInt());
         timer.Tock("tracking");
         std::cout << timer;
         // std::cout << "cost=" << cost << std::endl;

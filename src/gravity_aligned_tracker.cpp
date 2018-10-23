@@ -69,6 +69,7 @@ ftype GravityAlignedTracker::Minimize(int steps=1) {
         MatX JtJ = J.transpose() * J;
         Eigen::Matrix<ftype, 6, 1> delta = -JtJ.ldlt().solve(J.transpose() * r);
         g_.so3() = g_.so3() * SO3::exp(delta.head<3>());
+        // g_.so3() = g_.so3() * SO3::exp(Vec3f{0, delta(1), 0});
         g_.translation() += delta.tail<3>();
         timer_.Tock("GNupdate");
     }
