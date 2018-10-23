@@ -116,6 +116,7 @@ add_library(feh SHARED
         src/oned_search.cpp
         src/bresenham.cpp
         src/utils.cpp
+        src/DFtracker.cpp
         src/gravity_aligned_tracker.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
