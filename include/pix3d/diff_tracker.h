@@ -58,11 +58,8 @@ public:
 
     /// \brief: Transform the mesh according to the given pose.
     MatX TransformShape(const Mat3 &R, const Vec3 &T) const {
-        MatX V(V_.rows(), V_.cols());
-        V.setZero();
-        for (int i = 0; i < V_.rows(); ++i) {
-            V.row(i) = R * V_.row(i).transpose() + T;
-        }
+        MatX V = V_ * R.transpose();
+        V.rowwise() += T.transpose();
         return V;
     }
 

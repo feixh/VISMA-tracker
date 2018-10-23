@@ -231,7 +231,7 @@ bool VlslamDatasetLoader::Grab(int i,
                                Sophus::SO3f &Rg) {
 
     if (i >= size_ || i < 0) return false;
-    std::cout << i << "\n";
+//    std::cout << i << "\n";
 
     vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
     gwc = Sophus::SE3f(SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));

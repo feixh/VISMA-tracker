@@ -13,8 +13,8 @@ DiffTracker::DiffTracker(const cv::Mat &img, const cv::Mat &edge,
             ftype fx, ftype fy, ftype cx, ftype cy,
             const Mat3 &R, const Vec3 &T,
             const MatX &V, const MatXi &F):
-    shape_(shape), V_(V), F_(F), timer_("diff_tracker"),
-    img_(img.clone()), edge_(edge.clone()), R_(R), T_(T)
+    img_(img.clone()), edge_(edge.clone()),
+    shape_(shape), R_(R), T_(T), V_(V), F_(F), timer_("diff_tracker")
 {
     K_ << fx, 0, cx,
     0, fy, cy,

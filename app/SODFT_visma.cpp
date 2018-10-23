@@ -68,7 +68,8 @@ int main(int argc, char **argv) {
         Sophus::SO3f Rg;
 
         std::string imagepath;
-        loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        bool success = loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
+        if (!success) break;
 
         if (tracker == nullptr) {
             tracker = std::make_shared<DiffTracker>(
