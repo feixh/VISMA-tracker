@@ -50,8 +50,6 @@ struct Pix3dPacket {
 
         // load CAD model
         LoadMesh(dataroot + record["model"].asString(), V_, F_);
-
-        assert(success);
     }
     cv::Mat img_, mask_, edge_;
     Sophus::SE3<ftype> go_;  // object pose, applied to object directly
