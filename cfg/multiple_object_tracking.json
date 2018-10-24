@@ -1,6 +1,6 @@
 {
   "datatype": "VLSLAM", // other options: VLSLAM, SceneNN
-  "dataset_root": "/local/feixh/VISMA_experiments/",
+  "dataset_root": "/local/Data/VISMA_experiments/",
   // "dataset_root": "/local/feixh/VISMA_experiments/oldlab",
   "dataset": "clutter1",
   "camera_config": "../cfg/camera.json",
