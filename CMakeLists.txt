@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3 -Wall -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
@@ -60,13 +60,14 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/Sophus/include
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/include
         ${PROJECT_SOURCE_DIR}/thirdparty/libigl/include
+        ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/include
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
         ${GLOG_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIR}
-        ${PROTOBUF_INCLUDE_DIRS}
+        ${PROTOBUF_INCLUDE_DIR}
         ${GMP_INCLUDES}
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
@@ -76,6 +77,7 @@ include_directories(
 link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
 )
 
 set(OpenCV_MINIMAL
@@ -90,12 +92,12 @@ set(OpenCV_MINIMAL
 link_libraries(
         glfw
         glog
-        protobuf
         tbb
         ${OpenCV_MINIMAL}
         ${GMP_LIBRARIES}
         ${MPFR_LIBRARIES}
         ${FOLLY_LIBRARY}
+        ${PROTOBUF_LIBRARY}
         lcm
         double-conversion   # for folly
         GL
@@ -143,7 +145,6 @@ add_executable(sodft_visma app/SODFT_visma.cpp)
 #################################################
 add_executable(pix3dloader src/pix3d/test_loader.cpp)
 add_executable(pix3dtracker src/pix3d/test_tracker.cpp src/pix3d/diff_tracker.cpp)
-
 
 ################################################################################
 ################################################################################
