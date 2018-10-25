@@ -56,8 +56,6 @@ int main(int argc, char **argv) {
 
     std::shared_ptr<GravityAlignedTracker> tracker{nullptr};
 
-
-
     Timer timer;
     for (int i = 0; i < loader.size(); ++i) {
         cv::Mat img, edgemap;
@@ -94,8 +92,14 @@ int main(int argc, char **argv) {
         timer.Tock("tracking");
         std::cout << timer;
         // std::cout << "cost=" << cost << std::endl;
-        cv::imshow("tracker view", tracker->RenderEdgepixels());
-        cv::imshow("DF", tracker->GetDistanceField());
+        cv::Mat tracker_view = tracker->RenderEdgepixels();
+        cv::imshow("tracker view", tracker_view);
+        cv::Mat df = tracker->GetDistanceField();
+        cv::imshow("DF", df);
+        if (config["save"].asBool()) {
+            cv::imwrite(folly::sformat("{:04d}_projection.jpg", i), tracker_view);
+            cv::imwrite(folly::sformat("{:04d}_DF.jpg", i), df);
+        }
         char ckey = cv::waitKey(wait_time);
         if (ckey == 'q') break;
 

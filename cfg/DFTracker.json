@@ -10,6 +10,7 @@
   "Tinit": [-0.1, -0.4, 1.6],
 
   "iterations": 20,
-  "wait_time": 5
+  "wait_time": 5,
+  "save": false
 }
 
