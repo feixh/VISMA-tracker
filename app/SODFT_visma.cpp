@@ -89,13 +89,18 @@ int main(int argc, char **argv) {
 
         timer.Tick("tracking");
         float cost = tracker->Minimize(config["iterations"].asInt());
-        timer.Tock("tracking");
+        float duration = timer.Tock("tracking");
         std::cout << timer;
         // std::cout << "cost=" << cost << std::endl;
         cv::Mat tracker_view = tracker->RenderEdgepixels();
+        cv::putText(tracker_view, 
+                folly::sformat("{:02.f} FPS", 1000 / duration),
+                cv::Point(20, 20), CV_FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 255, 0), 2);
         cv::imshow("tracker view", tracker_view);
+
         cv::Mat df = tracker->GetDistanceField();
         cv::imshow("DF", df);
+
         if (config["save"].asBool()) {
             cv::imwrite(folly::sformat("{:04d}_projection.jpg", i), tracker_view);
             cv::imwrite(folly::sformat("{:04d}_DF.jpg", i), df);
