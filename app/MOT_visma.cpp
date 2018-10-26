@@ -3,8 +3,9 @@
 
 #include "glog/logging.h"
 #include "sophus/se3.hpp"
-#include "folly/json.h"
-#include "folly/FileUtil.h"
+
+#include "fmt/format.h"
+#include "json/json.h"
 
 // feh
 #include "tracker.h"
@@ -18,9 +19,13 @@ using TermColor = feh::TermColor;
 int main(int argc, char **argv) {
     std::string config_file("../cfg/multiple_object_tracking.json");
 
-    std::string content;
-    folly::readFile(config_file.c_str(), content);
-    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+    // std::string content;
+    // folly::readFile(config_file.c_str(), content);
+    // folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in(config_file, std::ios::in);
+    Json::Value config;
+    Json::Reader reader;
+    reader.parse(in, config);
 
     std::string dataset_root(config["dataset_root"].asString() + "/");
 
@@ -37,17 +42,17 @@ int main(int argc, char **argv) {
 
     std::shared_ptr<feh::VlslamDatasetLoader> loader;
     bool is_sceneNN(false);
-    if (config["datatype"].getString() == "VLSLAM") {
+    if (config["datatype"].asString() == "VLSLAM") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::VlslamDatasetLoader>(dataset_root);
-    } else if (config["datatype"].getString() == "ICL") {
+    } else if (config["datatype"].asString() == "ICL") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::ICLDatasetLoader>(dataset_root);
-    } else if (config["datatype"].getString() == "SceneNN") {
+    } else if (config["datatype"].asString() == "SceneNN") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::SceneNNDatasetLoader>(dataset_root);
         is_sceneNN = true;
-    } else if (config["datatype"].getString() == "KITTI") {
+    } else if (config["datatype"].asString() == "KITTI") {
         std::cout << dataset_root << "\n";
         loader = std::make_shared<feh::KittiDatasetLoader>(dataset_root);
     }
@@ -100,7 +105,7 @@ int main(int argc, char **argv) {
 //        cv::imshow("segmentation mask", segmask);
 
         if (dump_dir != nullptr) {
-            cv::imwrite(folly::sformat("{}/{:06d}.png", dump_dir, i),
+            cv::imwrite(fmt::format("{}/{:06d}.png", dump_dir, i),
                         display);
         }
 
@@ -114,11 +119,11 @@ int main(int argc, char **argv) {
             wait_time = config["wait_time"].asInt();
         } else if (ckey == 's') {
             if (dump_dir != nullptr) {
-                scene.WriteLogToFile(folly::sformat("{}/result_{:04d}.json", dump_dir, i));
+                scene.WriteLogToFile(fmt::format("{}/result_{:04d}.json", dump_dir, i));
             }
         }
     }
     if (dump_dir != nullptr) {
-        scene.WriteLogToFile(folly::sformat("{}/result.json", dump_dir));
+        scene.WriteLogToFile(fmt::format("{}/result.json", dump_dir));
     }
 }

@@ -7,9 +7,8 @@
 #include <fstream>
 
 // 3rd party
-#include "folly/json.h"
-#include "folly/FileUtil.h"
-#include "glog/logging.h"
+#include "json/json.h"
+#include "fmt/format.h"
 #include "sophus/se3.hpp"
 
 // own
@@ -21,9 +20,13 @@
 
 int main() {
     std::string config_file("../cfg/region_based_tracker.json");
-    std::string content;
-    folly::readFile(config_file.c_str(), content);
-    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+//    std::string content;
+//    folly::readFile(config_file.c_str(), content);
+//    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+    Json::Value config;
+    Json::Reader reader;
+    std::ifstream in(config_file, std::ios::in);
+    reader.parse(in, config);
 
     // dataset path
     std::string dataroot = config["dataroot"].asString();

@@ -63,7 +63,6 @@ ftype DFTracker::Minimize(int steps=1) {
     for (int iter = 0; iter < steps; ++iter) {
         timer_.Tick("Jacobian");
         std::tie(r, J) = ComputeResidualAndJacobian(g_);
-        // std::cout << folly::sformat("J.shape=({},{})", J.rows(), J.cols()) << std::endl;
         cost = 0.5 * r.squaredNorm();
         timer_.Tock("Jacobian");
 

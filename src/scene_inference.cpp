@@ -12,9 +12,7 @@
 #include "glog/logging.h"
 #include "opencv2/imgproc.hpp"
 #include "tbb/parallel_for.h"
-#include "folly/json.h"
-#include "folly/dynamic.h"
-#include "folly/FileUtil.h"
+#include "json/json.h"
 
 // own
 #include "tracker_utils.h"
@@ -286,24 +284,27 @@ void Scene::UpdateSegMask() {
 //}
 
 void Scene::UpdateLog() {
-    folly::dynamic obj_array = folly::dynamic::array;
+    // folly::dynamic obj_array = folly::dynamic::array;
+    Json::Value obj_array;
     for (auto tracker : trackers_) {
-        folly::dynamic tracker_obj = folly::dynamic::object;
+        // folly::dynamic tracker_obj = folly::dynamic::object;
+        Json::Value tracker_obj;
         tracker_obj["id"] = tracker->id();
         tracker_obj["model_name"] = tracker->shape_name();
         tracker_obj["status"] = as_integer(tracker->status());
-        WriteMatrixToDynamic(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
-        obj_array.push_back(tracker_obj);
+        WriteMatrixToJsonObj(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
+        obj_array.append(tracker_obj);
     }
-    folly::dynamic data = folly::dynamic::object(std::to_string(frame_counter_), obj_array);
 //    if (!obj_array.empty())
     {
-        log_.push_back(obj_array);
+        log_.append(obj_array);
     }
 }
 void Scene::WriteLogToFile(const std::string &filename) {
-    folly::writeFile(folly::toPrettyJson(log_), filename.c_str());
-
+    // folly::writeFile(folly::toPrettyJson(log_), filename.c_str());
+    std::ofstream in(filename, std::ios::out);
+    Json::StyledStreamWriter ss;
+    ss.write(in, log_);
 }
 
 bool Scene::BBoxTooCloseToBoundary(const vlslam_pb::BoundingBox &bbox) const {

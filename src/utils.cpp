@@ -10,9 +10,8 @@
 // I/O
 #include "igl/readOBJ.h"
 #include "igl/readPLY.h"
-#include "folly/FileUtil.h"
-#include "folly/dynamic.h"
-#include "folly/json.h"
+#include "json/json.h"
+#include "fmt/format.h"
 
 #include "vlslam.pb.h"
 
@@ -236,9 +235,14 @@ bool LoadEdgeMap(const std::string &filename, cv::Mat &edge) {
 std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::string &cat_json) {
     CHECK_STREQ(cat_json.substr(cat_json.find('.'), 5).c_str(), ".json");
     std::string content;
-    std::string full_path = folly::sformat("{}/{}", root, cat_json);
-    folly::readFile(full_path.c_str(), content);
-    folly::dynamic json_content = folly::parseJson(folly::json::stripComments(content));
+    std::string full_path = fmt::format("{}/{}", root, cat_json);
+    // folly::readFile(full_path.c_str(), content);
+    // folly::dynamic json_content = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in{full_path, std::ios::in};
+    Json::Reader reader;
+    Json::Value json_content;
+    reader.parse(in, json_content);
+
     std::vector<std::string> out;
     for (const auto &value : json_content["entries"]) {
         out.push_back(value.asString());
@@ -260,16 +264,32 @@ Mat4f SE3FromArray(double *data) {
     return out.cast<float>();
 }
 
-folly::dynamic MergeDynamic(const folly::dynamic &a, const folly::dynamic &b) {
-    if (b == nullptr) return a;
-    folly::dynamic out(a);
-    for (auto &item : b.items()) {
-        if (out.find(item.first) != out.items().end()) {
-            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
-        }
-        out[item.first] = item.second;
-    }
-    return out;
+Json::Value MergeDynamic(const Json::Value &a, const Json::Value &b) {
+//    if (b == nullptr) return a;
+//    Json::Value out(a);
+//    for (auto &item : b.items()) {
+//        if (out.find(item.first) != out.items().end()) {
+//            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
+//        }
+//        out[item.first] = item.second;
+//    }
+//    return out;
+    // FIXME: merge json objects
+    return a;
+}
+
+Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b) {
+//    if (b == nullptr) return a;
+//    Json::Value out(a);
+//    for (auto &item : b.items()) {
+//        if (out.find(item.first) != out.items().end()) {
+//            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
+//        }
+//        out[item.first] = item.second;
+//    }
+//    return out;
+    // FIXME: merge json objects
+    return a;
 }
 
 }   // namespace feh

@@ -9,8 +9,7 @@
 
 // 3rd party
 #include "igl/writeOFF.h"
-#include "folly/FileUtil.h"
-#include "folly/json.h"
+#include "json/json.h"
 
 // own
 #include "parallel_kernels.h"
@@ -36,21 +35,24 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
                                     const MatXf &vertices,
                                     const MatXi &faces) {
     std::string content;
-    folly::readFile(config_file.c_str(), content);
-    config_ = folly::parseJson(folly::json::stripComments(content));
+    // folly::readFile(config_file.c_str(), content);
+    // config_ = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in{config_file, std::ios::in};
+    Json::Reader reader;
+    reader.parse(in, config_);
 
 
     // scale levels
-    levels_ = config_["levels"].getInt();
+    levels_ = config_["levels"].asInt();
 
     // camera parameters
     if (camera_params.empty()) {
-        fx_ = config_["camera"]["fx"].getDouble();
-        fy_ = config_["camera"]["fy"].getDouble();
-        cx_ = config_["camera"]["cx"].getDouble();
-        cy_ = config_["camera"]["cy"].getDouble();
-        rows_ = config_["camera"]["rows"].getInt();
-        cols_ = config_["camera"]["cols"].getInt();
+        fx_ = config_["camera"]["fx"].asFloat();
+        fy_ = config_["camera"]["fy"].asFloat();
+        cx_ = config_["camera"]["cx"].asFloat();
+        cy_ = config_["camera"]["cy"].asFloat();
+        rows_ = config_["camera"]["rows"].asInt();
+        cols_ = config_["camera"]["cols"].asInt();
         fx_ *= cols_;
         fy_ *= rows_;
         cx_ *= cols_;
@@ -70,8 +72,8 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
 
     // near and far plane
     float z_near, z_far;
-    z_near = config_["camera"]["z_near"].getDouble();
-    z_far = config_["camera"]["z_far"].getDouble();
+    z_near = config_["camera"]["z_near"].asFloat();
+    z_far = config_["camera"]["z_far"].asFloat();
 
     for (int i = 0; i < levels_; ++i) {
         RendererPtr renderer =
@@ -107,7 +109,7 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
         // load mesh and setup
         std::tie(vertices_, faces_) = LoadMesh(config_["model"]["path"].asString());
         NormalizeVertices(vertices_);
-        if (config_["model"]["scanned"].getBool()) {
+        if (config_["model"]["scanned"].asBool()) {
             RotateVertices(vertices_, -M_PI / 2.0f);
         } else {
             FlipVertices(vertices_);
@@ -125,18 +127,18 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
     }
 
     // setup optimization related member variables
-    histogram_size_ = config_["bins_per_channel"].getInt();
+    histogram_size_ = config_["bins_per_channel"].asInt();
 //    hist_f_.resize(3);
 //    hist_b_.resize(3);
 //    for (int i = 0; i < 3; ++i) {
 //        hist_f_[i].setZero(histogram_size_);
 //        hist_b_[i].setZero(histogram_size_);
 //    }
-    alpha_f_ = config_["alpha_f"].getDouble();
-    alpha_b_ = config_["alpha_b"].getDouble();
-    inflate_size_ = config_["inflate_size"].getInt();
+    alpha_f_ = config_["alpha_f"].asDouble();
+    alpha_b_ = config_["alpha_b"].asFloat();
+    inflate_size_ = config_["inflate_size"].asInt();
 
-    constrain_rotation_ = config_.getDefault("constrain_rotation", false).getBool();
+    constrain_rotation_ = config_.get("constrain_rotation", false).asBool();
 }
 
 void RegionBasedTracker::InitializeTracker(const cv::Mat &image,
@@ -191,8 +193,8 @@ Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
 
     Sophus::SE3f g(gm);
     for (int level = levels_-1; level >= 1; --level) {
-        int num_iter = config_["num_iter"].getDefault("level" + std::to_string(level),
-                                               10).getInt();
+        int num_iter = config_["num_iter"].get("level" + std::to_string(level),
+                                               10).asInt();
         for (int i = 0; i < num_iter; ++i) {
             std::cout << "@level#" << level << ";;;iter#" << i << "\n";
             bool status = UpdateOneStepAtLevel(level, g);
@@ -231,7 +233,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
     tbb::parallel_for(tbb::blocked_range<int>(0, renderer->rows()),
                       BinarizeKernel<float>(depth,
                                             mask,
-                                            config_["depth_binarization_threshold"].getDouble()),
+                                            config_["depth_binarization_threshold"].asFloat()),
                       tbb::auto_partitioner());
     timer_.Tock("binarization");
 
@@ -254,11 +256,11 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
     tbb::parallel_for(tbb::blocked_range<int>(0, renderer->rows()),
                       EdgeDetectionKernel<float>(depth,
                                                  contour,
-                                                 config_["contour_detection_threshold"].getDouble()),
+                                                 config_["contour_detection_threshold"].asFloat()),
                       tbb::auto_partitioner());
     timer_.Tock("contour extraction");
     CHECK_EQ(contour.type(), CV_32FC1);
-    std::cout << "contour detection threshold=" << config_["contour_detection_threshold"].getDouble() << "\n";
+    std::cout << "contour detection threshold=" << config_["contour_detection_threshold"].asFloat() << "\n";
 
 
     timer_.Tick("distance transformation");
@@ -296,7 +298,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
     timer_.Tock("differentiate sdf");
 
     timer_.Tick("heaviside function");
-    float reach = config_["reach_of_smooth_heaviside"].getDouble();
+    float reach = config_["reach_of_smooth_heaviside"].asFloat();
     tbb::parallel_for(tbb::blocked_range<int>(0, renderer->rows()),
                       HeavisideKernel(signed_distance, heaviside, reach),
                       tbb::auto_partitioner());
@@ -481,7 +483,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
     std::cout << "#active contour points=" << dxp_dtwist_.size() << "\n";
 
     std::cout << "\n";
-    if (config_["dump_pointcloud"].getBool()){
+    if (config_["dump_pointcloud"].asBool()){
         // convert pointcloud buffer to vertex matrix
         Eigen::MatrixXf V =
             Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
@@ -580,11 +582,11 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
 //    // add delta to current state
     Eigen::Matrix<float, 6, 6> I;
     I.setIdentity();
-    float translation_damping_factor = config_.getDefault("translation_damping_factor", 0.0).getDouble();
-    float rotation_damping_factor = config_.getDefault("rotation_damping_factor", 0.0).getDouble();
+    float translation_damping_factor = config_.get("translation_damping_factor", 0.0).asFloat();
+    float rotation_damping_factor = config_.get("rotation_damping_factor", 0.0).asFloat();
     I.block<3, 3>(0, 0) *= translation_damping_factor;
     I.block<3, 3>(3, 3) *= rotation_damping_factor;
-    Jt *= config_.getDefault("residual_scaling", 1.0).getDouble();
+    Jt *= config_.get("residual_scaling", 1.0).asFloat();
 
     if (!constrain_rotation_) {
         Eigen::Matrix<float, 6, 1> delta = -(JtJ + I).llt().solve(Jt);
@@ -611,7 +613,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
 
     timer_.Tock("total at level " + std::to_string(level));
 
-    if (config_["tracker_view"].getBool()) {
+    if (config_["tracker_view"].asBool()) {
         // visualization at the original scale
         cv::Mat edge(renderers_[0]->rows(), renderers_[0]->cols(), CV_8UC1);
         renderers_[0]->RenderEdge(g.matrix(), edge.data);
@@ -622,7 +624,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         OverlayMaskOnImage(edge, display_, false, kColorGreen);
     }
 
-    if (config_["dump_mats"].getBool()) {
+    if (config_["dump_mats"].asBool()) {
 
         std::vector<cv::Mat> hdh(2);
         cv::split(heaviside, hdh);
@@ -659,7 +661,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         }
         SaveMatToFile<float>("sdf", signed_distance);
 
-        if (config_["visualize"].getBool()) {
+        if (config_["visualize"].asBool()) {
             cv::imshow("depth", depth);
             cv::imshow("mask", mask);
             cv::Mat contour_display = DistanceTransform::BuildView(contour);
@@ -704,7 +706,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         }
     }
 
-    char ckey = cv::waitKey(config_["wait_time"].getInt());
+    char ckey = cv::waitKey(config_["wait_time"].asInt());
     if (ckey == 'q') return false;
     std::cout << timer_;
     return true;

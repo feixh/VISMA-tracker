@@ -1,15 +1,14 @@
 #include <iostream>
 
 #include "glog/logging.h"
+#include "fmt/format.h"
+
 #include "renderer.h"
 #include "pix3d/dataloader.h"
-#include "folly/Format.h"
-
 #include "distance_transform.h"
 
 constexpr float znear = 0.1;
 constexpr float zfar = 10;
-
 
 int main(int argc, char **argv) {
     CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";
@@ -94,7 +93,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < packet.shape_[0]; ++i) {
         for (int j = 0; j < packet.shape_[1]; ++j) {
             if ( ((int)packet.mask_.at<uint8_t>(i, j)+ (int)mask.at<uint8_t>(i, j)) != 255) {
-                std::cout << folly::sformat("({}, {}) not consistent", i, j) << std::endl;
+                std::cout << fmt::format("({}, {}) not consistent", i, j) << std::endl;
                 mask_diff.at<uint8_t>(i, j) = 255;
             }
         }

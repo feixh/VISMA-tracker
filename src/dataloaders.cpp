@@ -4,9 +4,7 @@
 #include "dataloaders.h"
 
 // 3rd party
-#include "folly/FileUtil.h"
-#include "folly/dynamic.h"
-#include "folly/json.h"
+#include "json/json.h"
 
 // own
 #include "tracker_utils.h"
@@ -392,10 +390,14 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
 
     try {
         std::string contents;
-        folly::readFile((dataroot_+"/skip.json").c_str(), contents);
-        folly::dynamic skip_js = folly::parseJson(folly::json::stripComments(contents));
-        skip_head_ = skip_js.getDefault("head", 0).asInt();
-        until_last_ = skip_js.getDefault("last", -1).asInt();
+        // folly::readFile((dataroot_+"/skip.json").c_str(), contents);
+        // folly::dynamic skip_js = folly::parseJson(folly::json::stripComments(contents));
+        std::ifstream in{dataroot_+"/skip.json", std::ios::in};
+        Json::Reader reader;
+        Json::Value skip_js;
+        reader.parse(in, skip_js);
+        skip_head_ = skip_js.get("head", 0).asInt();
+        until_last_ = skip_js.get("last", -1).asInt();
     } catch (...) {
         skip_head_ = 0;
         until_last_ = -1;

@@ -15,7 +15,7 @@
 
 // 3rdparty
 #include "opencv2/core.hpp"
-#include "folly/dynamic.h"
+#include "json/json.h"
 #include "glog/logging.h"
 
 
@@ -318,7 +318,7 @@ enum class JsonMatLayout {
 /// \param layout: Whether the matrix is arranged as an one-dim array or two-dim matrix.
 template<typename T=ftype, int N=3, int M = N>
 Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
-    const folly::dynamic &v,
+    const Json::Value &v,
     const std::string &key,
     JsonMatLayout layout=JsonMatLayout::OneDim) {
 
@@ -338,18 +338,26 @@ Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
 /// \brief load N-dim double vector from json file
 template<typename T=ftype, int N>
 Eigen::Matrix<T, N, 1> GetVectorFromDynamic(
-    const folly::dynamic &v,
+    const Json::Value &v,
     const std::string &key) {
 
     return GetMatrixFromDynamic<T, N, 1>(v, key);
 };
 
 template<typename Derived>
-void WriteMatrixToDynamic(folly::dynamic &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
-    d[key] = folly::dynamic::array();
+void WriteMatrixToDynamic(Json::Value &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
+    // d[key] = Json::Value;
     for (int i = 0; i < m.rows(); ++i)
         for (int j = 0; j < m.cols(); ++j)
-            d[key].push_back(m(i, j));
+            d[key].append(m(i, j));
+}
+
+template<typename Derived>
+void WriteMatrixToJsonObj(Json::Value &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
+    // d[key] = Json::Value;
+    for (int i = 0; i < m.rows(); ++i)
+        for (int j = 0; j < m.cols(); ++j)
+            d[key].append(m(i, j));
 }
 
 /// \brief: Save opencv mat to file in txt or binary form (if the flag binary is turned on).
@@ -368,6 +376,8 @@ void SaveMatToFile(const std::string &filename, const cv::Mat &mat, bool binary=
 }
 
 /// \brief: Merge two dynamic objects and return the merged one.
-folly::dynamic MergeDynamic(const folly::dynamic &a, const folly::dynamic &b);
+Json::Value MergeDynamic(const Json::Value &a, const Json::Value &b);
+/// \brief: Merge two dynamic objects and return the merged one.
+Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b);
 
 }

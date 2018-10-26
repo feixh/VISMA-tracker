@@ -50,7 +50,7 @@ find_package(GMP REQUIRED)
 find_package(TBB REQUIRED)
 
 # facebook folly
-find_package(Folly REQUIRED)
+# find_package(Folly REQUIRED)
 
 
 include_directories(
@@ -61,6 +61,8 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/include
         ${PROJECT_SOURCE_DIR}/thirdparty/libigl/include
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/include
+        ${PROJECT_SOURCE_DIR}/thirdparty/fmt/include
+        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/include
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
@@ -71,13 +73,15 @@ include_directories(
         ${GMP_INCLUDES}
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
-        ${FOLLY_INCLUDE_DIR}
+        # ${FOLLY_INCLUDE_DIR}
 )
 
 link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/fmt/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
 )
 
 set(OpenCV_MINIMAL
@@ -96,10 +100,12 @@ link_libraries(
         ${OpenCV_MINIMAL}
         ${GMP_LIBRARIES}
         ${MPFR_LIBRARIES}
-        ${FOLLY_LIBRARY}
+        # ${FOLLY_LIBRARY}
         ${PROTOBUF_LIBRARY}
         lcm
-        double-conversion   # for folly
+        fmt
+        jsoncpp
+        # double-conversion   # for folly
         GL
         gtest gtest_main    # for testing
 )

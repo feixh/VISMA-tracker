@@ -5,8 +5,8 @@
 // 3rd party
 #include "glog/logging.h"
 #include "sophus/se3.hpp"
-#include "folly/json.h"
-#include "folly/FileUtil.h"
+#include "json/json.h"
+#include "fmt/format.h"
 
 // feh
 #include "tracker.h"
@@ -22,12 +22,25 @@ int main(int argc, char **argv) {
         config_file = argv[1];
     }
 
-    std::string content;
-    folly::readFile(config_file.c_str(), content);
-    auto config = folly::parseJson(folly::json::stripComments(content));
+    // std::string content;
+    // folly::readFile(config_file.c_str(), content);
+    // auto config = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in(config_file, std::ios::in);
+    Json::Value config;
+    Json::Reader reader;
+    reader.parse(in, config);
+    std::cout << config;
+    in.close();
 
-    folly::readFile(config["camera_config"].asString().c_str(), content);
-    auto cam_cfg = folly::parseJson(folly::json::stripComments(content));
+
+    // folly::readFile(config["camera_config"].asString().c_str(), content);
+    in.open(config["camera_config"].asString(), std::ios::in);
+    assert(in.is_open());
+    // auto cam_cfg = folly::parseJson(folly::json::stripComments(content));
+    Json::Value cam_cfg;
+    reader.parse(in, cam_cfg);
+    std::cout << cam_cfg;
+
 
     MatXf V;
     MatXi F;
@@ -74,8 +87,8 @@ int main(int argc, char **argv) {
             tracker = std::make_shared<GravityAlignedTracker>(
                 img, edgemap,
                 Vec2i{cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()},
-                cam_cfg["fx"].asDouble(), cam_cfg["fy"].asDouble(),
-                cam_cfg["cx"].asDouble(), cam_cfg["cy"].asDouble(),
+                cam_cfg["fx"].asFloat(), cam_cfg["fy"].asFloat(),
+                cam_cfg["cx"].asFloat(), cam_cfg["cy"].asFloat(),
                 SE3{Rinit, Tinit},
                 V, F);
             tracker->UpdateCameraPose(gwc);
@@ -97,8 +110,8 @@ int main(int argc, char **argv) {
         cv::Mat df = tracker->GetDistanceField();
         cv::imshow("DF", df);
         if (config["save"].asBool()) {
-            cv::imwrite(folly::sformat("{:04d}_projection.jpg", i), tracker_view);
-            cv::imwrite(folly::sformat("{:04d}_DF.jpg", i), df);
+            cv::imwrite(fmt::format("{:04d}_projection.jpg", i), tracker_view);
+            cv::imwrite(fmt::format("{:04d}_DF.jpg", i), df);
         }
         char ckey = cv::waitKey(wait_time);
         if (ckey == 'q') break;

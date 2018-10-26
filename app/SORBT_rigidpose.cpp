@@ -7,8 +7,8 @@
 #include <fstream>
 
 // 3rd party
-#include "folly/FileUtil.h"
-#include "folly/json.h"
+#include "fmt/format.h"
+#include "json/json.h"
 
 // own
 #include "renderer.h"
@@ -19,9 +19,13 @@ using Tag = feh::RigidPoseDatasetLoader::Tag;
 
 int main() {
 
-    std::string contents;
-    folly::readFile("../cfg/rigidpose.json", contents);
-    auto config = folly::parseJson(folly::json::stripComments(contents));
+    // std::string contents;
+    // folly::readFile("../cfg/rigidpose.json", contents);
+    // auto config = folly::parseJson(folly::json::stripComments(contents));
+    std::ifstream in("../cfg/rigidpose.json", std::ios::in);
+    Json::Value config;
+    Json::Reader reader;
+    reader.parse(in, config);
 
     int tag = (config["noise_level"].asInt() << 4)
               | config["left_right"].asInt();

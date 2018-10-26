@@ -12,7 +12,7 @@
 #include "math.h"
 
 // sophus
-#include "folly/dynamic.h"
+#include "json/json.h"
 #include "sophus/se3.hpp"
 #include "opencv2/highgui.hpp"
 
@@ -59,7 +59,7 @@ public:
     ~Tracker();
     /// \brief: Initialize tracker from a given jason configuration.
     void Initialize(const std::string &config_file,
-                    const folly::dynamic &more_config=folly::dynamic{});
+                    const Json::Value &more_config=Json::Value{});
     /// \brief: Initialize object from a given bounding box.
     /// \param bbox: From which we initialize object pose.
     /// \param cam_pse: g(init camera <- current camera).
@@ -233,7 +233,7 @@ private:
     bool use_partial_mesh_;
 
     // camera model & render engine
-    folly::dynamic config_;
+    Json::Value config_;
 
     std::shared_ptr<lcm::LCM> port_;
     std::shared_ptr<BBoxLikelihoodHandler> handler_;

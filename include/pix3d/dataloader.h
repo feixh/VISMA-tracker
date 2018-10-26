@@ -8,8 +8,7 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
-#include "folly/json.h"
-#include "folly/FileUtil.h"
+#include "json/json.h"
 #include "igl/readOBJ.h"
 #include "sophus/se3.hpp"
 
@@ -20,7 +19,7 @@
 namespace feh {
 
 struct Pix3dPacket {
-    Pix3dPacket(const std::string &dataroot, const folly::dynamic &record) {
+    Pix3dPacket(const std::string &dataroot, const Json::Value &record) {
         // load image & mask
         img_ = cv::imread(dataroot + record["img"].asString());
         mask_ = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
@@ -71,10 +70,11 @@ public:
         // std::string json_path{dataroot + "/pix3d.json"};
         // FIXME: use the real json file
         std::string json_path{dataroot + "/test.json"};
-        std::string content;
-        folly::readFile(json_path.c_str(), content);
         std::cout << TermColor::cyan << "parsing json file ..." << TermColor::endl;
-        json_ = folly::parseJson(folly::json::stripComments(content));
+        Json::Reader reader;
+        std::ifstream in(json_path, std::ios::in);
+        reader.parse(in, json_);
+        // json_ = folly::parseJson(folly::json::stripComments(content));
     }
 
     /// \brief: Grab datum by indexing the json file.
@@ -96,8 +96,8 @@ public:
 
 private:
     std::string dataroot_;
-    folly::dynamic json_;
-
+    // folly::dynamic json_;
+    Json::Value json_;
 };
 
 } // namespace feh

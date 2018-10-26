@@ -7,8 +7,8 @@
 
 // 3rd party
 #include "opencv2/imgproc.hpp"
-#include "folly/json.h"
-#include "folly/FileUtil.h"
+#include "json/json.h"
+#include "fmt/format.h"
 
 // own
 #include "tracker_utils.h"
@@ -32,17 +32,25 @@ Scene::Scene() :
 }
 
 
-void Scene::Initialize(const std::string &config_file, const folly::dynamic &more_config) {
+void Scene::Initialize(const std::string &config_file, const Json::Value &more_config) {
     std::string content;
-    folly::readFile(config_file.c_str(), content);
-    config_ = folly::parseJson(folly::json::stripComments(content));
-    config_ = MergeDynamic(config_, more_config);
+    // folly::readFile(config_file.c_str(), content);
+    std::ifstream in(config_file, std::ios::in);
+    Json::Reader reader;
+    reader.parse(in, config_);
+
+    // config_ = folly::parseJson(folly::json::stripComments(content));
+    // config_ = MergeDynamic(config_, more_config);
+    config_ = MergeJsonObj(config_, more_config);
     // LOAD SCENE CONFIGURATION
-    log_ = folly::dynamic::array();
+    // log_ = folly::dynamic::array();
+    // log_ = Json::Value();
 
     // LOAD CAMERA CONFIGURATION
-    folly::readFile(config_["camera_config"].asString().c_str(), content);
-    config_["camera"] = folly::parseJson(folly::json::stripComments(content));
+    // folly::readFile(config_["camera_config"].asString().c_str(), content);
+    // config_["camera"] = folly::parseJson(folly::json::stripComments(content));
+    in.open(config_["camera_config"].asString(), std::ios::in);
+    reader.parse(in, config_["camera"]);
 
     auto cam_cfg = config_["camera"];
     rows_        = cam_cfg["rows"].asInt();
@@ -178,7 +186,7 @@ void Scene::Build2DView() {
     // TRACKER STATUS
     cv::Point2i debug_info_pos(display_.cols-(display_.cols >> 2), 10);
     for (TrackerPtr tracker : trackers_) {
-        std::string status_str = folly::sformat("T#{}-B#{}<{:0.2f}> s:{} v:{:0.2f} ({:0.1f}, {:0.1f})",
+        std::string status_str = fmt::format("T#{}-B#{}<{:0.2f}> s:{} v:{:0.2f} ({:0.1f}, {:0.1f})",
                                                 tracker->id(),
                                                 tracker->matched_bbox(),
                                                 tracker->max_iou(),
@@ -196,7 +204,7 @@ void Scene::Build2DView() {
     // BOTTOM PANEL SHOWS FPS AND OTHER SYSTEM STATS
     cv::Mat bottom_panel(12, display_.cols, CV_8UC3);
     bottom_panel.setTo(0);
-    std::string sys_stats = folly::sformat("#OBJ:{}  FPS:{:0.2f}",
+    std::string sys_stats = fmt::format("#OBJ:{}  FPS:{:0.2f}",
                                            trackers_.size(),
                                            1000.0f / (timer_.LookUp("total", Timer::MILLISEC, true)+eps));
     cv::putText(bottom_panel, sys_stats, cv::Point(0, 10), CV_FONT_HERSHEY_PLAIN, 1, {0, 255, 0});

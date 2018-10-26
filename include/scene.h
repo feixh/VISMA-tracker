@@ -27,7 +27,7 @@ class Scene {
 public:
     Scene();
     void Initialize(const std::string &config_file,
-                    const folly::dynamic &more_config=folly::dynamic{});
+                    const Json::Value &more_config=Json::Value{});
     void SetInitCameraToWorld(const Sophus::SE3f &gwc0);
 
     /// \brief: Entrance of semantic mapping.
@@ -69,8 +69,8 @@ private:
     bool initial_pose_set_;
     std::unordered_set<std::string> valid_categories_;
     std::list<TrackerPtr> trackers_;
-    folly::dynamic config_;
-    folly::dynamic log_;
+    Json::Value config_;
+    Json::Value log_;
     Timer timer_;
 
 

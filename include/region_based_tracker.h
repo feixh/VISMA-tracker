@@ -1,6 +1,7 @@
 //
 // Created by visionlab on 11/2/17.
 //
+#pragma once
 #include "eigen_alias.h"
 #include "utils.h"
 
@@ -10,8 +11,8 @@
 
 // 3rd party
 #include "opencv2/opencv.hpp"
-#include "folly/dynamic.h"
 #include "sophus/se3.hpp"
+#include "json/json.h"
 
 //own
 #include "renderer.h"
@@ -76,7 +77,7 @@ public:
     cv::Mat GetDisplay() { return display_; }
 
 private:
-    folly::dynamic config_;
+    Json::Value config_;
     Timer timer_;
     MatXf vertices_;
     MatXi faces_;

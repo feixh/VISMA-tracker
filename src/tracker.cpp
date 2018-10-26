@@ -6,10 +6,8 @@
 
 // 3rd party
 #include "opencv2/imgproc.hpp"
-#include "folly/FileUtil.h"
-#include "folly/json.h"
-#include "folly/Format.h"
-
+#include "json/json.h"
+#include "fmt/format.h"
 // own
 #include "tracker_utils.h"
 #include "parallel_kernels.h"
@@ -84,15 +82,18 @@ Tracker::~Tracker() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void Tracker::Initialize(const std::string &config_file,
-                         const folly::dynamic &more_config) {
+                         const Json::Value &more_config) {
     if (status_ == TrackerStatus::VALID) {
         LOG(FATAL) << "FATAL::each tracker can only be initialized ONCE!!!";
     }
 
     // root of json
-    std::string content;
-    folly::readFile(config_file.c_str(), content);
-    config_ = folly::parseJson(folly::json::stripComments(content));
+    // std::string content;
+    // folly::readFile(config_file.c_str(), content);
+    // config_ = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in(config_file, std::ios::in);
+    Json::Reader reader;
+    reader.parse(in, config_);
 
     // merge config
     config_ = MergeDynamic(config_, more_config);
@@ -112,8 +113,8 @@ void Tracker::Initialize(const std::string &config_file,
 
     // setup likelihood parameters
     use_partial_mesh_          = filter_cfg["use_partial_mesh"].asBool();
-    use_CNN_                   = filter_cfg["use_CNN"].getBool();
-    use_MC_move_               = filter_cfg["use_MC_move"].getBool();
+    use_CNN_                   = filter_cfg["use_CNN"].asBool();
+    use_MC_move_               = filter_cfg["use_MC_move"].asBool();
     CNN_prob_thresh_           = filter_cfg["CNN_probability_threshold"].asDouble();
     evidence_kernel_size_      = filter_cfg["evidence_blur_kernel_size"].asInt();
     prediction_kernel_size_    = filter_cfg["prediction_blur_kernel_size"].asInt();
@@ -139,12 +140,14 @@ void Tracker::Initialize(const std::string &config_file,
     oned_search_.search_line_length_           = oned_cfg["search_line_length"].asInt();
     oned_search_.intensity_threshold_          = uint8_t(oned_cfg["intensity_thresh"].asInt() & 0xff);
     oned_search_.direction_consistency_thresh_ = oned_cfg["direction_thresh"].asDouble();
-    oned_search_.parallel_                     = oned_cfg["parallel"].getBool();
+    oned_search_.parallel_                     = oned_cfg["parallel"].asBool();
 
 
     // camera parameters
-    folly::readFile(config_["camera_config"].asString().c_str(), content);
-    config_["camera"] = folly::parseJson(folly::json::stripComments(content));
+    // folly::readFile(config_["camera_config"].asString().c_str(), content);
+    // config_["camera"] = folly::parseJson(folly::json::stripComments(content));
+    in.open(config_["camera_config"].asString(), std::ios::in);
+    reader.parse(in, config_["camera"]);
 
     auto cam_cfg = config_["camera"];
     s_           = cam_cfg["s"].asDouble();
@@ -183,7 +186,7 @@ void Tracker::Initialize(const std::string &config_file,
         }
         // render engine not set yet
     }
-    best_shape_match_ = config_["hack"].getDefault("best_shape_match", 0).asInt();
+    best_shape_match_ = config_["hack"].get("best_shape_match", 0).asInt();
 
     // near and far plane
     float z_near, z_far;
@@ -225,7 +228,7 @@ void Tracker::Initialize(const std::string &config_file,
     visible_mask_.setTo(1);
 
     // setup random number generator
-    if (config_["fixed_seed"].getBool()) {
+    if (config_["fixed_seed"].asBool()) {
         generator_ = std::make_shared<std::knuth_b>(0);
     } else {
         generator_ = std::make_shared<std::knuth_b>(time(NULL));
@@ -249,9 +252,9 @@ void Tracker::Initialize(const std::string &config_file,
     }
 
     // setup debug file
-    if (config_["debug_info"].getDefault("save_to_file", false).getBool())
+    if (config_["debug_info"].get("save_to_file", false).asBool())
     {
-        std::string dbg_filename = folly::sformat("dbg_tracker{:04d}.txt", id());
+        std::string dbg_filename = fmt::format("dbg_tracker{:04d}.txt", id());
         dbg_file_.open(dbg_filename, std::ios::out);
         CHECK(dbg_file_.is_open());
     }
@@ -290,7 +293,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
         if (visible_ratio_ > 0.8
             || (visible_ratio_ < 0.1 && convergence_counter_ <= 0)) ++no_observation_counter_;
         if (no_observation_counter_
-            > config_.getDefault("max_num_allowed_null_observations", 10).asInt()
+            > config_.get("max_num_allowed_null_observations", 10).asInt()
                 + 20 * convergence_counter_ + 10 * hits_) {
             used_bbox_index = kTooManyNullObservations;
 //                used_bbox_indexurn kTooManyNullObservations;
@@ -310,7 +313,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 && visible_ratio_ > 0.8f) {
                 ++initialization_counter_;
                 if (initialization_counter_
-                    > 5 * hits_ + config_.getDefault("max_num_allowed_initialization", 150).asInt()) {
+                    > 5 * hits_ + config_.get("max_num_allowed_initialization", 150).asInt()) {
                     return kTooManyInitializationTrials;
                 }
                 timer_.Tick("particle update");
@@ -434,7 +437,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
     }
 
     DLOG(INFO) << "mean=" << mean_.transpose() << "\n";
-    if (config_["debug_info"]["print_timing"].getBool()) {
+    if (config_["debug_info"]["print_timing"].asBool()) {
         std::cout << timer_;
     }
 
@@ -550,8 +553,6 @@ int Tracker::Preprocess(const cv::Mat &in_evidence,
 
     in_evidence.copyTo(evidence_[0]);
 
-//    cv::imwrite(folly::sformat("evidence_{:04d}_{:04d}.png", id_, (int)ts_), evidence_[0]);
-
     // scale image and evidence
     for (int i = 1; i < scale_level_; ++i) {
         cv::Size sz(image_[i].cols, image_[i].rows);
@@ -665,9 +666,6 @@ void Tracker::UpdateVisibility(const cv::Mat &segmask) {
     }
     visible_ratio_ = visible / (total + eps);
     cv::GaussianBlur(visible_mask_, visible_mask_, cv::Size(5, 5), 0);
-
-    // DEBUG:
-//    cv::imwrite(folly::sformat("visible_mask_{:04d}_{:04d}.png", id_, (int)ts_), visible_mask_);
 }
 
 void Tracker::ResetVisibility() {
@@ -700,7 +698,7 @@ void Tracker::BuildFilterView() {
     vlslam_pb::BoundingBoxList *the_bbox_list;
     the_bbox_list = &bbox_list0_;
 
-    if (config_["visualization"]["show_bounding_boxes"].getBool()
+    if (config_["visualization"]["show_bounding_boxes"].asBool()
         && status_ == TrackerStatus::INITIALIZING) {
         for (const auto &bbox: the_bbox_list->bounding_boxes()) {
             cv::rectangle(display_,
@@ -718,7 +716,7 @@ void Tracker::BuildFilterView() {
         }
     }
 
-    if (config_["visualization"]["show_projections"].getBool()) {
+    if (config_["visualization"]["show_projections"].asBool()) {
         // visualization of particle projections
         std::vector<feh::Vec2f> projections;
         GetProjection(projections, level);
@@ -727,20 +725,20 @@ void Tracker::BuildFilterView() {
         }
     }
 
-    if (config_["visualization"]["show_mean_projection"].getBool()) {
+    if (config_["visualization"]["show_mean_projection"].asBool()) {
         auto mean_proj = ProjectMean(level);
         cv::circle(display_, cv::Point(mean_proj(0), mean_proj(1)), 1, cv::Scalar(0, 255, 0), 2);
     }
 
-    if (config_["visualization"]["show_mean_boundary"].getBool()) {
+    if (config_["visualization"]["show_mean_boundary"].asBool()) {
         auto prediction = Render(level);
         OverlayMaskOnImage(prediction, display_, false, kColorMap.at(class_name_));
-    } else if (config_["visualization"]["show_wireframe"].getBool()) {
+    } else if (config_["visualization"]["show_wireframe"].asBool()) {
         auto wireframe = RenderWireframe(level);
         OverlayMaskOnImage(wireframe, display_, true, kColorMap.at(class_name_));
     }
 
-//    if (config_["visualization"]["show_correspondences"].getBool()) {
+//    if (config_["visualization"]["show_correspondences"].asBool()) {
 //        std::vector<EdgePixel> edgelist;
 //        renderer->ComputeEdgePixels(MatForRender(mean_),
 //                                    edgelist);
@@ -759,7 +757,7 @@ void Tracker::BuildFilterView() {
 //        }
 //    }
 
-    if (config_["visualization"]["show_evidence_as_thumbnail"].getBool()) {
+    if (config_["visualization"]["show_evidence_as_thumbnail"].asBool()) {
         cv::Mat thumbnail;
         cv::resize(evidence_[0], thumbnail, cv::Size(cols_[0] / 4,
                                                      rows_[0] / 4));

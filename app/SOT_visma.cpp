@@ -5,8 +5,8 @@
 // 3rd party
 #include "glog/logging.h"
 #include "sophus/se3.hpp"
-#include "folly/json.h"
-#include "folly/FileUtil.h"
+#include "json/json.h"
+#include "fmt/format.h"
 
 // feh
 #include "tracker.h"
@@ -16,9 +16,13 @@
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/single_object_tracking.json");
-    std::string content;
-    folly::readFile(config_file.c_str(), content);
-    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+//    std::string content;
+//    folly::readFile(config_file.c_str(), content);
+//    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
+    std::ifstream in(config_file, std::ios::in);
+    Json::Reader reader;
+    Json::Value config;
+    reader.parse(in, config);
 
     std::string dataset_root(config["dataset_root"].asString());
 
@@ -35,7 +39,7 @@ int main(int argc, char **argv) {
     feh::tracker::Tracker tracker;
     tracker.Initialize(config["tracker_config"].asString());
 
-    int start_index = config.getDefault("start_index", 0).asInt();
+    int start_index = config.get("start_index", 0).asInt();
 
     cv::namedWindow("tracker view", CV_WINDOW_NORMAL);
     Sophus::SE3f camera_pose_t0;
