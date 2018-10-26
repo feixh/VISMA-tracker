@@ -50,7 +50,6 @@ find_package(GMP REQUIRED)
 # cpu parallelism via intel threading building blocks
 find_package(TBB REQUIRED)
 
-
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}/include
@@ -71,7 +70,6 @@ include_directories(
         ${GMP_INCLUDES}
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
-        # ${FOLLY_INCLUDE_DIR}
 )
 
 link_directories(
@@ -98,7 +96,6 @@ link_libraries(
         ${OpenCV_MINIMAL}
         ${GMP_LIBRARIES}
         ${MPFR_LIBRARIES}
-        # ${FOLLY_LIBRARY}
         ${PROTOBUF_LIBRARY}
         lcm
         fmt
