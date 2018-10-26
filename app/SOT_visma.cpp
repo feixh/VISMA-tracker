@@ -5,24 +5,17 @@
 // 3rd party
 #include "glog/logging.h"
 #include "sophus/se3.hpp"
-#include "json/json.h"
-#include "fmt/format.h"
 
 // feh
-#include "tracker.h"
-#include "tracker_utils.h"
 #include "dataloaders.h"
+#include "tracker.h"
 #include "region_based_tracker.h"
+
+using namespace feh;
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/single_object_tracking.json");
-//    std::string content;
-//    folly::readFile(config_file.c_str(), content);
-//    folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in(config_file, std::ios::in);
-    Json::Reader reader;
-    Json::Value config;
-    reader.parse(in, config);
+    auto config = LoadJson(config_file);
 
     std::string dataset_root(config["dataset_root"].asString());
 
@@ -34,9 +27,9 @@ int main(int argc, char **argv) {
     int wait_time(0);
     wait_time = config["wait_time"].asInt();
 
-    feh::VlslamDatasetLoader loader(dataset_root);
+    VlslamDatasetLoader loader(dataset_root);
 
-    feh::tracker::Tracker tracker;
+    tracker::Tracker tracker;
     tracker.Initialize(config["tracker_config"].asString());
 
     int start_index = config.get("start_index", 0).asInt();

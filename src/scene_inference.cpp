@@ -4,14 +4,8 @@
 
 #include "scene.h"
 
-// stl
-#include <iostream>
-#include <fstream>
-
 // 3rd party
-#include "glog/logging.h"
 #include "opencv2/imgproc.hpp"
-#include "tbb/parallel_for.h"
 #include "json/json.h"
 
 // own
@@ -302,9 +296,14 @@ void Scene::UpdateLog() {
 }
 void Scene::WriteLogToFile(const std::string &filename) {
     // folly::writeFile(folly::toPrettyJson(log_), filename.c_str());
-    std::ofstream in(filename, std::ios::out);
-    Json::StyledStreamWriter ss;
-    ss.write(in, log_);
+    std::ofstream out(filename, std::ios::out);
+    if (out.is_open()) {
+        out << log_;
+        out.close();
+    } else {
+        throw std::runtime_error("failed to open output stream");
+    }
+
 }
 
 bool Scene::BBoxTooCloseToBoundary(const vlslam_pb::BoundingBox &bbox) const {

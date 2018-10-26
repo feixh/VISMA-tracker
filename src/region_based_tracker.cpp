@@ -37,11 +37,7 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
     std::string content;
     // folly::readFile(config_file.c_str(), content);
     // config_ = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in{config_file, std::ios::in};
-    Json::Reader reader;
-    reader.parse(in, config_);
-
-
+    config_ = LoadJson(config_file);
     // scale levels
     levels_ = config_["levels"].asInt();
 
@@ -502,9 +498,6 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic> C =
             Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
                 (&pointcloud_color[0], pointcloud_color.size()/3, 3);
-        auto CC = C.cast<double>();
-
-
         // write out points on the boundary with color
         // igl::writeOFF("boundary_pointcloud.off", V, F, CC);
 

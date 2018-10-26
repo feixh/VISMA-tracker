@@ -14,18 +14,14 @@
 #include "dataloaders.h"
 #include "utils.h"
 
+using namespace feh;
+
 using TermColor = feh::TermColor;
 
 int main(int argc, char **argv) {
     std::string config_file("../cfg/multiple_object_tracking.json");
 
-    // std::string content;
-    // folly::readFile(config_file.c_str(), content);
-    // folly::dynamic config = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in(config_file, std::ios::in);
-    Json::Value config;
-    Json::Reader reader;
-    reader.parse(in, config);
+    auto config = LoadJson(config_file);
 
     std::string dataset_root(config["dataset_root"].asString() + "/");
 

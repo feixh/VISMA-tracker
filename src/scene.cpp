@@ -34,23 +34,11 @@ Scene::Scene() :
 
 void Scene::Initialize(const std::string &config_file, const Json::Value &more_config) {
     std::string content;
-    // folly::readFile(config_file.c_str(), content);
-    std::ifstream in(config_file, std::ios::in);
-    Json::Reader reader;
-    reader.parse(in, config_);
-
-    // config_ = folly::parseJson(folly::json::stripComments(content));
-    // config_ = MergeDynamic(config_, more_config);
+    config_ = LoadJson(config_file);
     config_ = MergeJsonObj(config_, more_config);
-    // LOAD SCENE CONFIGURATION
-    // log_ = folly::dynamic::array();
-    // log_ = Json::Value();
 
     // LOAD CAMERA CONFIGURATION
-    // folly::readFile(config_["camera_config"].asString().c_str(), content);
-    // config_["camera"] = folly::parseJson(folly::json::stripComments(content));
-    in.open(config_["camera_config"].asString(), std::ios::in);
-    reader.parse(in, config_["camera"]);
+    config_["camera"] = LoadJson(config_["camera_config"].asString());
 
     auto cam_cfg = config_["camera"];
     rows_        = cam_cfg["rows"].asInt();

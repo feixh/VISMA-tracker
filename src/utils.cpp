@@ -236,12 +236,7 @@ std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::st
     CHECK_STREQ(cat_json.substr(cat_json.find('.'), 5).c_str(), ".json");
     std::string content;
     std::string full_path = fmt::format("{}/{}", root, cat_json);
-    // folly::readFile(full_path.c_str(), content);
-    // folly::dynamic json_content = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in{full_path, std::ios::in};
-    Json::Reader reader;
-    Json::Value json_content;
-    reader.parse(in, json_content);
+    auto json_content = LoadJson(full_path);
 
     std::vector<std::string> out;
     for (const auto &value : json_content["entries"]) {
@@ -290,6 +285,17 @@ Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b) {
 //    return out;
     // FIXME: merge json objects
     return a;
+}
+
+Json::Value LoadJson(const std::string &filename) {
+    std::ifstream in(filename, std::ios::in);
+    if (in.is_open()) {
+        Json::Value out;
+        in >> out;
+        return out;
+    } else {
+        throw std::runtime_error(fmt::format("failed to read file {}", filename));
+    }
 }
 
 }   // namespace feh

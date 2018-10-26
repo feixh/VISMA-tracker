@@ -15,8 +15,9 @@
 
 // 3rdparty
 #include "opencv2/core.hpp"
-#include "json/json.h"
 #include "glog/logging.h"
+#include "json/json.h"
+#include "fmt/format.h"
 
 
 namespace feh {
@@ -379,5 +380,7 @@ void SaveMatToFile(const std::string &filename, const cv::Mat &mat, bool binary=
 Json::Value MergeDynamic(const Json::Value &a, const Json::Value &b);
 /// \brief: Merge two dynamic objects and return the merged one.
 Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b);
+Json::Value LoadJson(const std::string &filename);
+
 
 }

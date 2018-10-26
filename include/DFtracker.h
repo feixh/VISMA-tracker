@@ -5,7 +5,6 @@
 #include <chrono>
 
 #include "glog/logging.h"
-#include "folly/Format.h"
 #include "opencv2/imgproc.hpp"
 #include "sophus/se3.hpp"
 

@@ -6,35 +6,26 @@
 // stl
 #include <fstream>
 
-// 3rd party
-#include "fmt/format.h"
-#include "json/json.h"
-
 // own
 #include "renderer.h"
 #include "tracker_utils.h"
 #include "region_based_tracker.h"
 
-using Tag = feh::RigidPoseDatasetLoader::Tag;
+using namespace feh;
+
+using Tag = RigidPoseDatasetLoader::Tag;
 
 int main() {
-
-    // std::string contents;
-    // folly::readFile("../cfg/rigidpose.json", contents);
-    // auto config = folly::parseJson(folly::json::stripComments(contents));
-    std::ifstream in("../cfg/rigidpose.json", std::ios::in);
-    Json::Value config;
-    Json::Reader reader;
-    reader.parse(in, config);
+    auto config = LoadJson("../cfg/rigidpose.json");
 
     int tag = (config["noise_level"].asInt() << 4)
               | config["left_right"].asInt();
-    feh::RigidPoseDatasetLoader loader(config["dataroot"].asString(),
+    RigidPoseDatasetLoader loader(config["dataroot"].asString(),
                                        config["dataset"].asString(),
                                        tag);
 
     // tracker
-    feh::tracker::RegionBasedTracker tracker;
+    tracker::RegionBasedTracker tracker;
     tracker.Initialize("../cfg/rigidpose.json",
                        {loader.focal_length_, loader.focal_length_,
                        loader.cx_, loader.cy_, loader.rows_, loader.cols_},
@@ -42,7 +33,7 @@ int main() {
                        loader.faces());
 
     // tmp
-    feh::Renderer renderer(loader.rows_, loader.cols_);
+    Renderer renderer(loader.rows_, loader.cols_);
     renderer.SetCamera(0.05, 5.0,
                        loader.focal_length_, loader.focal_length_,
                        loader.cx_, loader.cy_);
@@ -64,7 +55,7 @@ int main() {
 //        renderer.SetCamera(pose.matrix());
 ////        renderer.RenderWireframe(pose.matrix(), edge.data);
 //        renderer.RenderWireframe(Eigen::Matrix4f::Identity(), edge.data);
-//        feh::tracker::OverlayMaskOnImage(edge, display, true, feh::tracker::kColorGreen);
+//        tracker::OverlayMaskOnImage(edge, display, true, tracker::kColorGreen);
 
         auto v = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>(&loader.vertices()[0], 3, loader.vertices().size()/3);
         for (int i = 0; i < v.cols(); ++i) {
@@ -78,12 +69,12 @@ int main() {
 #else
 
         if (frame_counter == 0) {
-            std::vector<feh::EdgePixel> edgelist;
+            std::vector<EdgePixel> edgelist;
             renderer.ComputeEdgePixels(pose.matrix(), edgelist);
-            cv::Rect bbox = feh::tracker::RectEnclosedByContour(
+            cv::Rect bbox = tracker::RectEnclosedByContour(
                 edgelist, loader.rows_, loader.cols_);
 
-            bbox = feh::tracker::InflateRect(bbox, loader.rows_, loader.cols_, 20);
+            bbox = tracker::InflateRect(bbox, loader.rows_, loader.cols_, 20);
 
 //            tracker.Optimize(image, bbox, pose);
             tracker.InitializeTracker(image, bbox, pose);

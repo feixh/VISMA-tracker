@@ -91,9 +91,8 @@ void Tracker::Initialize(const std::string &config_file,
     // std::string content;
     // folly::readFile(config_file.c_str(), content);
     // config_ = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in(config_file, std::ios::in);
-    Json::Reader reader;
-    reader.parse(in, config_);
+    config_ = LoadJson(config_file);
+
 
     // merge config
     config_ = MergeDynamic(config_, more_config);
@@ -144,10 +143,7 @@ void Tracker::Initialize(const std::string &config_file,
 
 
     // camera parameters
-    // folly::readFile(config_["camera_config"].asString().c_str(), content);
-    // config_["camera"] = folly::parseJson(folly::json::stripComments(content));
-    in.open(config_["camera_config"].asString(), std::ios::in);
-    reader.parse(in, config_["camera"]);
+    config_["camera"] = LoadJson(config_["camera_config"].asString());
 
     auto cam_cfg = config_["camera"];
     s_           = cam_cfg["s"].asDouble();

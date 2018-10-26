@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.5)
 project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3 -Wall -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
@@ -48,9 +49,6 @@ find_package(GMP REQUIRED)
 
 # cpu parallelism via intel threading building blocks
 find_package(TBB REQUIRED)
-
-# facebook folly
-# find_package(Folly REQUIRED)
 
 
 include_directories(
@@ -105,7 +103,6 @@ link_libraries(
         lcm
         fmt
         jsoncpp
-        # double-conversion   # for folly
         GL
         gtest gtest_main    # for testing
 )

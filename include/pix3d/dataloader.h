@@ -71,9 +71,7 @@ public:
         // FIXME: use the real json file
         std::string json_path{dataroot + "/test.json"};
         std::cout << TermColor::cyan << "parsing json file ..." << TermColor::endl;
-        Json::Reader reader;
-        std::ifstream in(json_path, std::ios::in);
-        reader.parse(in, json_);
+        json_ = LoadJson(json_path);
         // json_ = folly::parseJson(folly::json::stripComments(content));
     }
 

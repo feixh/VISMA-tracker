@@ -390,12 +390,7 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
 
     try {
         std::string contents;
-        // folly::readFile((dataroot_+"/skip.json").c_str(), contents);
-        // folly::dynamic skip_js = folly::parseJson(folly::json::stripComments(contents));
-        std::ifstream in{dataroot_+"/skip.json", std::ios::in};
-        Json::Reader reader;
-        Json::Value skip_js;
-        reader.parse(in, skip_js);
+        auto skip_js = LoadJson(dataroot_+"/skip.json");
         skip_head_ = skip_js.get("head", 0).asInt();
         until_last_ = skip_js.get("last", -1).asInt();
     } catch (...) {

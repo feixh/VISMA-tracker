@@ -22,24 +22,8 @@ int main(int argc, char **argv) {
         config_file = argv[1];
     }
 
-    // std::string content;
-    // folly::readFile(config_file.c_str(), content);
-    // auto config = folly::parseJson(folly::json::stripComments(content));
-    std::ifstream in(config_file, std::ios::in);
-    Json::Value config;
-    Json::Reader reader;
-    reader.parse(in, config);
-    std::cout << config;
-    in.close();
-
-
-    // folly::readFile(config["camera_config"].asString().c_str(), content);
-    in.open(config["camera_config"].asString(), std::ios::in);
-    assert(in.is_open());
-    // auto cam_cfg = folly::parseJson(folly::json::stripComments(content));
-    Json::Value cam_cfg;
-    reader.parse(in, cam_cfg);
-    std::cout << cam_cfg;
+    auto config = LoadJson(config_file);
+    auto cam_cfg = LoadJson(config["camera_config"].asString());
 
 
     MatXf V;
@@ -107,7 +91,7 @@ int main(int argc, char **argv) {
         // std::cout << "cost=" << cost << std::endl;
         cv::Mat tracker_view = tracker->RenderEdgepixels();
         cv::putText(tracker_view, 
-                folly::sformat("{:02.f} FPS", 1000 / duration),
+                fmt::format("{:0.2f} FPS", 1000 / duration),
                 cv::Point(20, 20), CV_FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 255, 0), 2);
         cv::imshow("tracker view", tracker_view);
 
