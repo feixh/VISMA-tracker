@@ -1,8 +1,8 @@
 {
-  "CAD_model": "/local2/Data/VISMA/CAD/hermanmiller_aeron.obj",
-  "dataset_root": "/local2/Data/VISMA/",
-  // "CAD_model": "/local/Data/VISMA_experiments/CAD/hermanmiller_aeron.obj",
-  // "dataset_root": "/local/Data/VISMA_experiments/",
+  // "CAD_model": "/local2/Data/VISMA/CAD/hermanmiller_aeron.obj",
+  // "dataset_root": "/local2/Data/VISMA/",
+  "CAD_model": "/local/Data/VISMA_experiments/CAD/hermanmiller_aeron.obj",
+  "dataset_root": "/local/Data/VISMA_experiments/",
 
   "dataset": "swivel_chair",
   "camera_config": "../cfg/camera.json",
@@ -10,7 +10,7 @@
   "Tinit": [-0.1, -0.4, 1.6],
 
   "iterations": 20,
-  "wait_time": 5,
+  "wait_time": 1,
   "save": false
 }
 
