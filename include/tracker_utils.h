@@ -2,7 +2,7 @@
 // Created by feixh on 10/18/17.
 //
 #pragma once
-#include "eigen_alias.h"
+#include "alias.h"
 
 // stl
 #include <chrono>
@@ -11,7 +11,6 @@
 
 // 3rd party
 #include "opencv2/core.hpp"
-#include "sophus/se3.hpp"
 
 // own
 #include "utils.h"

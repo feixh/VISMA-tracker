@@ -2,7 +2,7 @@
 // Created by feixh on 10/31/17.
 //
 #pragma once
-#include "eigen_alias.h"
+#include "alias.h"
 
 // stl
 #include <vector>
@@ -11,13 +11,13 @@
 #include <unordered_set>
 
 // 3rd party
-#include "sophus/se3.hpp"
 #include "opencv2/core.hpp"
 
 // own
 #include "utils.h"
 #include "tracker.h"
 #include "vlslam.pb.h"
+#include "se3.h"
 
 namespace feh {
 
@@ -28,7 +28,7 @@ public:
     Scene();
     void Initialize(const std::string &config_file,
                     const Json::Value &more_config=Json::Value{});
-    void SetInitCameraToWorld(const Sophus::SE3f &gwc0);
+    void SetInitCameraToWorld(const SE3 &gwc0);
 
     /// \brief: Entrance of semantic mapping.
     /// \param evidence: Edge map extracted using modified SegNet.
@@ -39,8 +39,8 @@ public:
     /// \param imagepath: Full path of the input image to inform CNN process which image to operate on.
     void Update(const cv::Mat &evidence,
                 const vlslam_pb::BoundingBoxList &bbox_list,
-                const Sophus::SE3f &gwc,
-                const Sophus::SO3f &Rg,
+                const SE3 &gwc,
+                const SO3 &Rg,
                 const cv::Mat &img,
                 const std::string &imagepath);
 
@@ -75,8 +75,8 @@ private:
 
 
     int rows_, cols_;
-    Sophus::SE3f gwc0_, gwc_;
-    Sophus::SO3f Rg_;
+    SE3 gwc0_, gwc_;
+    SO3 Rg_;
 
     // BUFFER
     cv::Mat mask_;  // binary explanation mask

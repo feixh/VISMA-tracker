@@ -90,7 +90,7 @@ void Tracker::PFUpdate(int level) {
     }
 
     // UPDATE POSE
-    gwm_ = gwr_ * Sophus::SE3f(MatForRender());
+    gwm_ = gwr_ * SE3(MatForRender());
 }
 
 int Tracker::ComputeProposals(int level) {

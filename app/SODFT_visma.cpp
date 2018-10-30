@@ -4,7 +4,6 @@
 
 // 3rd party
 #include "glog/logging.h"
-#include "sophus/se3.hpp"
 #include "json/json.h"
 #include "fmt/format.h"
 
@@ -43,7 +42,7 @@ int main(int argc, char **argv) {
     cv::namedWindow("tracker view", CV_WINDOW_NORMAL);
     cv::namedWindow("DF", CV_WINDOW_NORMAL);
 
-    Sophus::SE3f camera_pose_t0;
+    SE3 camera_pose_t0;
     cv::Mat display;
 
     // initialization in camera frame
@@ -57,8 +56,8 @@ int main(int argc, char **argv) {
     for (int i = 0; i < loader.size(); ++i) {
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
-        Sophus::SE3f gwc;
-        Sophus::SO3f Rg;
+        SE3 gwc;
+        SO3 Rg;
 
         std::string imagepath;
         bool success = loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);

@@ -35,9 +35,9 @@ int main(int argc, char **argv) {
     cv::imshow("dt", dt_to_show);
 
     std::cout << "object pose=\n" << packet.go_.matrix3x4() << std::endl;
-    std::cout << "object pose inverse=\n" << packet.go_.inverse().matrix3x4() << std::endl;
+    std::cout << "object pose inverse=\n" << packet.go_.inv().matrix3x4() << std::endl;
     std::cout << "camera pose=\n" << packet.gc_.matrix3x4() << std::endl;
-    std::cout << "camera pose inverse=" << packet.gc_.inverse().matrix3x4() << std::endl;
+    std::cout << "camera pose inverse=" << packet.gc_.inv().matrix3x4() << std::endl;
     std::cout << "focal=" << packet.focal_length_ << std::endl;
     std::cout << "bbox=" << packet.bbox_.transpose() << std::endl;
     std::cout << "shape=" << packet.shape_.transpose() << std::endl;

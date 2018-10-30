@@ -267,8 +267,8 @@ void Tracker::Initialize(const std::string &config_file,
 ////////////////////////////////////////////////////////////////////////////////
 int Tracker::Update(const cv::Mat &in_evidence,
                     const vlslam_pb::BoundingBoxList &bbox_list,
-                    const Sophus::SE3f &gwc,
-                    const Sophus::SO3f &Rg,
+                    const SE3 &gwc,
+                    const SO3 &Rg,
                     const cv::Mat &img,
                     std::string imagepath) {
     ts_ += 1;
@@ -462,18 +462,18 @@ void Tracker::MultiScalePFUpdate() {
 
 int Tracker::Preprocess(const cv::Mat &in_evidence,
                         const vlslam_pb::BoundingBoxList &bbox_list,
-                        const Sophus::SE3f &gwc,
-                        const Sophus::SO3f &Rg,
+                        const SE3 &gwc,
+                        const SO3 &Rg,
                         const cv::Mat &img) {
     // use partial meshes during inference
     SwitchMeshForInference();
 
     // set current camera pose
     gwc_ = gwc;
-    grc_ = gwr_.inverse() * gwc;
+    grc_ = gwr_.inv() * gwc;
     for (auto sid : shape_ids_) {
         for (auto r: shapes_.at(sid).render_engines_) {
-            r->SetCamera(grc_.inverse().matrix());
+            r->SetCamera(grc_.inv().matrix());
         }
     }
 
@@ -784,7 +784,8 @@ Mat4f Tracker::MatForRender(const Vec4f &v) const{
     // rotation around y axis in gravity aligned camera frame
     // where y axis of the camera frame is along the direction of gravity
     Eigen::AngleAxisf Ro(v(3), Vec3f::UnitY());
-    Mat3f R = gwr_.rotationMatrix().transpose() * gwc0_.rotationMatrix() * Ro.toRotationMatrix();
+    // Mat3f R = gwr_.so3().matrix().transpose() * gwc0_.rotationMatrix() * Ro.toRotationMatrix();
+    Mat3f R = SO3{gwr_.so3().inv() * gwc0_.so3() * SO3{Ro.toRotationMatrix()}}.matrix();
 //    Mat3f R = gwr_.rotationMatrix().transpose() * Ro.toRotationMatrix();
 
     Mat4f out;
@@ -800,11 +801,11 @@ Mat4f Tracker::MatForRender() const{
 }
 
 cv::Mat Tracker::Render(int level) {
-    Sophus::SE3f pose(MatForRender(mean_));
+    SE3 pose(MatForRender(mean_));
     return RenderAt(pose, level);
 }
 
-cv::Mat Tracker::RenderAt(const Sophus::SE3f &object_pose,
+cv::Mat Tracker::RenderAt(const SE3 &object_pose,
                           int level) {
     auto renderer = renderers_[level];
     CHECK(renderer != nullptr);
@@ -816,16 +817,16 @@ cv::Mat Tracker::RenderAt(const Sophus::SE3f &object_pose,
 }
 
 cv::Mat Tracker::RenderWireframe(int level) {
-    Sophus::SE3f pose(MatForRender(mean_));
+    SE3 pose(MatForRender(mean_));
     return RenderWireframeAt(pose, level);
 }
 
 cv::Mat Tracker::RenderMask(int level) {
-    Sophus::SE3f pose(MatForRender(mean_));
+    SE3 pose(MatForRender(mean_));
     return RenderMaskAt(pose, level);
 }
 
-cv::Mat Tracker::RenderMaskAt(const Sophus::SE3f &object_pose, int level) {
+cv::Mat Tracker::RenderMaskAt(const SE3 &object_pose, int level) {
     auto renderer = renderers_[level];
     CHECK(renderer != nullptr);
 
@@ -835,7 +836,7 @@ cv::Mat Tracker::RenderMaskAt(const Sophus::SE3f &object_pose, int level) {
     return out;
 }
 
-cv::Mat Tracker::RenderWireframeAt(const Sophus::SE3f &object_pose,
+cv::Mat Tracker::RenderWireframeAt(const SE3 &object_pose,
                                    int level) {
     auto renderer = renderers_[level];
     CHECK(renderer != nullptr);
@@ -847,11 +848,11 @@ cv::Mat Tracker::RenderWireframeAt(const Sophus::SE3f &object_pose,
 }
 
 cv::Mat Tracker::RenderDepth(int level) {
-    Sophus::SE3f pose(MatForRender(mean_));
+    SE3 pose(MatForRender(mean_));
     return RenderDepthAt(pose, level);
 }
 
-cv::Mat Tracker::RenderDepthAt(const Sophus::SE3f &object_pose,
+cv::Mat Tracker::RenderDepthAt(const SE3 &object_pose,
                                int level) {
     auto renderer = renderers_[level];
     CHECK(renderer != nullptr);
@@ -880,7 +881,7 @@ void Tracker::GetProjection(std::vector<Vec2f> &projections,
             Vec3f v(particles_[i].v().head<3>());
             v(2) = std::exp(v(2));
             v.head<2>() *= v(2);
-            v = gwc_.inverse() * gwr_ * v;
+            v = gwc_.inv() * gwr_ * v;
             projections.push_back(Project(v, level));
         }
     }
@@ -890,7 +891,7 @@ Vec2f Tracker::ProjectMean(int level) const {
     Vec3f v(mean_.head<3>());
     v(2) = std::exp(v(2));
     v.head<2>() *= v(2);
-    v = gwc_.inverse() * gwr_ * v;
+    v = gwc_.inv() * gwr_ * v;
     return Project(v, level);
 }
 

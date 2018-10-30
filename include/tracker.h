@@ -2,7 +2,7 @@
 // Created by visionlab on 10/17/17.
 //
 #pragma once
-#include "eigen_alias.h"
+#include "alias.h"
 
 // stl
 #include <string>
@@ -13,7 +13,6 @@
 
 // sophus
 #include "json/json.h"
-#include "sophus/se3.hpp"
 #include "opencv2/highgui.hpp"
 
 // lcm
@@ -26,6 +25,7 @@
 #include "distance_transform.h"
 #include "particle.h"
 #include "lcm_msg_handlers.h"
+#include "se3.h"
 
 namespace feh {
 namespace tracker {
@@ -67,13 +67,13 @@ public:
     /// \param imagepath: Input image full path,
     /// which is only passed around as part of bbox message.
     void InitializeFromBoundingBox(const vlslam_pb::BoundingBox &bbox,
-                                   const Sophus::SE3f &cam_pose,
-                                   const Sophus::SO3f &Rg,
+                                   const SE3 &cam_pose,
+                                   const SO3 &Rg,
                                    std::string imagepath="");
     /// \brief: Initialization with azimuth distribution returned by CNN as prior.
     void InitializeFromBoundingBoxWithAzimuthPrior(const vlslam_pb::BoundingBox &bbox,
-                                                   const Sophus::SE3f &cam_pose,
-                                                   const Sophus::SO3f &Rg,
+                                                   const SE3 &cam_pose,
+                                                   const SO3 &Rg,
                                                    std::string imagepath="");
 
     bool IsObjectPoseInitialized() const { return status_ >= TrackerStatus::INITIALIZING; }
@@ -85,8 +85,8 @@ public:
     // FIXME: replace int with enum type to reflect status
     int Update(const cv::Mat &evidence,
                const vlslam_pb::BoundingBoxList &bbox_list,
-               const Sophus::SE3f &gwc,
-               const Sophus::SO3f &Rg,
+               const SE3 &gwc,
+               const SO3 &Rg,
                const cv::Mat &img,
                std::string imagepath="");
     /// \brief: Given hypothesis (v) and pixelwise posterior map (P), compute
@@ -95,8 +95,8 @@ public:
     /// \brief: Scale, crop evidences, etc.
     int Preprocess(const cv::Mat &evidence,
                    const vlslam_pb::BoundingBoxList &bbox_list,
-                   const Sophus::SE3f &gwc,
-                   const Sophus::SO3f &Rg,
+                   const SE3 &gwc,
+                   const SO3 &Rg,
                    const cv::Mat &img);
     /// \brief: Compute the normal of edge pixels at given level.
     void ComputeEdgeNormal(int level);
@@ -141,13 +141,13 @@ public:
 
     /// \brief: Render edge map at current best estimate.
     cv::Mat Render(int level=0);
-    cv::Mat RenderAt(const Sophus::SE3f &object_pose, int level=0);
+    cv::Mat RenderAt(const SE3 &object_pose, int level=0);
     cv::Mat RenderWireframe(int level=0);
-    cv::Mat RenderWireframeAt(const Sophus::SE3f &object_pose, int level=0);
+    cv::Mat RenderWireframeAt(const SE3 &object_pose, int level=0);
     cv::Mat RenderDepth(int level=0);
-    cv::Mat RenderDepthAt(const Sophus::SE3f &object_pose, int level=0);
+    cv::Mat RenderDepthAt(const SE3 &object_pose, int level=0);
     cv::Mat RenderMask(int level=0);
-    cv::Mat RenderMaskAt(const Sophus::SE3f &object_pose, int level=0);
+    cv::Mat RenderMaskAt(const SE3 &object_pose, int level=0);
     Vec2f Project(const Vec3f &vertex, int level=0) const;
     void GetProjection(std::vector<Vec2f> &projections, int level=0) const;
     Vec2f ProjectMean(int level=0) const;
@@ -155,7 +155,7 @@ public:
         Vec3f v(mean_.head<3>());
         v(2) = std::exp(v(2));
         v.head<2>() *= v(2);
-        v = gwc_.inverse() * gwr_ * v;
+        v = gwc_.inv() * gwr_ * v;
         return v;
     }
 
@@ -166,7 +166,7 @@ public:
     const std::string &class_name() const { return class_name_; }
     const std::string &shape_name() const { return shapes_.at(best_shape_match_).name_; }
     Mat4f pose() {
-        gwm_ = gwr_ * Sophus::SE3f(MatForRender());
+        gwm_ = gwr_ * SE3(MatForRender());
         return gwm_.matrix();
     }
     TrackerStatus status() const { return status_; }
@@ -188,7 +188,7 @@ public:
     const cv::Mat &GetFilterView() const { return display_; }
     void WriteOutParticles(const std::string &filename) const;
 
-    void SetInitCameraToWorld(const Sophus::SE3f &gwc0) {
+    void SetInitCameraToWorld(const SE3 &gwc0) {
         gwc0_ = gwc0;
     }
     /// \brief: Convert from local parametrization to object pose whose
@@ -303,13 +303,13 @@ private:
     // current image address
     std::string image_fullpath_;
     // reference camera pose
-    Sophus::SE3f gwc0_; // initial camera frame to world frame
-    Sophus::SE3f gwr_;     // g(world <- reference camera)
+    SE3 gwc0_; // initial camera frame to world frame
+    SE3 gwr_;     // g(world <- reference camera)
     // current camera pose g(reference <- current)
-    Sophus::SE3f gwc_;     // g(world <- current camera)
-    Sophus::SE3f grc_;      // g(reference camera <- current camera)
-    Sophus::SO3f Rg_;
-    Sophus::SE3f gwm_;  // g(world <- model) For output
+    SE3 gwc_;     // g(world <- current camera)
+    SE3 grc_;      // g(reference camera <- current camera)
+    SO3 Rg_;
+    SE3 gwm_;  // g(world <- model) For output
 
     std::ofstream dbg_file_;
 

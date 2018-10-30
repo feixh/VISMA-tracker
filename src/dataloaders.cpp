@@ -5,10 +5,10 @@
 
 // 3rd party
 #include "json/json.h"
+#include "opencv2/imgproc.hpp"
 
 // own
 #include "tracker_utils.h"
-#include "opencv2/imgproc.hpp"
 
 namespace feh {
 
@@ -32,7 +32,7 @@ LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
     }
     transform_data(3, 3) = 1.0;
     ifs.close();
-    transform_ = Sophus::SE3f(transform_data);
+    transform_ = SE3(transform_data);
     std::cout << "transform=\n" << transform_.matrix() << "\n";
 
     // read in jpg files
@@ -46,7 +46,7 @@ LinemodDatasetLoader::LinemodDatasetLoader(const std::string &dataroot):
 
 bool LinemodDatasetLoader::Grab(int i,
                                 cv::Mat &image,
-                                Sophus::SE3f &gm) {
+                                SE3 &gm) {
     if (i >= size_ || i < 0) return false;
 
     image = cv::imread(jpg_files_[i]);
@@ -79,7 +79,7 @@ bool LinemodDatasetLoader::Grab(int i,
     RT.block<3, 1>(0, 3) = T;
     RT(3, 3) = 1.0;
 
-    gm = Sophus::SE3f(RT);
+    gm = SE3(RT);
 
     return true;
 }
@@ -160,7 +160,7 @@ RigidPoseDatasetLoader::RigidPoseDatasetLoader(
 
 }
 
-bool RigidPoseDatasetLoader::Grab(cv::Mat &image, Sophus::SE3f &pose) {
+bool RigidPoseDatasetLoader::Grab(cv::Mat &image, SE3 &pose) {
     capture_ >> image;
     if (image.empty()) return false;
     if (index_ >= g_.size()) return false;
@@ -169,13 +169,13 @@ bool RigidPoseDatasetLoader::Grab(cv::Mat &image, Sophus::SE3f &pose) {
     return true;
 }
 
-Sophus::SE3f RigidPoseDatasetLoader::GetPose(int i) const {
-//    auto R = Sophus::SO3f::exp(g_[i].tail<3>());
-//    R *= Sophus::SO3f((Eigen::Matrix3f ()<< -1, 0, 0,
+SE3 RigidPoseDatasetLoader::GetPose(int i) const {
+//    auto R = SO3::exp(g_[i].tail<3>());
+//    R *= SO3((Eigen::Matrix3f ()<< -1, 0, 0,
 //                      0, -1, 0,
 //                      0, 0, 1).finished());
     Eigen::Matrix3f R = Eigen::AngleAxisf(g_[i].tail<3>().norm(), g_[i].tail<3>()).toRotationMatrix();
-    return Sophus::SE3f(Sophus::SO3f::fitToSO3(R), g_[i].head<3>());
+    return SE3(SO3::fitToSO3(R), g_[i].head<3>());
 }
 
 VlslamDatasetLoader::VlslamDatasetLoader(const std::string &dataroot):
@@ -214,8 +214,8 @@ bool VlslamDatasetLoader::Grab(int i,
                                cv::Mat &image,
                                cv::Mat &edgemap,
                                vlslam_pb::BoundingBoxList &bboxlist,
-                               Sophus::SE3f &gwc,
-                               Sophus::SO3f &Rg,
+                               SE3 &gwc,
+                               SO3 &Rg,
                                std::string &fullpath) {
     fullpath = png_files_[i];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
@@ -225,18 +225,18 @@ bool VlslamDatasetLoader::Grab(int i,
                                cv::Mat &image,
                                cv::Mat &edgemap,
                                vlslam_pb::BoundingBoxList &bboxlist,
-                               Sophus::SE3f &gwc,
-                               Sophus::SO3f &Rg) {
+                               SE3 &gwc,
+                               SO3 &Rg) {
 
     if (i >= size_ || i < 0) return false;
 //    std::cout << i << "\n";
 
     vlslam_pb::Packet *packet_ptr(dataset_.mutable_packets(i));
-    gwc = Sophus::SE3f(SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
+    gwc = SE3(SE3FromArray(packet_ptr->mutable_gwc()->mutable_data()));
 
     // gravity alignment rotation
     Vec3f Wg(packet_ptr->wg(0), packet_ptr->wg(1), 0);
-    Rg = Sophus::SO3f::exp(Wg);
+    Rg = SO3::exp(Wg);
 
     std::string png_file = png_files_[i];
     std::string edge_file = edge_files_[i];
@@ -296,14 +296,12 @@ ICLDatasetLoader::ICLDatasetLoader(const std::string &dataroot) {
     CHECK(fid.is_open()) << "failed to open pose file";
     float tmp[12];
     for (;;) {
-        Sophus::SE3f pose;
         for (int i = 0; i < 12; ++i) if (!(fid >> tmp[i])) break;
-        pose.setRotationMatrix((Mat3f() << tmp[0], tmp[1], tmp[2],
-            tmp[4], tmp[5], tmp[6],
-            tmp[8], tmp[9], tmp[10]).finished());
-        pose.translation() << tmp[3], tmp[7], tmp[11];
+        SE3 pose{(Mat3f{} << tmp[0], tmp[1], tmp[2],
+                            tmp[4], tmp[5], tmp[6],
+                            tmp[8], tmp[9], tmp[10]).finished(),
+                 Vec3f{tmp[3], tmp[7], tmp[11]}};
         poses_.push_back(pose);
-//        std::cout << "pose=\n" << pose.matrix3x4() << "\n";
         if (fid.eof()) break;
     }
     fid.close();
@@ -339,8 +337,8 @@ bool ICLDatasetLoader::Grab(int i,
                             cv::Mat &image,
                             cv::Mat &edgemap,
                             vlslam_pb::BoundingBoxList &bboxlist,
-                            Sophus::SE3f &gwc,
-                            Sophus::SO3f &Rg) {
+                            SE3 &gwc,
+                            SO3 &Rg) {
 
     if (i >= size_ || i < 0) return false;
     std::cout << i << "/" << size_ << "\n";
@@ -348,7 +346,8 @@ bool ICLDatasetLoader::Grab(int i,
 
     gwc = poses_[i];
     // world frame is already gravity aligned thanks to the nice ICL-NUIM dataset
-    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    // Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    Rg = SO3{};
 
     std::string png_file = png_files_[i];
     std::string edge_file = edge_files_[i];
@@ -375,8 +374,8 @@ bool ICLDatasetLoader::Grab(int i,
                                cv::Mat &image,
                                cv::Mat &edgemap,
                                vlslam_pb::BoundingBoxList &bboxlist,
-                               Sophus::SE3f &gwc,
-                               Sophus::SO3f &Rg,
+                               SE3 &gwc,
+                               SO3 &Rg,
                                std::string &fullpath) {
     fullpath = png_files_[i];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
@@ -402,11 +401,11 @@ SceneNNDatasetLoader::SceneNNDatasetLoader(const std::string &dataroot) {
 
     float tmp[16];
     for (;;) {
-        Sophus::SE3f pose;
+        SE3 pose;
         int x;
         fid >> x; fid >> x; fid >> x;
         for (int i = 0; i < 16; ++i) if (!(fid >> tmp[i])) break;
-        pose.so3() = Sophus::SO3f::fitToSO3(
+        pose.so3() = SO3::fitToSO3(
             (Mat3f() << tmp[0], tmp[1], tmp[2],
                 tmp[4], tmp[5], tmp[6],
                 tmp[8], tmp[9], tmp[10]).finished());
@@ -440,8 +439,8 @@ bool SceneNNDatasetLoader::Grab(int i,
                             cv::Mat &image,
                             cv::Mat &edgemap,
                             vlslam_pb::BoundingBoxList &bboxlist,
-                            Sophus::SE3f &gwc,
-                            Sophus::SO3f &Rg) {
+                            SE3 &gwc,
+                            SO3 &Rg) {
     i += skip_head_;
 
     if (i >= size_ || i < 0) return false;
@@ -452,7 +451,8 @@ bool SceneNNDatasetLoader::Grab(int i,
 
     gwc = poses_[i];
     // FIXME: MAKE UP GRAVITY
-    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    // Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    Rg = SO3{};
 
     std::string png_file = png_files_[i];
     std::string edge_file = edge_files_[i];
@@ -479,8 +479,8 @@ bool SceneNNDatasetLoader::Grab(int i,
                             cv::Mat &image,
                             cv::Mat &edgemap,
                             vlslam_pb::BoundingBoxList &bboxlist,
-                            Sophus::SE3f &gwc,
-                            Sophus::SO3f &Rg,
+                            SE3 &gwc,
+                            SO3 &Rg,
                             std::string &fullpath) {
     fullpath = png_files_[i+skip_head_];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);
@@ -511,8 +511,8 @@ KittiDatasetLoader::KittiDatasetLoader(const std::string &dataroot) {
         CHECK(fid.is_open()) << "failed to open pose file " << pose_files[i];
         float tmp[12];
         for (int k = 0; k < 12; ++k) fid >> tmp[k];
-        Sophus::SE3f pose;
-        pose.so3() = Sophus::SO3f::fitToSO3(
+        SE3 pose;
+        pose.so3() = SO3::fitToSO3(
             swapaxis * (Mat3f() << tmp[0], tmp[1], tmp[2],
                 tmp[4], tmp[5], tmp[6],
                 tmp[8], tmp[9], tmp[10]).finished());
@@ -526,11 +526,12 @@ bool KittiDatasetLoader::Grab(int i,
                               cv::Mat &image,
                               cv::Mat &edgemap,
                               vlslam_pb::BoundingBoxList &bboxlist,
-                              Sophus::SE3f &gwc,
-                              Sophus::SO3f &Rg) {
+                              SE3 &gwc,
+                              SO3 &Rg) {
     gwc = poses_[i];
     // FIXME: MAKE UP GRAVITY
-    Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    // Rg.setQuaternion(Eigen::Quaternion<float>::Identity());
+    Rg = SO3{};
 
     std::string png_file = png_files_[i];
     std::string edge_file = edge_files_[i];
@@ -560,8 +561,8 @@ bool KittiDatasetLoader::Grab(int i,
                               cv::Mat &image,
                               cv::Mat &edgemap,
                               vlslam_pb::BoundingBoxList &bboxlist,
-                              Sophus::SE3f &gwc,
-                              Sophus::SO3f &Rg,
+                              SE3 &gwc,
+                              SO3 &Rg,
                               std::string &fullpath) {
     fullpath = png_files_[i];
     return Grab(i, image, edgemap, bboxlist, gwc, Rg);

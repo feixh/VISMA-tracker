@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Eigen/Dense"
-#include "sophus/se3.hpp"
+#include "se3.h"
+#include "rodrigues.h"
 
 namespace feh {
 
@@ -52,8 +52,8 @@ using VecXi = Eigen::Matrix<int, Eigen::Dynamic, 1>;
 using MatXi = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic>;
 using MatX3i = Eigen::Matrix<int, Eigen::Dynamic, 3>;
 
-using SE3 = Sophus::SE3<ftype>;
-using SO3 = Sophus::SO3<ftype>;
+using SE3 = SE3Type<ftype>;
+using SO3 = SO3Type<ftype>;
 
 static const float eps = 1e-4f;
 

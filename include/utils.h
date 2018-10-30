@@ -3,7 +3,7 @@
 //
 // Common utilities.
 #pragma once
-#include "eigen_alias.h"
+#include "alias.h"
 
 // stl
 #include <chrono>

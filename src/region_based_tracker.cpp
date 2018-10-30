@@ -139,7 +139,7 @@ void RegionBasedTracker::Initialize(const std::string &config_file,
 
 void RegionBasedTracker::InitializeTracker(const cv::Mat &image,
                                            const cv::Rect &bbox,
-                                           const Sophus::SE3f &gm_init) {
+                                           const SE3 &gm_init) {
     cv::Mat edge(renderers_[0]->rows(), renderers_[0]->cols(), CV_8UC1);
     renderers_[0]->RenderEdge(gm_init.matrix(), edge.data);
     cv::Mat display(image.clone());
@@ -158,17 +158,17 @@ void RegionBasedTracker::Update(const cv::Mat &image) {
     gm_ = Optimize(image, bbox, gm_);
 }
 
-Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
+SE3 RegionBasedTracker::Optimize(const cv::Mat &image,
                                           const cv::Rect &bbox) {
     Vec3f W = GetVectorFromDynamic<float, 3>(config_, "W0");
     Vec3f T = GetVectorFromDynamic<float, 3>(config_, "T0");
-    Sophus::SE3f gm(Sophus::SO3f::exp(W), T);
+    SE3 gm(SO3::exp(W), T);
     return Optimize(image, bbox, gm);
 }
 
-Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
+SE3 RegionBasedTracker::Optimize(const cv::Mat &image,
                                           const cv::Rect &bbox,
-                                          const Sophus::SE3f &gm) {
+                                          const SE3 &gm) {
     // build image pyramid
     image_pyr_[0] = image.clone();
     roi_[0] = bbox;
@@ -187,7 +187,7 @@ Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
         roi_[i].height = roi_[i - 1].height * 0.5;
     }
 
-    Sophus::SE3f g(gm);
+    SE3 g(gm);
     for (int level = levels_-1; level >= 1; --level) {
         int num_iter = config_["num_iter"].get("level" + std::to_string(level),
                                                10).asInt();
@@ -202,7 +202,7 @@ Sophus::SE3f RegionBasedTracker::Optimize(const cv::Mat &image,
     return g;
 }
 
-bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
+bool RegionBasedTracker::UpdateOneStepAtLevel(int level, SE3 &g) {
     timer_.Tick("total at level " + std::to_string(level));
     CHECK(level >= 0 && level < levels_) << "level out-of-range";
     // grab local variables
@@ -502,7 +502,7 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         // igl::writeOFF("boundary_pointcloud.off", V, F, CC);
 
         // apply gcm to model vertices
-        Eigen::MatrixXf model_vertices = vertices_ * g.rotationMatrix().transpose();
+        Eigen::MatrixXf model_vertices = vertices_ * g.so3().inv().matrix();
         model_vertices.rowwise() += g.translation().transpose();
         // write out
         igl::writeOFF("model_pointcloud.off", model_vertices, F);
@@ -585,7 +585,8 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         Eigen::Matrix<float, 6, 1> delta = -(JtJ + I).llt().solve(Jt);
         std::cout << "delta=" << delta.transpose() << "\n";
         std::cout << "g=" << g.matrix3x4() << "\n";
-        g = Sophus::SE3f::exp(delta) * g;
+        // FIXME: exponential map does not work now with my own se3 type
+        // g = SE3::exp(delta) * g;
     } else {
         Eigen::Matrix<float, 4, 1> delta
             = -(JtJ + I).block<4, 4>(0, 0).llt().solve(Jt.head<4>());
@@ -599,7 +600,8 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, Sophus::SE3f &g) {
         full_delta.head<3>() = delta.head<3>();
         full_delta(4) = delta(3);
 
-        g = Sophus::SE3f::exp(full_delta) * g;
+        // FIXME: exponential map does not work now with my own se3 type
+        // g = SE3::exp(full_delta) * g;
 
     }
     timer_.Tock("construct linear system");

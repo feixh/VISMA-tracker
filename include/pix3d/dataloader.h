@@ -10,10 +10,9 @@
 #include "opencv2/imgproc.hpp"
 #include "json/json.h"
 #include "igl/readOBJ.h"
-#include "sophus/se3.hpp"
 
 // feh
-#include "eigen_alias.h"
+#include "alias.h"
 #include "utils.h"
 
 namespace feh {
@@ -30,7 +29,7 @@ struct Pix3dPacket {
         LoadEdgeMap(dataroot + std::string{tmp.begin(), tmp.end()-4} + ".edge", edge_);
 
         // load object pose
-        go_ = Sophus::SE3<ftype>{
+        go_ = SE3{
             GetMatrixFromDynamic<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
             GetVectorFromDynamic<ftype, 3>(record, "trans_mat")};
 
@@ -45,14 +44,14 @@ struct Pix3dPacket {
         inplane_rotation_  = record["inplane_rotation"].asDouble();
         Vec3 dir = Vec3::Zero() - cam_position_;
         dir /= dir.norm();
-        gc_ = Sophus::SE3<ftype>(Sophus::SO3<ftype>::exp(inplane_rotation_ * dir), cam_position_);
+        gc_ = SE3(SO3::exp(inplane_rotation_ * dir), cam_position_);
 
         // load CAD model
         LoadMesh(dataroot + record["model"].asString(), V_, F_);
     }
     cv::Mat img_, mask_, edge_;
-    Sophus::SE3<ftype> go_;  // object pose, applied to object directly
-    Sophus::SE3<ftype> gc_;  // camera pose FIXME: add more details later
+    SE3 go_;  // object pose, applied to object directly
+    SE3 gc_;  // camera pose FIXME: add more details later
     Vec3 cam_position_; // make the names consistent with pix3d json file
     ftype inplane_rotation_;    // assuming object sitting at the origin, camera is looking at the object center with an inplane rotation
     ftype focal_length_;

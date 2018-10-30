@@ -9,13 +9,13 @@
 #include <unordered_map>
 
 // 3rd party
-#include "sophus/se3.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/videoio.hpp"
 
 // own
 #include "vlslam.pb.h"
-#include "eigen_alias.h"
+#include "alias.h"
+#include "se3.h"
 
 namespace feh {
 
@@ -29,7 +29,7 @@ public:
     /// \param image: image at index i
     /// \param gm: ground truth model pose at index i
     /// \return: false if index out-of-range
-    bool Grab(int i, cv::Mat &image, Sophus::SE3f &gm);
+    bool Grab(int i, cv::Mat &image, SE3 &gm);
 
     int size() const { return size_; }
     MatXf vertices() const { return vertices_; }
@@ -40,7 +40,7 @@ private:
     MatXi faces_;
     std::vector<std::string> jpg_files_, trans_files_, rot_files_;
     std::string dataroot_;
-    Sophus::SE3f transform_;
+    SE3 transform_;
     int size_;
 
 public:
@@ -67,15 +67,15 @@ public:
                       cv::Mat &image,
                       cv::Mat &edgemap,
                       vlslam_pb::BoundingBoxList &bboxlist,
-                      Sophus::SE3f &gwc,
-                      Sophus::SO3f &Rg);
+                      SE3 &gwc,
+                      SO3 &Rg);
     /// \param fullpath: full path to the image file
     virtual bool Grab(int i,
                       cv::Mat &image,
                       cv::Mat &edgemap,
                       vlslam_pb::BoundingBoxList &bboxlist,
-                      Sophus::SE3f &gwc,
-                      Sophus::SO3f &Rg,
+                      SE3 &gwc,
+                      SO3 &Rg,
                       std::string &fullpath);
     std::unordered_map<int64_t, std::array<double, 6>> GrabPointCloud(int i, const cv::Mat &img);
 
@@ -94,18 +94,18 @@ public:
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg) override;
+              SE3 &gwc,
+              SO3 &Rg) override;
 
     bool Grab(int i,
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg,
+              SE3 &gwc,
+              SO3 &Rg,
               std::string &fullpath) override;
 private:
-    std::vector<Sophus::SE3f> poses_;
+    std::vector<SE3> poses_;
 };
 
 class ICLDatasetLoader : public VlslamDatasetLoader {
@@ -116,18 +116,18 @@ public:
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg) override ;
+              SE3 &gwc,
+              SO3 &Rg) override ;
     /// \param fullpath: full path to the image file
     bool Grab(int i,
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg,
+              SE3 &gwc,
+              SO3 &Rg,
               std::string &fullpath) override;
 private:
-    std::vector<Sophus::SE3f> poses_;
+    std::vector<SE3> poses_;
 };
 
 class SceneNNDatasetLoader : public VlslamDatasetLoader {
@@ -137,18 +137,18 @@ public:
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg) override ;
+              SE3 &gwc,
+              SO3 &Rg) override ;
     /// \param fullpath: full path to the image file
     bool Grab(int i,
               cv::Mat &image,
               cv::Mat &edgemap,
               vlslam_pb::BoundingBoxList &bboxlist,
-              Sophus::SE3f &gwc,
-              Sophus::SO3f &Rg,
+              SE3 &gwc,
+              SO3 &Rg,
               std::string &fullpath) override;
 private:
-    std::vector<Sophus::SE3f> poses_;
+    std::vector<SE3> poses_;
     int skip_head_, until_last_;
 };
 
@@ -169,8 +169,8 @@ public:
     ~RigidPoseDatasetLoader() {
         capture_.release();
     }
-    bool Grab(cv::Mat &image, Sophus::SE3f &pose);
-    Sophus::SE3f GetPose(int i) const;
+    bool Grab(cv::Mat &image, SE3 &pose);
+    SE3 GetPose(int i) const;
 
     MatXf vertices() const { return vertices_; }
     MatXi faces() const { return faces_; }

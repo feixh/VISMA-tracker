@@ -54,7 +54,7 @@ void Scene::Initialize(const std::string &config_file, const Json::Value &more_c
     evidence_ = cv::Mat(rows_, cols_, CV_8UC1);
 }
 
-void Scene::SetInitCameraToWorld(const Sophus::SE3f &gwc0) {
+void Scene::SetInitCameraToWorld(const SE3 &gwc0) {
     if (initial_pose_set_) {
         LOG(FATAL) << "initial camera pose already set!!!";
     }

@@ -6,15 +6,15 @@
 
 #include "glog/logging.h"
 #include "opencv2/imgproc.hpp"
-#include "sophus/se3.hpp"
 #include "fmt/format.h"
 
-#include "eigen_alias.h"
+#include "alias.h"
 #include "rodrigues.h"
 #include "utils.h"
 #include "distance_transform.h"
 #include "DFtracker.h"
 #include "renderer.h"
+#include "se3.h"
 
 namespace feh {
 

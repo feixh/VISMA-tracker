@@ -41,7 +41,7 @@ int main() {
 
     cv::Mat image;
     cv::Mat edge(loader.rows_, loader.cols_, CV_8UC1);
-    Sophus::SE3f pose;
+    SE3 pose;
     int frame_counter(0);
     while (loader.Grab(image, pose)) {
         cv::flip(image, image, 0);

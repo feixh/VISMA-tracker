@@ -2,7 +2,7 @@
 // Created by visionlab on 11/2/17.
 //
 #pragma once
-#include "eigen_alias.h"
+#include "alias.h"
 #include "utils.h"
 
 // stl
@@ -11,12 +11,12 @@
 
 // 3rd party
 #include "opencv2/opencv.hpp"
-#include "sophus/se3.hpp"
 #include "json/json.h"
 
 //own
 #include "renderer.h"
 #include "distance_transform.h"
+#include "se3.h"
 
 namespace feh {
 namespace tracker {
@@ -34,13 +34,13 @@ public:
     /// \param bbox: a bounding box roughly covers the object.
     /// \param gm_init: initial guess of model to camera rigid body transformation.
     /// \return: Optimized pose.
-    Sophus::SE3f Optimize(const cv::Mat &image,
+    SE3 Optimize(const cv::Mat &image,
                           const cv::Rect &bbox,
-                          const Sophus::SE3f &gm_init);
+                          const SE3 &gm_init);
     /// \brief: Optimize object pose given image and a rough bounding box.
     /// Initial guess will be read from configure file.
     /// \return: Optimized pose.
-    Sophus::SE3f Optimize(const cv::Mat &image,
+    SE3 Optimize(const cv::Mat &image,
                           const cv::Rect &bbox);
 
 
@@ -50,12 +50,12 @@ public:
     /// \param gm_init: Initial pose of the model.
     void InitializeTracker(const cv::Mat &image,
                     const cv::Rect &bbox,
-                    const Sophus::SE3f &gm_init);
+                    const SE3 &gm_init);
 
     /// \brief: Update pose estimation for tracking.
     void Update(const cv::Mat &image);
 
-    bool UpdateOneStepAtLevel(int level, Sophus::SE3f &g);
+    bool UpdateOneStepAtLevel(int level, SE3 &g);
 
     /// \brief: Compute color histograms from a given bounding box.
     /// Pixels inside the bounding box are considered as foreground.
@@ -114,7 +114,7 @@ private:
     bool constrain_rotation_;
     cv::Mat display_;
 
-    Sophus::SE3f gm_;
+    SE3 gm_;
 
 };
 

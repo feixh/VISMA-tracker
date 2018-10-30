@@ -7,7 +7,6 @@
 #include <fstream>
 
 // 3rd party
-#include "sophus/se3.hpp"
 
 // own
 #include "tracker_utils.h"
@@ -43,7 +42,7 @@ int main() {
 
     for (int i = 0; i < loader.size(); ++i) {
         cv::Mat img;
-        Sophus::SE3f gm_true;
+        SE3 gm_true;
         loader.Grab(i, img, gm_true);
 
 //#define FEH_DEBUG_LINEMOD_DATALOADER
@@ -54,10 +53,8 @@ int main() {
         tracker::OverlayMaskOnImage(edge, display);
         cv::imshow("input image with gt pose", display);
 #else
-        Sophus::SE3f gm;
-        gm.so3() = Sophus::SO3f::exp(gm_true.so3().log()
-                                         + Vec3f::Random() * M_PI * 30 / 180);
-        gm.translation() = gm_true.translation() + Vec3f::Random() * 0.01;
+        SE3 gm{ SO3::exp(gm_true.so3().log() + Vec3f::Random() * M_PI * 30 / 180),
+                gm_true.translation() + Vec3f::Random() * 0.01};
 
         cv::Mat display = img.clone();
         cv::Mat edge(loader.rows_, loader.cols_, CV_8UC1);

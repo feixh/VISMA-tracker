@@ -17,8 +17,8 @@ namespace tracker {
 
 void Scene::Update(const cv::Mat &evidence,
                    const vlslam_pb::BoundingBoxList &bbox_list,
-                   const Sophus::SE3f &gwc,
-                   const Sophus::SO3f &Rg,
+                   const SE3 &gwc,
+                   const SO3 &Rg,
                    const cv::Mat &img,
                    const std::string &imagepath) {
     ++frame_counter_;

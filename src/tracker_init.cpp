@@ -8,8 +8,8 @@ namespace feh {
 namespace tracker {
 
 void Tracker::InitializeFromBoundingBox(const vlslam_pb::BoundingBox &bbox,
-                                        const Sophus::SE3f &cam_pose,
-                                        const Sophus::SO3f &Rg,
+                                        const SE3 &cam_pose,
+                                        const SO3 &Rg,
                                         std::string imagepath) {
 
     image_fullpath_ = imagepath;
@@ -21,7 +21,7 @@ void Tracker::InitializeFromBoundingBox(const vlslam_pb::BoundingBox &bbox,
 
     for (auto sid : shape_ids_) {
         for (auto r: shapes_.at(sid).render_engines_) {
-            r->SetCamera(grc_.inverse().matrix());
+            r->SetCamera(grc_.inv().matrix());
         }
     }
     status_ = TrackerStatus::INITIALIZING;

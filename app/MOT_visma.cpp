@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "glog/logging.h"
-#include "sophus/se3.hpp"
 
 #include "fmt/format.h"
 #include "json/json.h"
@@ -71,8 +70,8 @@ int main(int argc, char **argv) {
         std::cout << "outer loop " <<  i << "/" << loader->size() << "\n";
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
-        Sophus::SE3f gwc;
-        Sophus::SO3f Rg;
+        SE3 gwc;
+        SO3 Rg;
 
         std::string imagepath;
         bool succeed = loader->Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
@@ -82,7 +81,7 @@ int main(int argc, char **argv) {
         if (i == 0) {
             // global reference frame
             if (is_sceneNN) {
-                scene.SetInitCameraToWorld(Sophus::SE3f{});
+                scene.SetInitCameraToWorld(SE3{});
             } else {
                 scene.SetInitCameraToWorld(gwc);
             }

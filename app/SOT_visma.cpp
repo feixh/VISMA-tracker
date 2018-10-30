@@ -4,7 +4,6 @@
 
 // 3rd party
 #include "glog/logging.h"
-#include "sophus/se3.hpp"
 
 // feh
 #include "dataloaders.h"
@@ -35,13 +34,13 @@ int main(int argc, char **argv) {
     int start_index = config.get("start_index", 0).asInt();
 
     cv::namedWindow("tracker view", CV_WINDOW_NORMAL);
-    Sophus::SE3f camera_pose_t0;
+    SE3 camera_pose_t0;
     cv::Mat display;
     for (int i = start_index; i < loader.size(); ++i) {
         cv::Mat img, edgemap;
         vlslam_pb::BoundingBoxList bboxlist;
-        Sophus::SE3f gwc;
-        Sophus::SO3f Rg;
+        SE3 gwc;
+        SO3 Rg;
 
         std::string imagepath;
         loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);

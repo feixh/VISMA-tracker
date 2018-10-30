@@ -31,7 +31,7 @@ DFTracker::DFTracker(const cv::Mat &img, const cv::Mat &edge,
                -1, 0, 0,
                0, -1, 0;
     Mat3 flip_so{flip_sc * flip_co};   // object -> spatial
-    g_ = SE3(flip_so * g.so3().matrix(), flip_so * g.translation());
+    g_ = SE3(SO3{flip_so * g.so3().matrix()}, flip_so * g.translation());
 
     BuildDistanceField();
 }
@@ -111,8 +111,8 @@ std::tuple<VecX, MatX> DFTracker::ComputeResidualAndJacobian(const SE3 &g) {
 
     auto Rso = g.so3().matrix();
     auto Tso = g.translation();
-    auto Rcs = gsc_.inverse().so3().matrix();
-    auto Tcs = gsc_.inverse().translation();
+    auto Rcs = gsc_.inv().so3().matrix();
+    auto Tcs = gsc_.inv().translation();
 
     auto fill_jacobian_kernel = [&edgelist, &r, &v, &J, &Rso, &Tso, &Rcs, &Tcs, this]
         (const tbb::blocked_range<int> &range) 
@@ -189,7 +189,7 @@ cv::Mat DFTracker::RenderEdgepixels() const {
 void DFTracker::UpdateCameraPose(const SE3 &gsc) {
     gsc_ = gsc;
     // Note: rendering engine takes transformation from initial frame (spatial) to current frame (camera)
-    engine_->SetCamera(gsc_.inverse().matrix());
+    engine_->SetCamera(gsc_.inv().matrix());
 }
 
 void DFTracker::UpdateImage(const cv::Mat &img, const cv::Mat &edge) {
