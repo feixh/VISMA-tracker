@@ -18,15 +18,17 @@
 namespace feh {
 
 struct Pix3dPacket {
-    Pix3dPacket(const std::string &dataroot, const Json::Value &record) {
+    Pix3dPacket(const std::string &dataroot, const Json::Value &record, bool has_edge=false) {
         // load image & mask
         img_ = cv::imread(dataroot + record["img"].asString());
         mask_ = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
         bbox_ = GetVectorFromDynamic<int, 4>(record, "bbox");
 
         // load pre-computed edge map
-        std::string tmp = record["img"].asString();
-        LoadEdgeMap(dataroot + std::string{tmp.begin(), tmp.end()-4} + ".edge", edge_);
+        if (has_edge) {
+          std::string tmp = record["img"].asString();
+          LoadEdgeMap(dataroot + std::string{tmp.begin(), tmp.end()-4} + ".edge", edge_);
+        }
 
         // load object pose
         go_ = SE3{
@@ -68,7 +70,7 @@ public:
 
         // std::string json_path{dataroot + "/pix3d.json"};
         // FIXME: use the real json file
-        std::string json_path{dataroot + "/test.json"};
+        std::string json_path{dataroot + "/pix3d.json"};
         std::cout << TermColor::cyan << "parsing json file ..." << TermColor::endl;
         json_ = LoadJson(json_path);
         // json_ = folly::parseJson(folly::json::stripComments(content));

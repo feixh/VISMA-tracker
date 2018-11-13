@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     cv::namedWindow("mask", CV_WINDOW_NORMAL);
     cv::imshow("mask", packet.mask_);
 
+    /*
     cv::namedWindow("edge", CV_WINDOW_NORMAL);
     cv::imshow("edge", packet.edge_);
 
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
     cv::namedWindow("dt", CV_WINDOW_NORMAL);
     cv::Mat dt_to_show = feh::DistanceTransform::BuildView(dt);
     cv::imshow("dt", dt_to_show);
+    */
 
     std::cout << "object pose=\n" << packet.go_.matrix3x4() << std::endl;
     std::cout << "object pose inverse=\n" << packet.go_.inv().matrix3x4() << std::endl;
