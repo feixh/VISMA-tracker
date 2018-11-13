@@ -39,6 +39,10 @@ struct Pix3dPacket {
         shape_ = GetVectorFromDynamic<int, 2>(record, "img_size");  // input layout: [width, height]
         std::swap(shape_[0], shape_[1]);    // shape layout: [height, width]
         focal_length_ = record["focal_length"].asDouble() / 32.0 * shape_[1];     // convert from mm to pixels
+        K_ << focal_length_, 0, 0.5 * shape_[1],
+              0, focal_length_, 0.5 * shape_[0],
+              0,             0,               1;
+        Kinv_ = K_.inverse();
 
 
         // construct camera pose from position and in-plane rotation
@@ -61,6 +65,7 @@ struct Pix3dPacket {
     MatX V_;    // vertices &
     MatXi F_;   // faces of CAD models
     Eigen::Matrix<int, 2, 1> shape_;  // shape of images: [rows, cols]
+    Mat3 K_, Kinv_;
 };
 
 class Pix3dLoader {
@@ -91,6 +96,11 @@ public:
         }
         throw std::out_of_range("failed to find datum at " + path);
     }
+
+    int size() const {
+      return json_.size();
+    }
+
 
 
 private:
