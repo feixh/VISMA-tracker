@@ -7,7 +7,7 @@
 #include <iostream>
 
 // 3rd party
-#include "opencv2/core.hpp"
+#include "opencv2/core/core.hpp"
 #include "tbb/blocked_range.h"
 
 // own

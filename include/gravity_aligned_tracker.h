@@ -5,8 +5,8 @@
 #include <chrono>
 
 #include "glog/logging.h"
-#include "opencv2/imgproc.hpp"
-#include "fmt/format.h"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "absl/strings/str_format.h"
 
 #include "alias.h"
 #include "rodrigues.h"

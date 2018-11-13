@@ -11,7 +11,7 @@
 
 // 3rd party
 #include "glog/logging.h"
-#include "opencv2/core.hpp"
+#include "opencv2/core/core.hpp"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
 

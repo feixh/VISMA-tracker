@@ -3,7 +3,7 @@
 
 #include "glog/logging.h"
 
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 #include "json/json.h"
 
 // feh
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 //        cv::imshow("segmentation mask", segmask);
 
         if (dump_dir != nullptr) {
-            cv::imwrite(fmt::format("{}/{:06d}.png", dump_dir, i),
+            cv::imwrite(absl::StrFormat("%d/%0.6d.png", dump_dir, i),
                         display);
         }
 
@@ -114,11 +114,11 @@ int main(int argc, char **argv) {
             wait_time = config["wait_time"].asInt();
         } else if (ckey == 's') {
             if (dump_dir != nullptr) {
-                scene.WriteLogToFile(fmt::format("{}/result_{:04d}.json", dump_dir, i));
+                scene.WriteLogToFile(absl::StrFormat("%d/result_%04d.json", dump_dir, i));
             }
         }
     }
     if (dump_dir != nullptr) {
-        scene.WriteLogToFile(fmt::format("{}/result.json", dump_dir));
+        scene.WriteLogToFile(absl::StrFormat("%d/result.json", dump_dir));
     }
 }

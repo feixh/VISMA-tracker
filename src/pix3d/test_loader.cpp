@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "glog/logging.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 #include "renderer.h"
 #include "pix3d/dataloader.h"
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < packet.shape_[0]; ++i) {
         for (int j = 0; j < packet.shape_[1]; ++j) {
             if ( ((int)packet.mask_.at<uint8_t>(i, j)+ (int)mask.at<uint8_t>(i, j)) != 255) {
-                std::cout << fmt::format("({}, {}) not consistent", i, j) << std::endl;
+                std::cout << absl::StrFormat("(%d, %d) not consistent", i, j) << std::endl;
                 mask_diff.at<uint8_t>(i, j) = 255;
             }
         }

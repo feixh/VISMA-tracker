@@ -5,7 +5,7 @@
 #include "scene.h"
 
 // 3rd party
-#include "opencv2/imgproc.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "json/json.h"
 
 // own

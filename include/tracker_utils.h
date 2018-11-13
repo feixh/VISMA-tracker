@@ -10,7 +10,7 @@
 #include <memory>
 
 // 3rd party
-#include "opencv2/core.hpp"
+#include "opencv2/core/core.hpp"
 
 // own
 #include "utils.h"

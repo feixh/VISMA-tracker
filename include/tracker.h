@@ -13,7 +13,7 @@
 
 // sophus
 #include "json/json.h"
-#include "opencv2/highgui.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 // lcm
 #include "lcm/lcm-cpp.hpp"

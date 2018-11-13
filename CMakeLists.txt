@@ -50,6 +50,8 @@ find_package(GMP REQUIRED)
 # cpu parallelism via intel threading building blocks
 find_package(TBB REQUIRED)
 
+add_subdirectory(thirdparty/abseil-cpp)
+
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}/include
@@ -57,8 +59,8 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/include
         ${PROJECT_SOURCE_DIR}/thirdparty/libigl/include
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/include
-        ${PROJECT_SOURCE_DIR}/thirdparty/fmt/include
         ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/include
+        ${PROJECT_SOURCE_DIR}/thirdparty/abseil-cpp
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
@@ -69,6 +71,7 @@ include_directories(
         ${GMP_INCLUDES}
         ${MPFR_INCLUDES}
         ${MPFR_CXX_INCLUDES}
+        /usr/include
 )
 
 link_directories(
@@ -77,14 +80,14 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/fmt/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        /usr/lib/x86_64-linux-gnu/
 )
 
 set(OpenCV_MINIMAL
         opencv_highgui
         opencv_core
-        opencv_imgcodecs
         opencv_imgproc
-        opencv_videoio
+        opencv_video
         opencv_calib3d)
 
 
@@ -97,7 +100,6 @@ link_libraries(
         ${MPFR_LIBRARIES}
         ${PROTOBUF_LIBRARY}
         lcm
-        fmt
         jsoncpp
         GL
         gtest gtest_main    # for testing
@@ -129,7 +131,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh)
+link_libraries(feh absl::str_format)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)
@@ -217,9 +219,3 @@ endif(build_viewer)
 install(TARGETS feh
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-
-
-
-
-
-

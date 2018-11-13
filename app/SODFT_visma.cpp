@@ -5,7 +5,7 @@
 // 3rd party
 #include "glog/logging.h"
 #include "json/json.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 // feh
 #include "tracker.h"
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
         // std::cout << "cost=" << cost << std::endl;
         cv::Mat tracker_view = tracker->RenderEdgepixels();
         cv::putText(tracker_view, 
-                fmt::format("{:0.2f} FPS", 1000 / duration),
+                absl::StrFormat("%0.2f FPS", 1000 / duration),
                 cv::Point(20, 20), CV_FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 255, 0), 2);
         cv::imshow("tracker view", tracker_view);
 
@@ -98,8 +98,8 @@ int main(int argc, char **argv) {
         cv::imshow("DF", df);
 
         if (config["save"].asBool()) {
-            cv::imwrite(fmt::format("{:04d}_projection.jpg", i), tracker_view);
-            cv::imwrite(fmt::format("{:04d}_DF.jpg", i), df);
+            cv::imwrite(absl::StrFormat("%04d_projection.jpg", i), tracker_view);
+            cv::imwrite(absl::StrFormat("%04d_DF.jpg", i), df);
         }
         char ckey = cv::waitKey(wait_time);
         if (ckey == 'q') break;

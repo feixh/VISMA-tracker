@@ -11,7 +11,7 @@
 #include "igl/readOBJ.h"
 #include "igl/readPLY.h"
 #include "json/json.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 #include "vlslam.pb.h"
 
@@ -235,7 +235,7 @@ bool LoadEdgeMap(const std::string &filename, cv::Mat &edge) {
 std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::string &cat_json) {
     CHECK_STREQ(cat_json.substr(cat_json.find('.'), 5).c_str(), ".json");
     std::string content;
-    std::string full_path = fmt::format("{}/{}", root, cat_json);
+    std::string full_path = absl::StrFormat("%d/%d", root, cat_json);
     auto json_content = LoadJson(full_path);
 
     std::vector<std::string> out;
@@ -294,7 +294,7 @@ Json::Value LoadJson(const std::string &filename) {
         in >> out;
         return out;
     } else {
-        throw std::runtime_error(fmt::format("failed to read file {}", filename));
+        throw std::runtime_error(absl::StrFormat("failed to read file %d", filename));
     }
 }
 

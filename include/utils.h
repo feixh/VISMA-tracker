@@ -14,10 +14,10 @@
 #include <fstream>
 
 // 3rdparty
-#include "opencv2/core.hpp"
+#include "opencv2/core/core.hpp"
 #include "glog/logging.h"
 #include "json/json.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 
 namespace feh {

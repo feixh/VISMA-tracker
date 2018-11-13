@@ -1,11 +1,11 @@
 //
 // Created by feixh on 10/18/17.
 //
-#include <opencv2/imgproc.hpp>
 #include "tracker_utils.h"
 
 // 3rd party
-#include "opencv2/highgui.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "tbb/parallel_for.h"
 #include "glog/logging.h"
 

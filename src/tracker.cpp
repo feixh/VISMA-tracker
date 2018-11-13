@@ -5,9 +5,9 @@
 #include "tracker.h"
 
 // 3rd party
-#include "opencv2/imgproc.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "json/json.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 // own
 #include "tracker_utils.h"
 #include "parallel_kernels.h"
@@ -250,7 +250,7 @@ void Tracker::Initialize(const std::string &config_file,
     // setup debug file
     if (config_["debug_info"].get("save_to_file", false).asBool())
     {
-        std::string dbg_filename = fmt::format("dbg_tracker{:04d}.txt", id());
+        std::string dbg_filename = absl::StrFormat("dbg_tracker%04d.txt", id());
         dbg_file_.open(dbg_filename, std::ios::out);
         CHECK(dbg_file_.is_open());
     }

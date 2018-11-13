@@ -6,9 +6,9 @@
 #include "scene.h"
 
 // 3rd party
-#include "opencv2/imgproc.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "json/json.h"
-#include "fmt/format.h"
+#include "absl/strings/str_format.h"
 
 // own
 #include "tracker_utils.h"
@@ -174,7 +174,7 @@ void Scene::Build2DView() {
     // TRACKER STATUS
     cv::Point2i debug_info_pos(display_.cols-(display_.cols >> 2), 10);
     for (TrackerPtr tracker : trackers_) {
-        std::string status_str = fmt::format("T#{}-B#{}<{:0.2f}> s:{} v:{:0.2f} ({:0.1f}, {:0.1f})",
+        std::string status_str = absl::StrFormat("T#%d-B#%d<%0.2f> s:%d v:%0.2f (%0.1f, %0.1f)",
                                                 tracker->id(),
                                                 tracker->matched_bbox(),
                                                 tracker->max_iou(),
@@ -192,7 +192,7 @@ void Scene::Build2DView() {
     // BOTTOM PANEL SHOWS FPS AND OTHER SYSTEM STATS
     cv::Mat bottom_panel(12, display_.cols, CV_8UC3);
     bottom_panel.setTo(0);
-    std::string sys_stats = fmt::format("#OBJ:{}  FPS:{:0.2f}",
+    std::string sys_stats = absl::StrFormat("#OBJ:%d  FPS:%0.2f",
                                            trackers_.size(),
                                            1000.0f / (timer_.LookUp("total", Timer::MILLISEC, true)+eps));
     cv::putText(bottom_panel, sys_stats, cv::Point(0, 10), CV_FONT_HERSHEY_PLAIN, 1, {0, 255, 0});
