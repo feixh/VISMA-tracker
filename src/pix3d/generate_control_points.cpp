@@ -27,6 +27,14 @@ cv::Mat DrawBox(const cv::Mat &img, const std::vector<Vec2> &xc) {
     cv::circle(disp, cv::Point(int(x(0)), int(x(1))), 5, 
         cv::Scalar(ColorMap[i][0], ColorMap[i][1], ColorMap[i][2]), -1);
   }
+  std::vector<std::pair<int, int>> edges = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, 
+                                          {1, 5}, {2, 6}, {2, 3}, {4, 6}, 
+                                          {4, 5}, {3, 7}, {6, 7}, {5, 7}};
+  for (auto e : edges) {
+    cv::Point p1(xc[e.first](0), xc[e.first](1));
+    cv::Point p2(xc[e.second](0), xc[e.second](1));
+    cv::line(disp, p1, p2, cv::Scalar(255, 0, 0), 2);
+  }
   return disp;
 }
 
