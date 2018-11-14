@@ -103,6 +103,7 @@ link_libraries(
         jsoncpp
         GL
         gtest gtest_main    # for testing
+        gflags
 )
 
 

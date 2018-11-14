@@ -294,7 +294,7 @@ Json::Value LoadJson(const std::string &filename) {
         in >> out;
         return out;
     } else {
-        throw std::runtime_error(absl::StrFormat("failed to read file %d", filename));
+        throw std::runtime_error(absl::StrFormat("failed to read file %s", filename));
     }
 }
 

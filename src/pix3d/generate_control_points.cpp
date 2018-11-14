@@ -1,9 +1,16 @@
+#define STRIP_FLAG_HELP 1
 #include <iostream>
 
 #include "glog/logging.h"
+#include "gflags/gflags.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_cat.h"
 
 #include "pix3d/dataloader.h"
+
+DEFINE_string(pix3d_root, "", "Root directory of Pix3d dataset.");
+DEFINE_bool(show_control_points, true, "If true, visualize the control points.");
+DEFINE_bool(save_control_points, false, "If true, save the control points.");
 
 using namespace feh; 
 
@@ -39,19 +46,22 @@ cv::Mat DrawBox(const cv::Mat &img, const std::vector<Vec2> &xc) {
 }
 
 int main(int argc, char **argv) {
-    CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";
-    Pix3dLoader loader(argv[1]);
+    gflags::SetUsageMessage("generate virtual control points for pix3d dataset");
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    Pix3dLoader loader(FLAGS_pix3d_root);
     cv::namedWindow("image", CV_WINDOW_NORMAL);
 
     for (int i = 0; i < loader.size(); ++i) {
+      std::cout << absl::StrFormat("%05d/%05d", i, loader.size()) << std::endl;
       auto packet = loader.GrabPacket(i); // index by path
-      std::cout << "object pose=\n" << packet.go_.matrix3x4() << std::endl;
-      std::cout << "object pose inverse=\n" << packet.go_.inv().matrix3x4() << std::endl;
-      std::cout << "camera pose=\n" << packet.gc_.matrix3x4() << std::endl;
-      std::cout << "camera pose inverse=" << packet.gc_.inv().matrix3x4() << std::endl;
-      std::cout << "focal=" << packet.focal_length_ << std::endl;
-      std::cout << "bbox=" << packet.bbox_.transpose() << std::endl;
-      std::cout << "shape=" << packet.shape_.transpose() << std::endl;
+      // std::cout << "object pose=\n" << packet.go_.matrix3x4() << std::endl;
+      // std::cout << "object pose inverse=\n" << packet.go_.inv().matrix3x4() << std::endl;
+      // std::cout << "camera pose=\n" << packet.gc_.matrix3x4() << std::endl;
+      // std::cout << "camera pose inverse=" << packet.gc_.inv().matrix3x4() << std::endl;
+      // std::cout << "focal=" << packet.focal_length_ << std::endl;
+      // std::cout << "bbox=" << packet.bbox_.transpose() << std::endl;
+      // std::cout << "shape=" << packet.shape_.transpose() << std::endl;
 
       // // transfrom
       // packet.V_.col(0) *= -1;
@@ -61,11 +71,10 @@ int main(int argc, char **argv) {
       Vec3f xyz_min = packet.V_.colwise().minCoeff();
 
       // generate 9 control points: 8 corners of 3D Bounding Box + box centroid
-      std::cout << "xyz_max=" << xyz_max.transpose() << std::endl;
-      std::cout << "xyz_min=" << xyz_min.transpose() << std::endl;
+      // std::cout << "xyz_max=" << xyz_max.transpose() << std::endl;
+      // std::cout << "xyz_min=" << xyz_min.transpose() << std::endl;
       auto control_points = GenerateControlPoints(xyz_min, xyz_max);
-      for (auto Xo : control_points) std::cout << Xo.transpose() << std::endl;
-
+      // for (auto Xo : control_points) std::cout << Xo.transpose() << std::endl;
 
       // project
       std::vector<Vec2f> kps; // keypoints on image plane, in pixel coordinates
@@ -78,12 +87,25 @@ int main(int argc, char **argv) {
         auto xc = Xc.head<2>();
         kps.push_back(xc);
       }
-      for (auto xc : kps) std::cout << xc.transpose() << std::endl;
-      cv::Mat disp = DrawBox(packet.img_, kps);
+      // for (auto xc : kps) std::cout << xc.transpose() << std::endl;
 
-      cv::imshow("image", disp);
-      char c = cv::waitKey();
-      if (c == 'q') break;
+      if (FLAGS_save_control_points) {
+        std::string path = packet.record_["img"].asString();
+        path.erase(path.find_last_of('.'));
+        path = absl::StrCat(argv[1], "/", path, "_virtual_control_points.txt");
+        // std::cout << path << std::endl;
+        std::ofstream ofs(path, std::ios::out);
+        assert(ofs.is_open());
+        for (auto xc : kps) ofs << xc.transpose() << std::endl;
+        ofs.close();
+      }
+
+      if (FLAGS_show_control_points) {
+        cv::Mat disp = DrawBox(packet.img_, kps);
+        cv::imshow("image", disp);
+        char c = cv::waitKey(5);
+        if (c == 'q') break;
+      }
     }
 }
 

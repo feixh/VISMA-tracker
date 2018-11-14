@@ -18,7 +18,10 @@
 namespace feh {
 
 struct Pix3dPacket {
-    Pix3dPacket(const std::string &dataroot, const Json::Value &record, bool has_edge=false) {
+    Pix3dPacket(const std::string &dataroot, const Json::Value &record, bool has_edge=false):
+      record_{record}
+    {
+        record_ = record;
         // load image & mask
         img_ = cv::imread(dataroot + record["img"].asString());
         mask_ = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
@@ -66,6 +69,8 @@ struct Pix3dPacket {
     MatXi F_;   // faces of CAD models
     Eigen::Matrix<int, 2, 1> shape_;  // shape of images: [rows, cols]
     Mat3 K_, Kinv_;
+    Json::Value record_;
+
 };
 
 class Pix3dLoader {
