@@ -9,6 +9,7 @@
 #include "pix3d/dataloader.h"
 
 DEFINE_string(pix3d_root, "", "Root directory of Pix3d dataset.");
+DEFINE_int32(wait_time, 5, "Wait time for the opencv window.");
 DEFINE_bool(show_control_points, true, "If true, visualize the control points.");
 DEFINE_bool(save_control_points, false, "If true, save the control points.");
 
@@ -103,7 +104,7 @@ int main(int argc, char **argv) {
       if (FLAGS_show_control_points) {
         cv::Mat disp = DrawBox(packet.img_, kps);
         cv::imshow("image", disp);
-        char c = cv::waitKey(5);
+        char c = cv::waitKey(FLAGS_wait_time);
         if (c == 'q') break;
       }
     }
