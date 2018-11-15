@@ -134,5 +134,4 @@ cv::Mat PrettyLabelMap(const cv::Mat &label_map, const std::vector<std::array<ui
 
 }   // namespace tracker
 
-
 }   // namespace feh
