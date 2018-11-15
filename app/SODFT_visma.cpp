@@ -6,6 +6,7 @@
 #include "glog/logging.h"
 #include "json/json.h"
 #include "absl/strings/str_format.h"
+#include "zmqpp/zmqpp.hpp"
 
 // feh
 #include "tracker.h"
@@ -24,6 +25,10 @@ int main(int argc, char **argv) {
     auto config = LoadJson(config_file);
     auto cam_cfg = LoadJson(config["camera_config"].asString());
 
+    // setup zmq client
+    zmqpp::context context;
+    zmqpp::socket socket(context, zmqpp::socket_type::request);
+    socket.connect("tcp://localhost:16006");
 
     MatXf V;
     MatXi F;
@@ -62,6 +67,12 @@ int main(int argc, char **argv) {
         std::string imagepath;
         bool success = loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
         if (!success) break;
+
+        zmqpp::message msg;
+        msg.add_raw<uint8_t>(img.data, img.rows * img.cols * 3);
+        socket.send(msg);
+        std::string bbox_msg;
+        socket.receive(bbox_msg);
 
         std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
         std::cout << "Rg=\n" << Rg.matrix() << std::endl;

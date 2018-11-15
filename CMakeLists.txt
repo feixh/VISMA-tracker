@@ -61,6 +61,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/include
         ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/include
         ${PROJECT_SOURCE_DIR}/thirdparty/abseil-cpp
+        ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/include
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
@@ -80,6 +81,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/fmt/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/lib
         /usr/lib/x86_64-linux-gnu/
 )
 
@@ -104,6 +106,7 @@ link_libraries(
         GL
         gtest gtest_main    # for testing
         gflags
+        zmq zmqpp
 )
 
 
