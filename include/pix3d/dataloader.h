@@ -25,7 +25,7 @@ struct Pix3dPacket {
         // load image & mask
         img_ = cv::imread(dataroot + record["img"].asString());
         mask_ = cv::imread(dataroot + record["mask"].asString(), CV_LOAD_IMAGE_GRAYSCALE);
-        bbox_ = GetVectorFromDynamic<int, 4>(record, "bbox");
+        bbox_ = GetVectorFromJson<int, 4>(record, "bbox");
 
         // load pre-computed edge map
         if (has_edge) {
@@ -35,11 +35,11 @@ struct Pix3dPacket {
 
         // load object pose
         go_ = SE3{
-            GetMatrixFromDynamic<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
-            GetVectorFromDynamic<ftype, 3>(record, "trans_mat")};
+            GetMatrixFromJson<ftype, 3, 3>(record, "rot_mat", JsonMatLayout::RowMajor),
+            GetVectorFromJson<ftype, 3>(record, "trans_mat")};
 
         // camera intrinsics
-        shape_ = GetVectorFromDynamic<int, 2>(record, "img_size");  // input layout: [width, height]
+        shape_ = GetVectorFromJson<int, 2>(record, "img_size");  // input layout: [width, height]
         std::swap(shape_[0], shape_[1]);    // shape layout: [height, width]
         focal_length_ = record["focal_length"].asDouble() / 32.0 * shape_[1];     // convert from mm to pixels
         K_ << focal_length_, 0, 0.5 * shape_[1],
@@ -49,7 +49,7 @@ struct Pix3dPacket {
 
 
         // construct camera pose from position and in-plane rotation
-        cam_position_ = GetVectorFromDynamic<ftype, 3>(record, "cam_position");
+        cam_position_ = GetVectorFromJson<ftype, 3>(record, "cam_position");
         inplane_rotation_  = record["inplane_rotation"].asDouble();
         Vec3 dir = Vec3::Zero() - cam_position_;
         dir /= dir.norm();

@@ -318,7 +318,7 @@ enum class JsonMatLayout {
 /// \param key: the key
 /// \param layout: Whether the matrix is arranged as an one-dim array or two-dim matrix.
 template<typename T=ftype, int N=3, int M = N>
-Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
+Eigen::Matrix<T, N, M> GetMatrixFromJson(
     const Json::Value &v,
     const std::string &key,
     JsonMatLayout layout=JsonMatLayout::OneDim) {
@@ -338,23 +338,15 @@ Eigen::Matrix<T, N, M> GetMatrixFromDynamic(
 
 /// \brief load N-dim double vector from json file
 template<typename T=ftype, int N>
-Eigen::Matrix<T, N, 1> GetVectorFromDynamic(
+Eigen::Matrix<T, N, 1> GetVectorFromJson(
     const Json::Value &v,
     const std::string &key) {
 
-    return GetMatrixFromDynamic<T, N, 1>(v, key);
+    return GetMatrixFromJson<T, N, 1>(v, key);
 };
 
 template<typename Derived>
-void WriteMatrixToDynamic(Json::Value &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
-    // d[key] = Json::Value;
-    for (int i = 0; i < m.rows(); ++i)
-        for (int j = 0; j < m.cols(); ++j)
-            d[key].append(m(i, j));
-}
-
-template<typename Derived>
-void WriteMatrixToJsonObj(Json::Value &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
+void WriteMatrixToJson(Json::Value &d, const std::string &key, const Eigen::MatrixBase<Derived> &m) {
     // d[key] = Json::Value;
     for (int i = 0; i < m.rows(); ++i)
         for (int j = 0; j < m.cols(); ++j)
@@ -377,9 +369,7 @@ void SaveMatToFile(const std::string &filename, const cv::Mat &mat, bool binary=
 }
 
 /// \brief: Merge two dynamic objects and return the merged one.
-Json::Value MergeDynamic(const Json::Value &a, const Json::Value &b);
-/// \brief: Merge two dynamic objects and return the merged one.
-Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b);
+void MergeJson(Json::Value &a, const Json::Value &b);
 Json::Value LoadJson(const std::string &filename);
 
 

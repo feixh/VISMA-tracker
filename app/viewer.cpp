@@ -68,7 +68,7 @@ void DrawOneFrame(const cv::Mat &img,
         cv::Mat input_with_contour = img.clone();
 
         for (const auto &obj : result) {
-            auto pose = feh::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
+            auto pose = feh::GetMatrixFromJson<float, 3, 4>(obj, "model_pose");
 //            std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
 //                                       obj["id"].asInt(),
 //                                       obj["status"].asInt(),

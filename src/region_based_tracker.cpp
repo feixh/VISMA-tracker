@@ -158,10 +158,10 @@ void RegionBasedTracker::Update(const cv::Mat &image) {
     gm_ = Optimize(image, bbox, gm_);
 }
 
-SE3 RegionBasedTracker::Optimize(const cv::Mat &image,
-                                          const cv::Rect &bbox) {
-    Vec3f W = GetVectorFromDynamic<float, 3>(config_, "W0");
-    Vec3f T = GetVectorFromDynamic<float, 3>(config_, "T0");
+SE3 RegionBasedTracker::Optimize(const cv::Mat &image, 
+    const cv::Rect &bbox) {
+    Vec3f W = GetVectorFromJson<float, 3>(config_, "W0");
+    Vec3f T = GetVectorFromJson<float, 3>(config_, "T0");
     SE3 gm(SO3::exp(W), T);
     return Optimize(image, bbox, gm);
 }

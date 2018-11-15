@@ -87,13 +87,14 @@ int main(int argc, char **argv) {
     cv::namedWindow("tracker view", CV_WINDOW_NORMAL);
     cv::namedWindow("DF", CV_WINDOW_NORMAL);
     cv::namedWindow("Detection", CV_WINDOW_NORMAL);
+    cv::Mat disp_tracker, disp_DF, disp_det;
 
     SE3 camera_pose_t0;
 
     // initialization in camera frame
     Mat3 Rinit = Mat3::Identity();
     Vec3 Tinit = Vec3::Zero();
-    Tinit = GetVectorFromDynamic<ftype, 3>(config, "Tinit");
+    Tinit = GetVectorFromJson<ftype, 3>(config, "Tinit");
 
     std::shared_ptr<GravityAlignedTracker> tracker{nullptr};
 
@@ -114,10 +115,12 @@ int main(int argc, char **argv) {
 
         // receive message
         std::string bbox_msg;
-        socket.receive(bbox_msg);
-        vlslam_pb::NewBoxList newboxlist;
-        newboxlist.ParseFromString(bbox_msg);
-        auto det = DrawBoxList(img, newboxlist);
+        bool recv_ok = socket.receive(bbox_msg);
+        if (recv_ok) {
+          vlslam_pb::NewBoxList newboxlist;
+          newboxlist.ParseFromString(bbox_msg);
+          disp_det = DrawBoxList(img, newboxlist);
+        } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
 
         // std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
         // std::cout << "Rg=\n" << Rg.matrix() << std::endl;
@@ -144,20 +147,20 @@ int main(int argc, char **argv) {
         float duration = timer.Tock("tracking");
         std::cout << timer;
         // std::cout << "cost=" << cost << std::endl;
-        cv::Mat tracker_view = tracker->RenderEdgepixels();
-        cv::putText(tracker_view, 
+        disp_tracker = tracker->RenderEdgepixels();
+        cv::putText(disp_tracker, 
                 absl::StrFormat("%0.2f FPS", 1000 / duration),
                 cv::Point(20, 20), CV_FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 255, 0), 2);
-        cv::imshow("tracker view", tracker_view);
+        cv::imshow("tracker view", disp_tracker);
 
-        cv::Mat df = tracker->GetDistanceField();
-        cv::imshow("DF", df);
+        disp_DF = tracker->GetDistanceField();
+        cv::imshow("DF", disp_DF);
 
-        cv::imshow("Detection", det);
+        cv::imshow("Detection", disp_det);
 
         if (config["save"].asBool()) {
-            cv::imwrite(absl::StrFormat("%04d_projection.jpg", i), tracker_view);
-            cv::imwrite(absl::StrFormat("%04d_DF.jpg", i), df);
+            cv::imwrite(absl::StrFormat("%04d_projection.jpg", i), disp_tracker);
+            cv::imwrite(absl::StrFormat("%04d_DF.jpg", i), disp_DF);
         }
         char ckey = cv::waitKey(wait_time);
         if (ckey == 'q') break;

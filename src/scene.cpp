@@ -35,7 +35,7 @@ Scene::Scene() :
 void Scene::Initialize(const std::string &config_file, const Json::Value &more_config) {
     std::string content;
     config_ = LoadJson(config_file);
-    config_ = MergeJsonObj(config_, more_config);
+    MergeJson(config_, more_config);
 
     // LOAD CAMERA CONFIGURATION
     config_["camera"] = LoadJson(config_["camera_config"].asString());

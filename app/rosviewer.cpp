@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
             cm[0] = {255, 255, 255};    // white background
 
             for (const auto &obj : result) {
-                auto pose = feh::io::GetMatrixFromDynamic<float, 3, 4>(obj, "model_pose");
+                auto pose = feh::io::GetMatrixFromJson<float, 3, 4>(obj, "model_pose");
 //            std::cout << folly::format("id={}\nstatus={}\nshape={}\npose=\n",
 //                                       obj["id"].asInt(),
 //                                       obj["status"].asInt(),

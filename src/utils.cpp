@@ -259,32 +259,13 @@ Mat4f SE3FromArray(double *data) {
     return out.cast<float>();
 }
 
-Json::Value MergeDynamic(const Json::Value &a, const Json::Value &b) {
-//    if (b == nullptr) return a;
-//    Json::Value out(a);
-//    for (auto &item : b.items()) {
-//        if (out.find(item.first) != out.items().end()) {
-//            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
-//        }
-//        out[item.first] = item.second;
-//    }
-//    return out;
-    // FIXME: merge json objects
-    return a;
-}
-
-Json::Value MergeJsonObj(const Json::Value &a, const Json::Value &b) {
-//    if (b == nullptr) return a;
-//    Json::Value out(a);
-//    for (auto &item : b.items()) {
-//        if (out.find(item.first) != out.items().end()) {
-//            std::cout << TermColor::yellow << "WARNING: KEY " << item.first << " EXISTS" << TermColor::endl;
-//        }
-//        out[item.first] = item.second;
-//    }
-//    return out;
-    // FIXME: merge json objects
-    return a;
+void MergeJson(Json::Value &a, const Json::Value &b) {
+  if (!a.isObject() || !b.isObject()) return;
+  for (const auto &key : b.getMemberNames()) 
+    if (a[key].isObject()) 
+      MergeJson(a[key], b[key]); 
+    else 
+      a[key] = b[key];
 }
 
 Json::Value LoadJson(const std::string &filename) {

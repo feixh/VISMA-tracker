@@ -95,7 +95,7 @@ void Tracker::Initialize(const std::string &config_file,
 
 
     // merge config
-    config_ = MergeDynamic(config_, more_config);
+    MergeJson(config_, more_config);
 
     // setup hyper-parameters of filter
     auto filter_cfg = config_["filter"];
@@ -103,8 +103,8 @@ void Tracker::Initialize(const std::string &config_file,
     keep_id_prob_      = filter_cfg["keep_shape_id_probability"].asDouble();
     azi_flip_rate_     = filter_cfg["azimuth_flip_rate"].asDouble();  // flip azimuth with this probability
     azi_uniform_mix_   = filter_cfg["azimuth_uniform_mix"].asDouble();
-    initial_std_       = GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
-    proposal_std_      = GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
+    initial_std_       = GetVectorFromJson<float, 4>(filter_cfg, "initial_std");
+    proposal_std_      = GetVectorFromJson<float, 4>(filter_cfg, "proposal_std");
     azimuth_prob_.setZero(360);
     LOG(INFO) << "max num of particles=" << max_num_particles_;
     LOG(INFO) << "initial std=" << initial_std_.transpose();
@@ -320,7 +320,7 @@ int Tracker::Update(const cv::Mat &in_evidence,
                 // ESTABLISH CONVERGENCE CRITERION HERE
                 if (StationaryEnough()  &&  CloseEnough(0.85, 10, 0.0)) {
                     status_ = TrackerStatus::INITIALIZED;
-                    proposal_std_ = GetVectorFromDynamic<float, 4>(config_["filter"], "small_proposal_std");
+                    proposal_std_ = GetVectorFromJson<float, 4>(config_["filter"], "small_proposal_std");
                      azi_uniform_mix_ = 0;
                     initial_std_ *= 10;
                     keep_id_prob_ = 1-1e-4;
@@ -362,8 +362,8 @@ int Tracker::Update(const cv::Mat &in_evidence,
                         status_ = TrackerStatus::INITIALIZING;
                         auto filter_cfg = config_["filter"];
                         keep_id_prob_ = filter_cfg["keep_shape_id_probability"].asDouble();
-                        initial_std_ = GetVectorFromDynamic<float, 4>(filter_cfg, "initial_std");
-                        proposal_std_ = GetVectorFromDynamic<float, 4>(filter_cfg, "proposal_std");
+                        initial_std_ = GetVectorFromJson<float, 4>(filter_cfg, "initial_std");
+                        proposal_std_ = GetVectorFromJson<float, 4>(filter_cfg, "proposal_std");
                         scale_level_ = filter_cfg["scale_level"].asInt();
 
                         float keep_prob = filter_cfg["keep_shape_id_probability"].asDouble();

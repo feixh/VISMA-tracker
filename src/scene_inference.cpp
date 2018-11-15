@@ -286,7 +286,7 @@ void Scene::UpdateLog() {
         tracker_obj["id"] = tracker->id();
         tracker_obj["model_name"] = tracker->shape_name();
         tracker_obj["status"] = as_integer(tracker->status());
-        WriteMatrixToJsonObj(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
+        WriteMatrixToJson(tracker_obj, "model_pose", tracker->pose().block<3, 4>(0, 0));
         obj_array.append(tracker_obj);
     }
 //    if (!obj_array.empty())
