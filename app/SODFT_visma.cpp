@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
         newboxlist.ParseFromString(bbox_msg);
         auto det = DrawBoxList(img, newboxlist);
 
-        std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
-        std::cout << "Rg=\n" << Rg.matrix() << std::endl;
+        // std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
+        // std::cout << "Rg=\n" << Rg.matrix() << std::endl;
 
         if (tracker == nullptr) {
             tracker = std::make_shared<GravityAlignedTracker>(
