@@ -7,6 +7,9 @@
   "dataset": "swivel_chair",
   "camera_config": "../cfg/camera.json",
 
+
+  "port": 16006,  // communication port
+
   "Tinit": [-0.1, -0.4, 1.6],
 
   "iterations": 20,

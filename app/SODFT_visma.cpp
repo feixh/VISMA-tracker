@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // setup zmq client
     zmqpp::context context;
     zmqpp::socket socket(context, zmqpp::socket_type::request);
-    socket.connect("tcp://localhost:16006");
+    socket.connect(absl::StrFormat("tcp://localhost:%d", config["port"].asInt()));
 
     MatXf V;
     MatXi F;
