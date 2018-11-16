@@ -135,7 +135,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh absl::str_format)
+link_libraries(feh absl::str_format absl::time)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)

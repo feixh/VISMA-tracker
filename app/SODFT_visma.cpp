@@ -6,6 +6,7 @@
 #include "glog/logging.h"
 #include "json/json.h"
 #include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
 #include "zmqpp/zmqpp.hpp"
 
 // feh
@@ -121,6 +122,7 @@ int main(int argc, char **argv) {
           newboxlist.ParseFromString(bbox_msg);
           disp_det = DrawBoxList(img, newboxlist);
         } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
+        absl::SleepFor(absl::Milliseconds(10));
 
         // std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
         // std::cout << "Rg=\n" << Rg.matrix() << std::endl;
