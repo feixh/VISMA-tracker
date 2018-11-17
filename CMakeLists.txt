@@ -49,6 +49,7 @@ find_package(GMP REQUIRED)
 find_package(TBB REQUIRED)
 
 add_subdirectory(thirdparty/abseil-cpp)
+add_subdirectory(thirdparty/jsoncpp)
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -79,7 +80,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
-        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        # ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/lib
         /usr/lib/x86_64-linux-gnu/
 )
@@ -99,12 +100,10 @@ link_libraries(
         ${MPFR_LIBRARIES}
         ${PROTOBUF_LIBRARY}
         lcm
-        jsoncpp
         GL
         gtest gtest_main    # for testing
         gflags
         zmq zmqpp
-        absl::str_format absl::time
 )
 
 add_library(core SHARED
@@ -134,7 +133,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh core)
+link_libraries(feh core absl::str_format absl::time jsoncpp)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)
