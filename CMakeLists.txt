@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -msse -msse2 -msse3 -msse4")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
@@ -49,7 +49,6 @@ find_package(GMP REQUIRED)
 find_package(TBB REQUIRED)
 
 add_subdirectory(thirdparty/abseil-cpp)
-add_subdirectory(thirdparty/jsoncpp)
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -80,8 +79,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
-        ${PROJECT_SOURCE_DIR}/thirdparty/fmt/lib
-        # ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/lib
         /usr/lib/x86_64-linux-gnu/
 )
