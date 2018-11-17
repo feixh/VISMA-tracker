@@ -11,8 +11,8 @@
 #include "distance_transform.h"
 #include "renderer.h"
 #include "tracker_utils.h"
-#include "pix3d/dataloader.h"
-#include "pix3d/diff_tracker.h"
+#include "pix3dloader.h"
+#include "diff_tracker.h"
 
 int main(int argc, char **argv) {
     // CHECK_EQ(argc, 2) << "requires root directory of pix3d as an argument!";

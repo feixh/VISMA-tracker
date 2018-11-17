@@ -4,7 +4,7 @@
 #include "absl/strings/str_format.h"
 
 #include "renderer.h"
-#include "pix3d/dataloader.h"
+#include "pix3dloader.h"
 #include "distance_transform.h"
 
 constexpr float znear = 0.1;

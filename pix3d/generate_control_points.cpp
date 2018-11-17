@@ -3,10 +3,10 @@
 
 #include "glog/logging.h"
 #include "gflags/gflags.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 
-#include "pix3d/dataloader.h"
+#include "pix3dloader.h"
 
 DEFINE_string(pix3d_root, "", "Root directory of Pix3d dataset.");
 DEFINE_int32(wait_time, 5, "Wait time for the opencv window.");

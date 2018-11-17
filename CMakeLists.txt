@@ -150,9 +150,9 @@ add_executable(sodft_visma app/SODFT_visma.cpp)
 #################################################
 # differentiable likelihood for 3D tracking
 #################################################
-add_executable(pix3dloader src/pix3d/test_loader.cpp)
-add_executable(pix3dkeypoints src/pix3d/generate_control_points.cpp)
-add_executable(pix3dtracker src/pix3d/test_tracker.cpp src/pix3d/diff_tracker.cpp)
+add_executable(pix3dloader pix3d/test_loader.cpp)
+add_executable(pix3dkeypoints pix3d/generate_control_points.cpp)
+add_executable(pix3dtracker pix3d/test_tracker.cpp pix3d/diff_tracker.cpp)
 
 ################################################################################
 ################################################################################

@@ -1,4 +1,4 @@
-#include "pix3d/diff_tracker.h"
+#include "diff_tracker.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
 
