@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(vlslam_plus)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -g -fopenmp -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -msse -msse2 -msse3 -msse4")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-narrowing")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin )
@@ -51,6 +51,7 @@ find_package(GMP REQUIRED)
 find_package(TBB REQUIRED)
 
 add_subdirectory(thirdparty/abseil-cpp)
+add_subdirectory(thirdparty/jsoncpp)
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -83,7 +84,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/fmt/lib
-        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        # ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/lib
         /usr/lib/x86_64-linux-gnu/
 )
@@ -110,25 +111,26 @@ link_libraries(
         gtest gtest_main    # for testing
         gflags
         zmq zmqpp
+        absl::str_format absl::time
 )
 
 add_library(core SHARED
         core/utils.cpp)
 
 add_library(feh SHARED
-        src/scene_inference.cpp
-        src/scene.cpp
-        src/renderer.cpp
-        src/region_based_tracker.cpp
-        src/tracker.cpp
-        src/tracker_sir.cpp
-        src/tracker_init.cpp
-        src/tracker_utils.cpp
-        src/dataloaders.cpp
-        src/oned_search.cpp
-        src/bresenham.cpp
-        src/DFtracker.cpp
-        src/gravity_aligned_tracker.cpp
+        tracker/scene_inference.cpp
+        tracker/scene.cpp
+        tracker/renderer.cpp
+        tracker/region_based_tracker.cpp
+        tracker/tracker.cpp
+        tracker/tracker_sir.cpp
+        tracker/tracker_init.cpp
+        tracker/tracker_utils.cpp
+        tracker/dataloaders.cpp
+        tracker/oned_search.cpp
+        tracker/bresenham.cpp
+        tracker/DFtracker.cpp
+        tracker/gravity_aligned_tracker.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
@@ -139,7 +141,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh core absl::str_format absl::time)
+link_libraries(feh core)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)
