@@ -16,7 +16,7 @@ namespace feh {
 
         SO3Type() : R_{BaseType::Identity()} {}
 
-        SO3Type(const BaseType &R) : R_{R} {}
+        SO3Type(const Eigen::Matrix<T, 3, 3> &R):R_{R} {}
 
         SO3Type(const AxisType &axis, T angle) :
                 R_{rodrigues(AxisType{axis / axis.norm() * angle})} {}
@@ -54,6 +54,11 @@ namespace feh {
             return BaseType{svd.matrixU() * BaseType::Identity() * svd.matrixV().transpose()};
         }
 
+        template <typename TT>
+        SO3Type<TT> cast() const {
+          return R_.template cast<TT>();
+        }
+
     private:
         BaseType R_;
     };
@@ -64,6 +69,12 @@ namespace feh {
         using PointType = Eigen::Matrix<Type, 3, 1>;
 
         SE3Type() : R_{}, T_{0, 0, 0} {}
+
+        /*
+        SE3Type(const Eigen::Matrix<Type, 3, 4> &RT):
+                R_{RT.template block<3, 3>(0, 0)},
+                T_{RT.template block<3, 1>(0, 3)} {}
+        */
 
         SE3Type(const Eigen::Matrix<Type, 4, 4> &RT):
                 R_{RT.template block<3, 3>(0, 0)},
@@ -110,6 +121,19 @@ namespace feh {
             out.template block<3, 4>(0, 0) = matrix3x4();
             return out;
         };
+
+        template <typename TT>
+        SE3Type<TT> cast() {
+          return SE3Type<TT>(R_.cast<TT>(), T_.cast<TT>());
+        }
+
+        template <typename Derived>
+        static SE3Type from_matrix3x4(const Eigen::MatrixBase<Derived> &other) {
+          EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(Derived, 3, 4);
+          Eigen::Matrix<Type, 3, 3> R = other.template block<3, 3>(0, 0).template cast<Type>();
+          Eigen::Matrix<Type, 3, 1> T = other.template block<3, 1>(0, 3).template cast<Type>();
+          return {R, T};
+        }
 
     private:
         SO3Type<Type> R_;

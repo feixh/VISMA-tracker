@@ -20,17 +20,6 @@
 
 namespace feh {
 
-/// \brief: Load edgemap from protobuf file.
-bool LoadEdgeMap(const std::string &filename, cv::Mat &edge);
-/// \brief: Load a list of mesh file paths.
-/// \param root: Root directory of the CAD database. All the meshes are put directly under this directory.
-/// \param cat_json: Json file of the list of meshes of a certain category.
-std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::string &cat_json);
-
-/// \brief: Convert protobuf repeated field to Eigen matrix.
-Mat4f SE3FromArray(float *data);
-Mat4f SE3FromArray(double *data);
-
 /// \link: http://campar.in.tum.de/Main/StefanHinterstoisser
 class LinemodDatasetLoader {
 public:

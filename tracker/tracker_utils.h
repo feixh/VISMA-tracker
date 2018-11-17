@@ -20,6 +20,11 @@
 namespace feh {
 
 namespace tracker {
+/// \brief: Load a list of mesh file paths.
+/// \param root: Root directory of the CAD database. All the meshes are put directly under this directory.
+/// \param cat_json: Json file of the list of meshes of a certain category.
+std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::string &cat_json);
+
 /// \brief: Convert from local parametrization (inverse depth) to usual state representation.
 Vec4f StateFromLocalParam(const Vec4f &local_param, Mat4f *jac=nullptr);
 ///// \brief: Convert from state to local parametrization (inverse depth).

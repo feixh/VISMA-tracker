@@ -18,6 +18,19 @@
 namespace feh {
 
 namespace tracker {
+
+std::vector<std::string> LoadMeshDatabase(const std::string &root, const std::string &cat_json) {
+    CHECK_STREQ(cat_json.substr(cat_json.find('.'), 5).c_str(), ".json");
+    std::string content;
+    std::string full_path = StrFormat("%d/%d", root, cat_json);
+    auto json_content = LoadJson(full_path);
+
+    std::vector<std::string> out;
+    for (const auto &value : json_content["entries"]) {
+        out.push_back(value.asString());
+    }
+    return out;
+}
 // utils
 Mat4f Mat4FromState(const Vec4f &state) {
     Mat4f mat;

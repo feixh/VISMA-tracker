@@ -80,7 +80,7 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/lcm-1.4.0/lib
-        # ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
+        ${PROJECT_SOURCE_DIR}/thirdparty/jsoncpp/lib
         ${PROJECT_SOURCE_DIR}/thirdparty/zmqpp/lib
         /usr/lib/x86_64-linux-gnu/
 )
@@ -106,9 +106,6 @@ link_libraries(
         zmq zmqpp
 )
 
-add_library(core SHARED
-        core/utils.cpp)
-
 add_library(feh SHARED
         tracker/scene_inference.cpp
         tracker/scene.cpp
@@ -123,6 +120,8 @@ add_library(feh SHARED
         tracker/bresenham.cpp
         tracker/DFtracker.cpp
         tracker/gravity_aligned_tracker.cpp
+        tracker/message_utils.cpp
+        core/utils.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})
 
@@ -133,7 +132,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh core absl::str_format absl::time jsoncpp)
+link_libraries(feh absl::str_format absl::time jsoncpp)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)
