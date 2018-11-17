@@ -68,8 +68,11 @@ int main(int argc, char **argv) {
 
     // setup zmq client
     zmqpp::context context;
-    zmqpp::socket socket(context, zmqpp::socket_type::request);
-    socket.connect(absl::StrFormat("tcp://localhost:%d", config["port"].asInt()));
+    std::shared_ptr<zmqpp::socket> socket = nullptr;
+    if (config["request_detection"].asBool()) {
+      socket = std::make_shared<zmqpp::socket>(context, zmqpp::socket_type::request);
+      socket->connect(absl::StrFormat("tcp://localhost:%d", config["port"].asInt()));
+    } 
 
     MatXf V;
     MatXi F;
@@ -110,19 +113,21 @@ int main(int argc, char **argv) {
         bool success = loader.Grab(i, img, edgemap, bboxlist, gwc, Rg, imagepath);
         if (!success) break;
 
-        zmqpp::message msg;
-        msg.add_raw<uint8_t>(img.data, img.rows * img.cols * 3);
-        socket.send(msg);
-
-        // receive message
-        std::string bbox_msg;
-        bool recv_ok = socket.receive(bbox_msg);
-        if (recv_ok) {
-          vlslam_pb::NewBoxList newboxlist;
-          newboxlist.ParseFromString(bbox_msg);
-          disp_det = DrawBoxList(img, newboxlist);
-        } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
-        absl::SleepFor(absl::Milliseconds(10));
+        if (socket) {
+          zmqpp::message msg;
+          msg.add_raw<uint8_t>(img.data, img.rows * img.cols * 3);
+          socket->send(msg);
+          // receive message
+          std::string bbox_msg;
+          bool recv_ok = socket->receive(bbox_msg);
+          if (recv_ok) {
+            vlslam_pb::NewBoxList newboxlist;
+            newboxlist.ParseFromString(bbox_msg);
+            disp_det = DrawBoxList(img, newboxlist);
+          } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
+          absl::SleepFor(absl::Milliseconds(10));
+          cv::imshow("Detection", disp_det);
+        }
 
         // std::cout << "gwc=\n" << gwc.matrix3x4() << std::endl;
         // std::cout << "Rg=\n" << Rg.matrix() << std::endl;
@@ -158,7 +163,6 @@ int main(int argc, char **argv) {
         disp_DF = tracker->GetDistanceField();
         cv::imshow("DF", disp_DF);
 
-        cv::imshow("Detection", disp_det);
 
         if (config["save"].asBool()) {
             cv::imwrite(absl::StrFormat("%04d_projection.jpg", i), disp_tracker);

@@ -623,26 +623,11 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, SE3 &g) {
 
         std::vector<cv::Mat> hdh(2);
         cv::split(heaviside, hdh);
-        SaveMatToFile<float>("h", hdh[0]);
-        SaveMatToFile<float>("dh", hdh[1]);
 
         std::vector<cv::Mat> pfpb(2);
-        SaveMatToFile<float>("pf", P[0]);
-        SaveMatToFile<float>("pb", P[1]);
 
         std::vector<cv::Mat> dsdf_dxy(2);
         cv::split(dsdf_dxp, dsdf_dxy);
-        SaveMatToFile<float>("dsdfx", dsdf_dxy[0]);
-        SaveMatToFile<float>("dsdfy", dsdf_dxy[1]);
-
-//        SaveMatToFile<uint8_t>("active", active_pixels);
-
-        SaveMatToFile<float>("Jwx", J_debug[0]);
-        SaveMatToFile<float>("Jwy", J_debug[1]);
-        SaveMatToFile<float>("Jwz", J_debug[2]);
-        SaveMatToFile<float>("Jtx", J_debug[3]);
-        SaveMatToFile<float>("Jty", J_debug[4]);
-        SaveMatToFile<float>("Jtz", J_debug[5]);
 
         // check signed distance field
         for (int i = 0; i < dt.rows; ++i) {
@@ -654,7 +639,6 @@ bool RegionBasedTracker::UpdateOneStepAtLevel(int level, SE3 &g) {
                 }
             }
         }
-        SaveMatToFile<float>("sdf", signed_distance);
 
         if (config_["visualize"].asBool()) {
             cv::imshow("depth", depth);

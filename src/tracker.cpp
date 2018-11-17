@@ -11,6 +11,7 @@
 // own
 #include "tracker_utils.h"
 #include "parallel_kernels.h"
+#include "dataloaders.h"
 
 namespace feh {
 namespace tracker {

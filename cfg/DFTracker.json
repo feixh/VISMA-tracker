@@ -8,6 +8,7 @@
   "camera_config": "../cfg/camera.json",
 
 
+  "request_detection": false,
   "port": 16006,  // communication port
 
   "Tinit": [-0.1, -0.4, 1.6],

@@ -55,6 +55,7 @@ add_subdirectory(thirdparty/abseil-cpp)
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/core
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
         ${PROJECT_SOURCE_DIR}/thirdparty/googletest/include
         ${PROJECT_SOURCE_DIR}/thirdparty/libigl/include
@@ -109,6 +110,8 @@ link_libraries(
         zmq zmqpp
 )
 
+add_library(core SHARED
+        core/utils.cpp)
 
 add_library(feh SHARED
         src/scene_inference.cpp
@@ -122,7 +125,6 @@ add_library(feh SHARED
         src/dataloaders.cpp
         src/oned_search.cpp
         src/bresenham.cpp
-        src/utils.cpp
         src/DFtracker.cpp
         src/gravity_aligned_tracker.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
@@ -135,7 +137,7 @@ add_library(feh SHARED
 #        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 # Once feh is built, link applications to it.
-link_libraries(feh absl::str_format absl::time)
+link_libraries(feh core absl::str_format absl::time)
 
 add_executable(preprocess_mesh app/preprocess_mesh.cpp)
 add_executable(mot app/MOT_visma.cpp)

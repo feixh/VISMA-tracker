@@ -10,10 +10,12 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "json/json.h"
 #include "igl/readOBJ.h"
+#include "glog/logging.h"
 
 // feh
 #include "alias.h"
 #include "utils.h"
+#include "dataloaders.h"
 
 namespace feh {
 
