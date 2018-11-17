@@ -31,8 +31,6 @@ find_package(OpenGL REQUIRED)
 # glfw
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
-# OpenCV
-find_package(OpenCV REQUIRED)
 # Glog
 find_package(Glog REQUIRED)
 # Eigen
@@ -69,7 +67,6 @@ include_directories(
 
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
-        ${OpenCV_INCLUDE_DIRS}
         ${GLOG_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIR}
         ${PROTOBUF_INCLUDE_DIR}
@@ -89,19 +86,17 @@ link_directories(
         /usr/lib/x86_64-linux-gnu/
 )
 
-set(OpenCV_MINIMAL
-        opencv_highgui
-        opencv_core
-        opencv_imgproc
-        opencv_video
-        opencv_calib3d)
-
-
 link_libraries(
         glfw
         glog
         tbb
-        ${OpenCV_MINIMAL}
+
+        opencv_highgui
+        opencv_core
+        opencv_imgproc
+        opencv_video
+        opencv_calib3d
+
         ${GMP_LIBRARIES}
         ${MPFR_LIBRARIES}
         ${PROTOBUF_LIBRARY}
