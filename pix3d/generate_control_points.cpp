@@ -70,8 +70,10 @@ int main(int argc, char **argv) {
       Vec3 Tgt = Flip * packet.go_.translation();
       SE3 g_gt{Rgt, Tgt};
 
+      std::vector<bool> valid;
       for (auto Xo : control_points) {
         auto Xc = g_gt * Xo;
+        valid.push_back(Xc(2) > 0.05 ? true : false);
         Xc /= Xc(2);
         Xc = packet.K_ * Xc;
         auto xc = Xc.head<2>();

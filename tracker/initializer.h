@@ -9,6 +9,13 @@
 
 namespace feh {
 /// \brief: solve absolute pose given 3D control points (X) and their 2D projections (x)
-SE3 Initialize(const std::vector<Vec3> &X, const std::vector<Vec2> &x, const Mat3 &K=Mat3::Identity());
+SE3 Initialize(const std::vector<Vec3> &X, 
+    const std::vector<Vec2> &x, 
+    const Mat3 &K=Mat3::Identity());
+
+SE3 Initialize(const std::vector<Vec3> &X, 
+    const std::vector<Vec2> &x, 
+    const std::vector<bool> &valid,
+    const Mat3 &K=Mat3::Identity());
 
 }   // namespace feh
