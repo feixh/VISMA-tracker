@@ -15,6 +15,7 @@
 #include "dataloaders.h"
 #include "gravity_aligned_tracker.h"
 #include "vlslam.pb.h"
+#include "initializer.h"
 
 using namespace feh;
 
@@ -44,6 +45,10 @@ int main(int argc, char **argv) {
     tracker::FlipVertices(V);
 
     auto control_pts = tracker::GenerateControlPoints(V);
+    Mat3 K;
+    K << cam_cfg["fx"].asFloat(), 0, cam_cfg["cx"].asFloat(),
+         0, cam_cfg["fy"].asFloat(), cam_cfg["cy"].asFloat(),
+         0, 0, 1;
 
     std::string dataset_path(config["dataset_root"].asString() + config["dataset"].asString());
 
@@ -63,6 +68,7 @@ int main(int argc, char **argv) {
     Mat3 Rinit = Mat3::Identity();
     Vec3 Tinit = Vec3::Zero();
     Tinit = GetVectorFromJson<ftype, 3>(config, "Tinit");
+    SE3 g_init(Rinit, Tinit);
 
     std::shared_ptr<GravityAlignedTracker> tracker{nullptr};
 
@@ -85,9 +91,25 @@ int main(int argc, char **argv) {
           std::string bbox_msg;
           bool recv_ok = socket->receive(bbox_msg);
           if (recv_ok) {
-            vlslam_pb::NewBoxList newboxlist;
-            newboxlist.ParseFromString(bbox_msg);
-            disp_det = DrawBoxList(img, newboxlist);
+            vlslam_pb::NewBoxList boxlist;
+            boxlist.ParseFromString(bbox_msg);
+            disp_det = DrawBoxList(img, boxlist);
+
+            for (auto box : boxlist.boxes()) {
+              g_init = Initialize(control_pts, 
+                  KeypointsFromBox(box, cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()),
+                  K);
+              // apply correction
+              Mat3 correction;
+              correction << -1, 0, 0,
+                         0, -1, 0,
+                         0, 0, 1;
+              g_init = SE3::from_matrix3x4(correction * g_init.matrix3x4());
+              // FIXME: project to rotation around gravity
+              // Ideally, object pose estimation should be parametrized in gravity aligned frame.
+              // Eigen::AngleAxisf aa(g_init.so3().matrix());
+              std::cout << "g_init\n" << g_init.matrix3x4() << std::endl;
+            }
 
             // initializer.solve(control_pts, newboxlist);
           } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
@@ -105,7 +127,7 @@ int main(int argc, char **argv) {
                 Vec2i{cam_cfg["rows"].asInt(), cam_cfg["cols"].asInt()},
                 cam_cfg["fx"].asFloat(), cam_cfg["fy"].asFloat(),
                 cam_cfg["cx"].asFloat(), cam_cfg["cy"].asFloat(),
-                SE3{Rinit, Tinit},
+                g_init,
                 V, F);
             tracker->UpdateCameraPose(gwc);
             tracker->UpdateGravity(Rg);

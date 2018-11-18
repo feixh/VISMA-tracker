@@ -22,6 +22,8 @@ DFTracker::DFTracker(const cv::Mat &img, const cv::Mat &edge,
     engine_ = std::make_shared<Renderer>(shape_[0], shape_[1]);
     engine_->SetCamera(znear, zfar, fx, fy, cx, cy);
     engine_->SetMesh(V_, F_);
+
+
     Mat3 flip_co;   // object -> camera
     flip_co << -1, 0, 0,
         0, -1, 0,

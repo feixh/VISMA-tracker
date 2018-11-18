@@ -56,4 +56,12 @@ cv::Mat DrawBoxList(const cv::Mat &image, const vlslam_pb::NewBoxList &boxlist) 
   return disp;
 }
 
+std::vector<Vec2> KeypointsFromBox(const vlslam_pb::NewBox &box, int rows, int cols) {
+  std::vector<Vec2> out;
+  for (int i = 0; i < (box.keypoints_size() >> 1); ++i) {
+    out.emplace_back(cols * box.keypoints(i<<1), rows * box.keypoints((i<<1)+1));
+  }
+  return out;
+}
+
 }
