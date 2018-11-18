@@ -2,6 +2,8 @@
 #include "Eigen/Dense"
 #include "math.h"
 
+namespace feh {
+
 template <typename T>
 Eigen::Matrix<T, 3, 3> hat(const Eigen::Matrix<T, 3, 1> &u) {
     return (Eigen::Matrix<T, 3, 3>{} 
@@ -186,5 +188,7 @@ template <typename T>
 Eigen::Matrix<T, 3, 3> projectSO3(const Eigen::Matrix<T, 3, 3> &R) {
     Eigen::JacobiSVD<Eigen::Matrix<T, 3, 3>> svd(R, Eigen::ComputeFullU | Eigen::ComputeFullV);
     return svd.matrixU() * Eigen::Matrix<T, 3, 3>::Identity() * svd.matrixV().transpose();
+}
+
 }
 
