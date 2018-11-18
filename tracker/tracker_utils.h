@@ -136,6 +136,7 @@ cv::Mat PrettyZBuffer(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=20
 /// \brief: Linearize a depth map for visualization.
 cv::Mat LinearizeDepthMap(const cv::Mat &zbuffer, float z_near=0.05f, float z_far=20.0f);
 cv::Mat PrettyLabelMap(const cv::Mat &label_map, const std::vector<std::array<uint8_t, 3>> &color_map);
+std::vector<Vec3f> GenerateControlPoints(const MatXf &V);
 
 }   // namespace tracker
 

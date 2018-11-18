@@ -7,6 +7,8 @@
 #include "absl/strings/str_format.h"
 
 #include "pix3dloader.h"
+#include "tracker_utils.h"
+#include "initializer.h"
 
 DEFINE_string(pix3d_root, "", "Root directory of Pix3d dataset.");
 DEFINE_int32(wait_time, 5, "Wait time for the opencv window.");
@@ -16,17 +18,6 @@ DEFINE_bool(save_control_points, false, "If true, save the control points.");
 using namespace feh; 
 
 auto ColorMap = GenerateRandomColorMap();
-
-std::vector<Vec3f> GenerateControlPoints(const Vec3f &xyz_min, const Vec3f &xyz_max) {
-  std::vector<Vec3f> xyz{xyz_min, xyz_max};
-  std::vector<Vec3f> out;
-  for (int i = 0; i < 2; ++i)
-    for (int j = 0; j < 2; ++j)
-      for (int k = 0; k < 2; ++k)
-        out.push_back({xyz[i](0), xyz[j](1), xyz[k](2)});
-  out.push_back(0.5 * (xyz_min + xyz_max));
-  return out;
-};
 
 cv::Mat DrawBox(const cv::Mat &img, const std::vector<Vec2> &xc) {
   cv::Mat disp = img.clone();
@@ -63,26 +54,24 @@ int main(int argc, char **argv) {
       // std::cout << "focal=" << packet.focal_length_ << std::endl;
       // std::cout << "bbox=" << packet.bbox_.transpose() << std::endl;
       // std::cout << "shape=" << packet.shape_.transpose() << std::endl;
-
-      // // transfrom
-      // packet.V_.col(0) *= -1;
-      // packet.V_.col(1) *= -1;
-
-      Vec3f xyz_max = packet.V_.colwise().maxCoeff();
-      Vec3f xyz_min = packet.V_.colwise().minCoeff();
-
+      
       // generate 9 control points: 8 corners of 3D Bounding Box + box centroid
-      // std::cout << "xyz_max=" << xyz_max.transpose() << std::endl;
-      // std::cout << "xyz_min=" << xyz_min.transpose() << std::endl;
-      auto control_points = GenerateControlPoints(xyz_min, xyz_max);
+      auto control_points = tracker::GenerateControlPoints(packet.V_);
       // for (auto Xo : control_points) std::cout << Xo.transpose() << std::endl;
 
       // project
       std::vector<Vec2f> kps; // keypoints on image plane, in pixel coordinates
+      Mat3 Flip;
+      Flip << -1, 0, 0,
+           0, -1, 0,
+           0, 0, 1;
+
+      Mat3 Rgt = Flip * packet.go_.so3().matrix();
+      Vec3 Tgt = Flip * packet.go_.translation();
+      SE3 g_gt{Rgt, Tgt};
+
       for (auto Xo : control_points) {
-        auto Xc = packet.go_ * Xo;
-        Xc(0) *= -1;
-        Xc(1) *= -1;
+        auto Xc = g_gt * Xo;
         Xc /= Xc(2);
         Xc = packet.K_ * Xc;
         auto xc = Xc.head<2>();
@@ -107,6 +96,13 @@ int main(int argc, char **argv) {
         char c = cv::waitKey(FLAGS_wait_time);
         if (c == 'q') break;
       }
+
+      // test the pose initializer given 3D control points and
+      // 2D projections
+      auto est = Initialize(control_points, kps, packet.K_);
+      std::cout << "==========\n";
+      std::cout << "est=\n" << est.matrix3x4() << std::endl;
+      std::cout << "gt=\n" << g_gt.matrix3x4() << std::endl;
     }
 }
 

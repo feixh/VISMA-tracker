@@ -121,6 +121,7 @@ add_library(feh SHARED
         tracker/DFtracker.cpp
         tracker/gravity_aligned_tracker.cpp
         tracker/message_utils.cpp
+        tracker/initializer.cpp
         core/utils.cpp
         ${PROJECT_SOURCE_DIR}/thirdparty/glad/src/glad.c
         ${PROTO_SRCS})

@@ -43,6 +43,8 @@ int main(int argc, char **argv) {
     tracker::RotateVertices(V, -M_PI / 2);
     tracker::FlipVertices(V);
 
+    auto control_pts = tracker::GenerateControlPoints(V);
+
     std::string dataset_path(config["dataset_root"].asString() + config["dataset"].asString());
 
     int wait_time(0);
@@ -86,7 +88,10 @@ int main(int argc, char **argv) {
             vlslam_pb::NewBoxList newboxlist;
             newboxlist.ParseFromString(bbox_msg);
             disp_det = DrawBoxList(img, newboxlist);
+
+            // initializer.solve(control_pts, newboxlist);
           } else std::cout << TermColor::red << "failed to receive message" << TermColor::endl;
+
           absl::SleepFor(absl::Milliseconds(10));
           cv::imshow("Detection", disp_det);
         }

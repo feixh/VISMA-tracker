@@ -436,6 +436,23 @@ cv::Mat PrettyLabelMap(const cv::Mat &label_map, const std::vector<std::array<ui
     return out;
 }
 
+/// \brief: Generate virtual control points of the 3D object.
+// control points are: 8 corners and 1 centroid of the 3D Bounding box
+/// \param X: N-by-3 vertices.
+std::vector<Vec3f> GenerateControlPoints(const MatXf &X) {
+  Vec3f xyz_max = X.colwise().maxCoeff();
+  Vec3f xyz_min = X.colwise().minCoeff();
+
+  std::vector<Vec3f> xyz{xyz_min, xyz_max};
+  std::vector<Vec3f> out;
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j)
+      for (int k = 0; k < 2; ++k)
+        out.push_back({xyz[i](0), xyz[j](1), xyz[k](2)});
+  out.push_back(0.5 * (xyz_min + xyz_max));
+  return out;
+};
+
 
 }   // namespace tracker
 
