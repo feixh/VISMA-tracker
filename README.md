@@ -1,3 +1,17 @@
+This is the code for our ECCV 18 paper:
+
+```
+@inproceedings{feiS18,
+    title = {Visual-Inertial Object Detection and Mapping},
+    author = {Fei, X. and Soatto, S.},
+    booktitle = {Proceedings of the European Conference on Computer Vision},
+    year = {2018}
+}
+```
+
+I'll clean up the code base soon. The data utilities released earlier can be found [here](https://github.com/feixh/VISMA).
+
+
 ## Applications
 
 - SOT: Single Object Tracking
