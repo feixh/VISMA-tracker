@@ -50,6 +50,7 @@ find_package(TBB REQUIRED)
 
 add_subdirectory(thirdparty/abseil-cpp)
 add_subdirectory(thirdparty/jsoncpp)
+add_subdirectory(thirdparty/lcm-1.4.0)
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
