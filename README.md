@@ -1,3 +1,5 @@
+
+
 # VISMA-tracker
 
 This is a preemptive release of the code for our ECCV 18 paper:
@@ -58,7 +60,7 @@ To build, simply trigger `build.sh` in the project root directory. Missing packa
 
 ### Messaging
 - ZMQ: Zero Message Queue
-- LCM: Lgihtweight Communications and Marshalling
+- LCM: Lightweight Communications and Marshalling
 
 ## Launch faster-rcnn for object likelihood
 
